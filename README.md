@@ -54,7 +54,7 @@ references to change as the evidence does.
 **One commit ahead of upstream and the HANDOFF is fresh: the hint says `↑1 sin push → git push`.**
 ![One commit ahead, HANDOFF fresh](docs/img/statusline-fable-push-hint.png)
 
-**A Sonnet session at medium effort with a `redactor` subagent running; cache warm at 97%, TTL 59 min.**
+**A Sonnet session at medium effort with a `redactor` subagent running; cache warm at 97%, TTL 59 min.** Unattended runs use bypass with a scoped prompt, a hard stop and reviewer gates — see Roadmap → UNATTENDED. This capture shows that mode, not the default one.
 ![Sonnet session with redactor subagent](docs/img/statusline-sonnet-subagent.png)
 
 **`⚠HANDOFF 0h ·1f`: one modified file is newer than the handoff, so the handoff no longer describes the tree.**
@@ -126,8 +126,12 @@ number behind the status line's hints. [`docs/hooks.md`](docs/hooks.md) and
 
 The rules that cite evidence are checked against the real papers in
 [`docs/references.md`](docs/references.md); citations that could not be resolved are listed
-there as unverified rather than dressed up. References are expected to change as the evidence
-does — propose or challenge one with
+there as unverified rather than dressed up. The reviewer gate ("reviewer never weaker than the
+author") is grounded in Panickssery et al., "LLM Evaluators Recognize and Favor Their Own
+Generations," NeurIPS 2024 ([arXiv:2404.13076](https://arxiv.org/abs/2404.13076)); the
+candidates found for citations that could not be verified are tracked in
+[`docs/references-candidates.md`](docs/references-candidates.md). References are expected to
+change as the evidence does — propose or challenge one with
 [`.github/ISSUE_TEMPLATE/reference.md`](.github/ISSUE_TEMPLATE/reference.md).
 
 ## Roadmap
@@ -154,6 +158,7 @@ does — propose or challenge one with
 
 ## Author
 
-Yoichi Palacios (iC7), data engineer / developer, Lima, Peru — GitHub
-[IchiSieben](https://github.com/IchiSieben). See [`CITATION.cff`](CITATION.cff) if you build on
-this.
+Yoichi Palacios Tanaka (IchiSieben) · [ichisieben.dev](https://ichisieben.dev)
+
+Data engineer / developer, Lima, Peru — GitHub [IchiSieben](https://github.com/IchiSieben). See
+[`CITATION.cff`](CITATION.cff) if you build on this.

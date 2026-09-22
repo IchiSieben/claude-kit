@@ -341,8 +341,8 @@ fail por dimensión, con evidencia `file:line`) — ese formato reduce el sesgo 
 Y por eso **nunca** se cambia el modelo de la sesión para conseguir un review: el `reviewer` corre
 en su propio contexto y no invalida la caché del hilo.
 
-*Fuente: `orquestador-estado.md` §2.2 y §2.4 (Xiang 2026) · `agents/reviewer.md` ·
-`CLAUDE.md` §Routing regla 6*
+*Fuente: Panickssery et al. 2024 (arXiv:2404.13076, sesgo de auto-preferencia) · `agents/reviewer.md` ·
+`CLAUDE.md` §Routing regla 6 — ver `docs/references.md`*
 
 ### Cuándo subagente
 

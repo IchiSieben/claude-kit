@@ -45,32 +45,38 @@ aborda esa regla."
 
 ## No verificadas — a confirmar por el owner
 
-`MANUAL.md` §5 del kit cita `Xiang 2026` para "el revisor tiene que ser por lo menos tan fuerte
-como el autor," y `skills/xreview/SKILL.md` cita `Panickssery 2024; Xiang 2026, Yang 2026` para la
-rúbrica de revisión de elección forzada. Ni `Xiang` ni `Yang` resuelven a un paper específico y
-encontrable de 2026:
+Al 2026-09-22, `MANUAL.md` §5, `skills/xreview/SKILL.md` y `skills/spec/SKILL.md` ya no citan
+`Xiang 2026`, `Yang 2026` ni `Tufano et al. 2026` — esas reglas se reanclaron a lo verificado
+arriba (Panickssery 2024) o quedaron marcadas "práctica propia, sin paper que la respalde
+todavía." Los cinco nombres de abajo nunca resolvieron a un paper específico y encontrable;
+quedan acá, y en [`docs/references-candidates.es.md`](references-candidates.es.md) con los
+resultados de búsqueda de los near-miss, para que el owner los cierre formalmente (encontrar el
+paper real, o confirmar que no existe) en vez de que desaparezcan en silencio.
 
-- **Xiang 2026** — se buscó en arXiv un paper de asimetría revisor/autor o juez-LLM por un autor
-  apellidado Xiang publicado en 2026; no se encontró coincidencia. El match temático más cercano,
-  "Can LLMs Judge Better Than They Generate?" (arXiv:2606.28050), es de otro autor (Bandyopadhyay)
-  y trata la asimetría juez/generador en general, no "revisor ≥ autor."
-- **Yang 2026** — se buscó un paper de 2026 sobre revisores LLM más débiles causando ediciones
-  dañinas, o sobre rúbricas de revisión de código cross-model; apareció "Stop Automating Peer
-  Review Without Rigorous Evaluation," que acredita feedback de una Diyi Yang, pero ese paper trata
-  la política de revisión humana de ICML, no una rúbrica de revisión de código por LLM — no coincide
-  con la afirmación para la que se lo cita.
-
-El propio `MANUAL.md` no menciona `Lodha 2026` ni `Min 2026` / "CAT" en ningún lugar — un grep de
-todo el árbol `home/.claude/` no encontró rastro de ninguno de los dos nombres. Las búsquedas de un
-paper de arXiv de 2026 de un "Lodha" sobre agentes LLM, y de un paper de 2026 de "Min" que introduzca
-algo llamado "CAT," no devolvieron ninguna coincidencia plausible. Estas dos referencias no se pueden
-atar a ninguna regla específica del kit tal como está hoy; el owner debería decir qué querían
-respaldar, o sacarlas.
-
-`skills/spec/SKILL.md` también cita a `Tufano et al. 2026` para "escribir el contrato...
-mejora medible la detección de bugs." No se encontró ningún paper de 2026 con primer autor Tufano
-sobre pre/postcondiciones y detección de bugs; solo apareció trabajo anterior de Tufano (2024 y
-antes) sobre temas de revisión de código no relacionados. Se lista acá y no en Verificadas.
+- **Xiang 2026** — se citaba para "el revisor tiene que ser por lo menos tan fuerte como el
+  autor." Se buscó en arXiv un paper de asimetría revisor/autor o juez-LLM por un autor
+  apellidado Xiang publicado en 2026; no se encontró coincidencia. El match temático más
+  cercano, "Can LLMs Judge Better Than They Generate?" (arXiv:2606.28050), es de otro autor
+  (Bandyopadhyay) y trata la asimetría juez/generador en general, no "revisor ≥ autor."
+- **Yang 2026** — se citaba junto a Xiang 2026 para la misma rúbrica de elección forzada. Se
+  buscó un paper de 2026 sobre revisores LLM más débiles causando ediciones dañinas, o sobre
+  rúbricas de revisión de código cross-model; apareció "Stop Automating Peer Review Without
+  Rigorous Evaluation," que acredita feedback de una Diyi Yang, pero ese paper trata la política
+  de revisión humana de ICML, no una rúbrica de revisión de código por LLM — no coincide con la
+  afirmación para la que se lo citaba.
+- **Lodha 2026** — no está citado en ningún lugar del árbol `home/.claude/` del kit (grep
+  2026-09-22, cero resultados). Las búsquedas de un paper de arXiv de 2026 de un "Lodha" sobre
+  agentes LLM no devolvieron ninguna coincidencia plausible. No hay nada que reanclar; el owner
+  debería decir qué quería respaldar, o sacarlo.
+- **Min 2026 / "CAT"** — misma situación que Lodha: no está citado en ningún lugar del árbol del
+  kit. Las búsquedas de un paper de 2026 con primer autor "Min" que introduzca algo llamado
+  "CAT" no devolvieron ninguna coincidencia plausible.
+- **Tufano 2026** — se citaba en `skills/spec/SKILL.md` para "escribir el contrato... mejora
+  medible la detección de bugs." No se encontró ningún paper de 2026 con primer autor Tufano
+  sobre pre/postcondiciones y detección de bugs, ni en una segunda pasada de búsqueda corrida el
+  2026-09-22; solo apareció trabajo anterior de Tufano (2023-2024) sobre predicción de cobertura
+  y automatización de agentes de desarrollo, y dos papers de 2025 de otros autores sobre
+  inferencia de postcondiciones. Se lista acá y no en Verificadas.
 
 ---
 

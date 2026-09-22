@@ -28,10 +28,11 @@ Fuente: frontmatter de `home/.claude/agents/reviewer.md` (`tools:`, descripción
 ## Por qué el auto-review del mismo modelo no es una compuerta válida
 
 La evidencia que cita el kit: el auto-review del mismo modelo está sesgado hacia la
-aprobación (Panickssery 2024), y un revisor distinto y al menos igual de fuerte, con una
-rúbrica de elección forzada, ayuda (Xiang 2026, Yang 2026). Los papers están en
-`docs/references.md`. Por eso tanto `reviewer` como `/xreview` usan una rúbrica donde
-ninguna dimensión se puede saltear, en vez de comentario libre.
+aprobación (Panickssery 2024). Usar un revisor distinto y al menos igual de fuerte, con una
+rúbrica de elección forzada, es práctica propia del kit, todavía sin paper que la respalde —
+ver `docs/references.es.md` para lo verificado y `docs/references-candidates.es.md` para el
+rastro de búsqueda de la cita que llevaba antes. Por eso tanto `reviewer` como `/xreview` usan
+una rúbrica donde ninguna dimensión se puede saltear, en vez de comentario libre.
 
 Fuente: `home/.claude/skills/xreview/SKILL.md` (línea Evidence).
 

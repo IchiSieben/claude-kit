@@ -9,7 +9,7 @@ argument-hint: [feature or project name]
 
 Target: $ARGUMENTS
 
-Evidence: writing the contract (pre/post-conditions, undefined behavior) before code measurably improves bug detection (Tufano et al. 2026); tests-as-spec raise solve rates (Mathews & Nagappan 2024).
+Evidence: writing the contract (pre/post-conditions, undefined behavior) before code — own practice, not yet backed by a paper; tests-as-spec raise solve rates (Mathews & Nagappan 2024).
 
 ## 1. Interview (use AskUserQuestion, max 3 rounds, batch questions)
 Cover only what you cannot infer from the repo:

@@ -58,7 +58,7 @@ está la especificación.
 **Un commit por delante del remoto y el HANDOFF está fresco: la pista dice `↑1 sin push → git push`.**
 ![Un commit por delante, HANDOFF fresco](docs/img/statusline-fable-push-hint.png)
 
-**Una sesión Sonnet en esfuerzo medio con un subagente `redactor` corriendo; caché tibia al 97 %, TTL 59 min.**
+**Una sesión Sonnet en esfuerzo medio con un subagente `redactor` corriendo; caché tibia al 97 %, TTL 59 min.** Las corridas desatendidas usan bypass con un prompt acotado, un hard stop y las compuertas del revisor — ver Roadmap → UNATTENDED. Esta captura muestra ese modo, no el modo por defecto.
 ![Sesión Sonnet con subagente redactor](docs/img/statusline-sonnet-subagent.png)
 
 **`⚠HANDOFF 0h ·1f`: un archivo modificado es más nuevo que el handoff, así que el handoff ya no describe el árbol.**
@@ -133,8 +133,12 @@ comandos `/manual` y `/ahora` que lo muestran.
 
 Las reglas que citan evidencia se contrastan con los papers reales en
 [`docs/references.es.md`](docs/references.es.md); las citas que no se pudieron resolver figuran
-ahí como no verificadas, sin maquillarlas. Se espera que las referencias cambien conforme
-cambie la evidencia — propone o cuestiona una con
+ahí como no verificadas, sin maquillarlas. La compuerta del revisor ("el revisor nunca más
+débil que el autor") se apoya en Panickssery et al., "LLM Evaluators Recognize and Favor Their
+Own Generations," NeurIPS 2024 ([arXiv:2404.13076](https://arxiv.org/abs/2404.13076)); los
+candidatos encontrados para las citas que no se pudieron verificar están en
+[`docs/references-candidates.es.md`](docs/references-candidates.es.md). Se espera que las
+referencias cambien conforme cambie la evidencia — propone o cuestiona una con
 [`.github/ISSUE_TEMPLATE/reference.md`](.github/ISSUE_TEMPLATE/reference.md).
 
 ## Hoja de ruta
@@ -163,6 +167,7 @@ cambie la evidencia — propone o cuestiona una con
 
 ## Autor
 
-Yoichi Palacios (iC7), data engineer / developer, Lima, Perú — GitHub
-[IchiSieben](https://github.com/IchiSieben). Ver [`CITATION.cff`](CITATION.cff) si construyes
-sobre esto.
+Yoichi Palacios Tanaka (IchiSieben) · [ichisieben.dev](https://ichisieben.dev)
+
+Data engineer / developer, Lima, Perú — GitHub [IchiSieben](https://github.com/IchiSieben). Ver
+[`CITATION.cff`](CITATION.cff) si construyes sobre esto.

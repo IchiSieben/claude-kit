@@ -26,10 +26,11 @@ Source: `home/.claude/agents/reviewer.md` frontmatter (`tools:`, description); `
 ## Why same-model self-review is not a gate
 
 The evidence the kit cites: same-model self-review is biased toward approval (Panickssery
-2024), and a different, at-least-as-strong reviewer using a forced-choice rubric helps
-(Xiang 2026, Yang 2026). See `docs/references.md` for the papers. This is why both
-`reviewer` and `/xreview` use a rubric with no dimension allowed to be skipped, rather than
-open-ended commentary.
+2024). Using a different, at-least-as-strong reviewer with a forced-choice rubric is the
+kit's own practice, not yet backed by a paper — see `docs/references.md` for what is verified
+and `docs/references-candidates.md` for the search trail on the citation this used to carry.
+This is why both `reviewer` and `/xreview` use a rubric with no dimension allowed to be
+skipped, rather than open-ended commentary.
 
 Source: `home/.claude/skills/xreview/SKILL.md` (Evidence line).
 

@@ -8,7 +8,7 @@ allowed-tools: Read Write Bash(git *)
 
 # Cross-model review — mode: $0
 
-Evidence: same-model self-review is biased toward approval (Panickssery 2024); a different, at-least-as-strong reviewer with a forced-choice rubric helps (Xiang 2026, Yang 2026); a weaker reviewer can cause harmful rewrites, so external reviewers REPORT, they do not edit.
+Evidence: same-model self-review is biased toward approval (Panickssery 2024); a different, at-least-as-strong reviewer with a forced-choice rubric helps — own practice, not yet backed by a paper; a weaker reviewer can cause harmful rewrites, so external reviewers REPORT, they do not edit.
 
 ## If $0 == pack
 1. Collect: `git diff main...HEAD` (or staged diff), SPEC.md, the test command and its last output.

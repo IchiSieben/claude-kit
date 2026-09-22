@@ -44,29 +44,35 @@ read them as "here is what the field has published on the topic that rule addres
 
 ## Unverified — owner to confirm
 
-The kit's `MANUAL.md` §5 cites `Xiang 2026` for "reviewer must be at least as strong as the author,"
-and `skills/xreview/SKILL.md` cites `Panickssery 2024; Xiang 2026, Yang 2026` for the forced-choice
-review rubric. Neither `Xiang` nor `Yang` resolves to a specific, findable 2026 paper:
+As of 2026-09-22, `MANUAL.md` §5, `skills/xreview/SKILL.md` and `skills/spec/SKILL.md` no longer
+cite `Xiang 2026`, `Yang 2026` or `Tufano et al. 2026` — those rules were re-anchored to what is
+verified above (Panickssery 2024) or marked "own practice, not yet backed by a paper." The five
+names below never resolved to a specific, findable paper; they are kept here, and in
+[`docs/references-candidates.md`](references-candidates.md) with the near-miss search results,
+so the owner can close them out formally (find the real paper, or confirm there isn't one) rather
+than have them silently disappear.
 
-- **Xiang 2026** — searched arXiv for LLM-judge / reviewer-strength-asymmetry papers by an author
-  named Xiang published in 2026; found no matching paper. The closest topical match, "Can LLMs
-  Judge Better Than They Generate?" (arXiv:2606.28050), is by a different author (Bandyopadhyay)
-  and is about judge/generator asymmetry in general, not "reviewer ≥ author."
-- **Yang 2026** — searched for a 2026 paper on weaker LLM reviewers causing harmful edits or on
-  cross-model code-review rubrics; found "Stop Automating Peer Review Without Rigorous Evaluation,"
-  which credits feedback to a Diyi Yang, but that paper is about ICML's human peer-review policy, not
-  about an LLM code-review rubric — it does not match the claim it is cited for.
-
-`MANUAL.md` itself does not mention `Lodha 2026` or `Min 2026` / "CAT" anywhere — a grep of the whole
-`home/.claude/` tree found no trace of either name. Searches for a 2026 arXiv paper by a "Lodha" on
-LLM agents, and for a 2026 paper by "Min" introducing something called "CAT," returned no plausible
-match. These two references cannot be tied to any specific rule in the kit as it stands today; the
-owner should say what they were meant to support, or drop them.
-
-`skills/spec/SKILL.md` also cites `Tufano et al. 2026` for "writing the contract... measurably
-improves bug detection." No 2026 paper by a first author Tufano on preconditions/postconditions and
-bug detection could be found; only earlier Tufano work (2024 and prior) on unrelated code-review
-topics turned up. Listed here rather than under Verified.
+- **Xiang 2026** — was cited for "reviewer must be at least as strong as the author." Searched
+  arXiv for LLM-judge / reviewer-strength-asymmetry papers by an author named Xiang published in
+  2026; found no matching paper. The closest topical match, "Can LLMs Judge Better Than They
+  Generate?" (arXiv:2606.28050), is by a different author (Bandyopadhyay) and is about
+  judge/generator asymmetry in general, not "reviewer ≥ author."
+- **Yang 2026** — was cited alongside Xiang 2026 for the forced-choice review rubric. Searched for
+  a 2026 paper on weaker LLM reviewers causing harmful edits or on cross-model code-review rubrics;
+  found "Stop Automating Peer Review Without Rigorous Evaluation," which credits feedback to a Diyi
+  Yang, but that paper is about ICML's human peer-review policy, not about an LLM code-review
+  rubric — it does not match the claim it was cited for.
+- **Lodha 2026** — not cited anywhere in the kit's `home/.claude/` tree (grepped 2026-09-22, zero
+  hits). Searches for a 2026 arXiv paper by a "Lodha" on LLM agents returned no plausible match.
+  Nothing to re-anchor; the owner should say what this was meant to support, or drop it.
+- **Min 2026 / "CAT"** — same situation as Lodha: not cited anywhere in the kit's tree. Searches
+  for a 2026 paper by a first author "Min" introducing something called "CAT" returned no
+  plausible match.
+- **Tufano 2026** — was cited in `skills/spec/SKILL.md` for "writing the contract... measurably
+  improves bug detection." No 2026 paper by a first author Tufano on preconditions/postconditions
+  and bug detection could be found, including in a second search pass on 2026-09-22; only earlier
+  Tufano work (2023-2024) on coverage prediction and dev-agent automation, and two 2025 papers by
+  other authors on postcondition inference, turned up. Listed here rather than under Verified.
 
 ---
 

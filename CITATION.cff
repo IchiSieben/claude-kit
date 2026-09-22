@@ -3,9 +3,11 @@ message: "If you build on this kit, a citation or a link back is appreciated."
 type: software
 title: "claude-kit: an operating kit for Claude Code (routing, subagents, review gate, hooks, status line)"
 authors:
-  - family-names: Palacios
+  - family-names: Palacios Tanaka
     given-names: Yoichi
-    alias: iC7
+    alias: IchiSieben
+    orcid: ""
+    website: "https://ichisieben.dev"
 repository-code: "https://github.com/IchiSieben/claude-kit"
 license: Apache-2.0
 version: 0.1.0
@@ -15,3 +17,16 @@ keywords:
   - llm-agents
   - model-routing
   - developer-tools
+preferred-citation:
+  type: software
+  title: "claude-kit: an operating kit for Claude Code (routing, subagents, review gate, hooks, status line)"
+  authors:
+    - family-names: Palacios Tanaka
+      given-names: Yoichi
+      alias: IchiSieben
+      orcid: ""
+      website: "https://ichisieben.dev"
+  repository-code: "https://github.com/IchiSieben/claude-kit"
+  license: Apache-2.0
+  version: 0.1.0
+  date-released: 2026-09-22
