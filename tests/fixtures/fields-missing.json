@@ -1,0 +1,52 @@
+{
+  "session_id": "00000000-0000-0000-0000-000000000000",
+  "transcript_path": "C:\\work\\tmp\\transcript.jsonl",
+  "cwd": "C:\\work\\demo-project",
+  "scratchpad_dir": "C:\\work\\tmp\\scratchpad",
+  "prompt_id": "11111111-1111-1111-1111-111111111111",
+  "effort": {},
+  "model": "Opus 5",
+  "workspace": {
+    "current_dir": "C:\\work\\demo-project",
+    "project_dir": "C:\\work\\demo-project",
+    "added_dirs": [],
+    "repo": {
+      "host": "github.com",
+      "owner": "example",
+      "name": "demo-project"
+    }
+  },
+  "version": "2.1.276",
+  "output_style": {
+    "name": "default"
+  },
+  "cost": {
+    "total_cost_usd": 0.0,
+    "total_lines_added": 0,
+    "total_lines_removed": 0
+  },
+  "context_window": {
+    "context_window_size": 1000000,
+    "current_usage": null,
+    "used_percentage": null
+  },
+  "exceeds_200k_tokens": false,
+  "prompt_cache": {
+    "warm": "yes",
+    "ttl": 3600
+  },
+  "fast_mode": false,
+  "thinking": "on",
+  "rate_limits": {
+    "five_hour": {},
+    "seven_day": {}
+  },
+  "futuro_desconocido": {
+    "algo": [
+      1,
+      2,
+      3
+    ],
+    "otro": true
+  }
+}

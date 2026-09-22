@@ -1,0 +1,14 @@
+/* TEAM */
+Author: Yoichi Palacios (iC7)
+Role: data engineer / developer
+Location: Lima, Peru
+GitHub: https://github.com/IchiSieben
+
+/* THANKS */
+The authors of the papers listed in docs/references.md, whose measurements motivated
+the rules in this kit.
+
+/* SITE */
+Standards: bash, jq, POSIX-ish shell, Markdown
+Built with: Claude Code (Anthropic), in VS Code on Windows
+Language: English (kit, code, EN docs); Spanish (manual, ES docs)

@@ -1,0 +1,100 @@
+{
+  "_readme": [
+    "THE ONE PLACE where the kit's operating thresholds live. statusline.sh, the hooks and",
+    "/ahora read this file; none of them may carry the number itself. A missing or unreadable",
+    "file is NOT a licence to fall back to a hardcoded default: the bar prints an amber",
+    "'umbrales' warning and stops colouring and hinting, because a threshold you cannot read",
+    "is not the same thing as a threshold that is not crossed.",
+    "",
+    "Schema, one object per threshold:",
+    "  id        stable name; code looks thresholds up BY ID, never by position",
+    "  priority  lower fires first. The bar shows ONE hint: the lowest priority that matches",
+    "  hint      true = it can produce a hint; false = it is only a band (colour, gate, hook)",
+    "  condition {metric, op, value} — metric is measured by the caller, op is >= > <= <",
+    "            A metric that could not be measured is -1 and never matches (unknown != zero)",
+    "  gate      id of another threshold whose condition must ALSO hold",
+    "  param     extra number the threshold needs; meaning documented per threshold",
+    "  actions   default / fresh (HANDOFF up to date) / nodata (the detail is missing)",
+    "            placeholders: {n} the metric's current value, {h} hours, {causes} cache causes",
+    "  source    where the number came from. No source = it is invented and must be deleted"
+  ],
+  "version": 1,
+  "confirmed": "2026-09-18 — owner confirmed every value below unchanged from statusline.sh",
+  "thresholds": [
+    {
+      "id": "quota-5h",
+      "priority": 10,
+      "hint": true,
+      "condition": { "metric": "five_pct", "op": ">=", "value": 90 },
+      "actions": { "default": "límite 5h al {n}% → para o baja a sonnet" },
+      "source": "statusline.sh (bloque de hints) · MANUAL.md §7 · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "context-red",
+      "priority": 20,
+      "hint": true,
+      "condition": { "metric": "context_k", "op": ">=", "value": 300 },
+      "actions": {
+        "default": "→ /handoff PRIMERO, luego /clear",
+        "fresh": "estado guardado → /clear seguro"
+      },
+      "source": "statusline.sh (RED_K, banda roja y marca ┋) · MANUAL.md §2 (banda absoluta, /clear por defecto) · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "cache-cold",
+      "priority": 30,
+      "hint": true,
+      "condition": { "metric": "cache_pct", "op": "<", "value": 60 },
+      "actions": {
+        "default": "caché frío: {causes}",
+        "nodata": "caché frío → /usage dice la causa"
+      },
+      "source": "statusline.sh (banda ámbar de caché y bloque de hints) · MANUAL.md §7 · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "session-long",
+      "priority": 40,
+      "hint": true,
+      "gate": "context-amber",
+      "condition": { "metric": "session_min", "op": ">=", "value": 480 },
+      "actions": {
+        "default": "sesión de {h}h → /handoff antes de /clear",
+        "fresh": "sesión de {h}h → /clear seguro, estado guardado"
+      },
+      "source": "statusline.sh (bloque de hints, 480 min = 8h) · MANUAL.md §7 · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "unpushed",
+      "priority": 50,
+      "hint": true,
+      "param": 7200,
+      "condition": { "metric": "ahead", "op": ">", "value": 0 },
+      "actions": { "default": "↑{n} sin push → git push" },
+      "source": "statusline.sh (bloque de hints; param = segundos que un commit puede esperar antes de que ↑N se ponga ámbar) · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "context-amber",
+      "priority": 60,
+      "hint": false,
+      "condition": { "metric": "context_k", "op": ">=", "value": 150 },
+      "actions": {},
+      "source": "statusline.sh (GREEN_K, banda de trabajo) · MANUAL.md §2 · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "handoff-drift-files",
+      "priority": 70,
+      "hint": false,
+      "condition": { "metric": "handoff_dirty", "op": ">", "value": 20 },
+      "actions": {},
+      "source": "statusline.sh (banda roja de deriva) y hooks/session-drift-warn.sh — era EL número duplicado entre la barra y un hook; confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "handoff-drift-sessions",
+      "priority": 71,
+      "hint": false,
+      "condition": { "metric": "handoff_sessions", "op": ">=", "value": 2 },
+      "actions": {},
+      "source": "statusline.sh (banda roja de deriva) y hooks/session-drift-warn.sh — era EL número duplicado entre la barra y un hook; confirmado por el owner 2026-09-18"
+    }
+  ]
+}

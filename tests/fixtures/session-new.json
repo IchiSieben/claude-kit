@@ -1,0 +1,57 @@
+{
+  "session_id": "00000000-0000-0000-0000-000000000000",
+  "transcript_path": "C:\\work\\tmp\\transcript.jsonl",
+  "cwd": "C:\\work\\demo-project",
+  "scratchpad_dir": "C:\\work\\tmp\\scratchpad",
+  "effort": {
+    "level": "medium"
+  },
+  "model": {
+    "id": "claude-sonnet-5",
+    "display_name": "Sonnet 5"
+  },
+  "workspace": {
+    "current_dir": "C:\\work\\demo-project",
+    "project_dir": "C:\\work\\demo-project",
+    "added_dirs": [],
+    "repo": {
+      "host": "github.com",
+      "owner": "example",
+      "name": "demo-project"
+    }
+  },
+  "version": "2.1.274",
+  "output_style": {
+    "name": "default"
+  },
+  "cost": {
+    "total_cost_usd": 0,
+    "total_duration_ms": 428435,
+    "total_api_duration_ms": 0,
+    "total_lines_added": 0,
+    "total_lines_removed": 0
+  },
+  "context_window": {
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "context_window_size": 1000000,
+    "current_usage": null,
+    "used_percentage": null,
+    "remaining_percentage": null
+  },
+  "exceeds_200k_tokens": false,
+  "fast_mode": false,
+  "thinking": {
+    "enabled": true
+  },
+  "rate_limits": {
+    "five_hour": {
+      "used_percentage": 2,
+      "resets_at": 1789716000
+    },
+    "seven_day": {
+      "used_percentage": 87,
+      "resets_at": 1789736400
+    }
+  }
+}

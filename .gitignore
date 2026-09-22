@@ -1,0 +1,19 @@
+# Runtime state never belongs in the kit. These names are the reason the kit exists as a
+# separate repo from ~/.claude: transcripts, credentials and logs stay on the machine.
+.credentials.json
+history.jsonl
+**/projects/
+**/logs/
+**/state/
+**/synced/
+.env
+*.key
+*.pem
+__pycache__/
+.venv/
+node_modules/
+.tools/
+# Hooks write pre-compaction drafts here; they are your input, not history.
+docs/handoffs/*-draft.md
+# Raw screenshots go to inbox/ and are processed (cropped, checked) before they are committed.
+docs/img/inbox/

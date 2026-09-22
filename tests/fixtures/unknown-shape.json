@@ -1,0 +1,13 @@
+{
+  "schema": "v9",
+  "totally": {
+    "different": [
+      "shape",
+      1,
+      null
+    ]
+  },
+  "model": 42,
+  "cost": "free",
+  "workspace": []
+}

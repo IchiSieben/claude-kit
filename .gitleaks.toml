@@ -1,0 +1,18 @@
+# gitleaks configuration for claude-kit.
+#
+# tests/hooks_test.sh deliberately feeds FAKE secrets to hooks/log-tool-failure.sh to prove
+# they are redacted before they reach disk. Those literals are the test, not a leak, and
+# they are listed here one by one so that any OTHER token-shaped string still fails the scan.
+title = "claude-kit"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake tokens used as redaction test vectors in tests/hooks_test.sh"
+regexes = [
+  '''sk-abc123SECRET''',
+  '''tok_UPPERLEAK''',
+  '''ghp_AAAABBBBCCCCDDDDEEEE''',
+  '''hunter2(plaintext|UPPER)''',
+]
