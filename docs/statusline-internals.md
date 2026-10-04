@@ -190,10 +190,13 @@ Do not guess field names. Capture a real sample:
 On this machine (Windows + Git Bash) a process spawn costs ~50–65 ms and a bash `fork`
 for command substitution ~28 ms, which dominates everything else.
 
-| Path | Measured |
-|---|---|
-| Floor: bash startup + the one jq call, no git and no HANDOFF | **~225 ms** |
-| Full render: git status + commits + dirty-file mtimes + sessions | **~476 ms** |
+| Path | Windows + Git Bash | macOS (Apple Silicon) |
+|---|---|---|
+| Floor: bash startup + the one jq call, no git and no HANDOFF | **~225 ms** | TBD (measure on the Mac) |
+| Full render: git status + commits + dirty-file mtimes + sessions | **~476 ms** | TBD (measure on the Mac) |
+
+The Mac column stays empty until it is measured there with the same method; a predicted
+number would be exactly the kind of figure this bar exists to refuse.
 
 The original 200 ms target is **not reachable on this machine**: the
 floor alone exceeds it before any git work happens. Dropping the `·Nc` and `·Ns` counters
@@ -213,8 +216,9 @@ null, `prompt_cache` absent, no `session_name`), a long session, a payload with 
 missing or wrongly typed, and a payload of an entirely unknown shape. `tests/expected/`
 holds the golden output.
 
-Determinism comes from pinning `CC_NOW`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `CC_CTX_*`
-and `CC_BAR_WIDTH`, and from pointing the fixtures' `current_dir` at a path that does not
+Determinism comes from pinning `CC_NOW`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW`, `CC_CTX_*`,
+`CC_BAR_WIDTH` and `CC_NODE` (to `test`, so a golden blessed on Windows also passes on the
+Mac), and from pointing the fixtures' `current_dir` at a path that does not
 exist, so git and HANDOFF take their "no data" branch instead of reading this machine.
 The drift counters are covered separately by a throwaway git repo the suite builds
 itself, with its fake `HOME` **outside** that repo — an `events.jsonl` created inside it
@@ -223,3 +227,41 @@ test.
 
 `statusline.sh --selftest` runs the same suite; it only works from the repo copy, since
 `~/.claude/` has no `tests/` beside it, and says so rather than failing obscurely.
+
+---
+
+## macOS
+
+The kit runs on macOS (Apple Silicon or Intel) next to Windows + Git Bash, from the same
+files. Install the three things macOS does not ship in a usable version:
+
+```bash
+brew install jq bash coreutils
+```
+
+- **`bash`** — macOS ships `/bin/bash` **3.2**, the last GPLv2 release, and Apple will not
+  update it. The status line needs **4.2** (associative arrays from 4.0, `printf '%(…)T'`
+  dates from 4.2). Which `bash` Claude Code's subprocess picks up depends on its PATH, and an
+  app launched from the Dock does not inherit your shell's. So `statusline.sh` starts with a
+  guard written in 3.2 syntax: on an old bash it `exec`s `/opt/homebrew/bin/bash` (or
+  `/usr/local/bin/bash` on Intel) with the same arguments — stdin survives `exec`, so the
+  payload arrives intact. If neither exists the bar prints `⚠ bash4` in amber instead of
+  crashing (`--drift` prints nothing, so the hooks stay quiet; `--ahora` still answers in 3
+  lines). `settings.json` keeps the portable `"bash ~/.claude/statusline.sh"`: whichever bash
+  starts it, it lands on bash ≥ 4.2. The hooks need no guard: none uses a bash-4 feature.
+- **`jq`** — found on PATH, then the WinGet shim, then `/opt/homebrew/bin/jq`,
+  `/usr/local/bin/jq`. The hooks call bare `jq`, so for them it must be on Claude Code's PATH.
+- **`coreutils`** — not required by the bar: it detects BSD `stat` (`-f %m`) vs GNU `stat`
+  (`-c %Y`) by itself, without a fork. Useful for your own scripts.
+
+`python3` is what `verify.sh` uses on the Mac; it picks the first of `python3`, `python` that
+actually runs (on Windows `python3` is the Microsoft Store stub, which exists and fails).
+
+Line 1 of the bar names the machine: `@mac`, `@win` or `@linux`, read from `$OSTYPE` (no
+fork). Over Remote-SSH every window looks the same, so this is how you tell them apart.
+`CC_NODE` overrides it with a name of your own — but **not** in `settings.json` `env`: `env` is
+one of the `PORTABLE` keys the mirror copies to every machine, so every node would get the
+same name. Export it in the environment that launches Claude Code on that machine instead.
+
+Not verified on a Mac yet — see `HANDOFF.md` for the checklist: both suites under `/bin/bash`
+and under Homebrew bash, the Cost column, and a screenshot of the bar in VS Code.

@@ -21,8 +21,40 @@
 #   CC_BAR_WIDTH    default 20    characters
 #   CC_STATE_DIR    where the /ahora snapshot is written (default ~/.claude/state)
 #   CC_NOW          override "now" (epoch seconds) — used by --selftest only
+#   CC_NODE         name shown as @<node> instead of mac/win/linux. NOT in settings.json
+#                   "env": that key is mirrored to every machine, so all would share it
 # Requires jq. Verified against the stdin payload of Claude Code 2.1.274/275/276;
 # see README.md ("Status line") for how to re-capture a sample when it changes.
+
+# ---- bash >= 4.2 guard. MUST stay first, and MUST stay bash-3.2 syntax. ----
+# macOS ships /bin/bash 3.2 (the last GPLv2 release) and which `bash` Claude Code's subprocess
+# finds there depends on PATH. This file needs 4.0 (`declare -A`, `${p,,}`) and 4.2
+# (`printf '%(…)T'`), so an old bash re-execs into Homebrew's with the same args; stdin is
+# inherited across `exec`, so the payload survives. No forks: on bash >= 4.2 it is one test.
+# The exported sentinel stops a second hop: if the "new" bash is old too, we say so and stop.
+# CC_TEST_BASH_MAJOR / CC_BASH4_CANDIDATES exist for tests/statusline_test.sh only — they let
+# a machine without bash 3.2 prove the re-exec path. The fake major is ignored after the hop.
+_cc_major=${BASH_VERSINFO[0]} _cc_minor=${BASH_VERSINFO[1]}
+[ -n "${CC_BASH_REEXEC:-}" ] || _cc_major=${CC_TEST_BASH_MAJOR:-$_cc_major}
+if [ "$_cc_major" -lt 4 ] || { [ "$_cc_major" -eq 4 ] && [ "$_cc_minor" -lt 2 ]; }; then
+  if [ -z "${CC_BASH_REEXEC:-}" ]; then
+    export CC_BASH_REEXEC=1
+    for _cc_b in ${CC_BASH4_CANDIDATES:-/opt/homebrew/bin/bash /usr/local/bin/bash}; do
+      [ -x "$_cc_b" ] && exec "$_cc_b" "${BASH_SOURCE[0]}" "$@"
+    done
+  fi
+  # No bash >= 4.2 anywhere. Say it in the shape each caller expects, never crash.
+  case "${1:-}" in
+    --drift) ;;                  # the hooks read "nothing" as "no data" and stay quiet
+    --ahora) printf '%s\n' "ahora: esta barra necesita bash >= 4.2 y solo encontró ${BASH_VERSION}" \
+                           "hacé: brew install bash (queda en /opt/homebrew/bin/bash; la barra lo busca sola)" \
+                           "por qué: macOS trae bash 3.2, sin arrays asociativos ni printf de fechas" ;;
+    *)       printf '%s\n' $'\033[33m⚠ bash4\033[0m' ;;
+  esac
+  exit 0
+fi
+unset _cc_major _cc_minor _cc_b
+
 set -u
 
 W=${CC_BAR_WIDTH:-20}
@@ -50,17 +82,52 @@ WARN="${AMB}⚠${R}"
 S=$'\001'   # field missing or of an unexpected type -> render ⚠
 E=$'\002'   # parent object is explicitly null -> legitimately no data yet, render nothing
 
-# ---- jq resolution: PATH, then the WinGet link shim, else bail loud. ----
+# ---- jq resolution: PATH, then the WinGet link shim, then Homebrew, else bail loud. ----
 # Never print an all-zeros line: a broken jq must look broken, not idle.
+# Homebrew paths matter because Claude Code launched from the Dock/Finder does not inherit
+# the shell's PATH, so /opt/homebrew/bin (Apple Silicon) or /usr/local/bin (Intel) may be
+# missing from it even though `jq` works in your terminal.
 JQ_BIN=""
 if command -v jq >/dev/null 2>&1; then
   JQ_BIN="jq"
 elif [ -x "${LOCALAPPDATA:-}/Microsoft/WinGet/Links/jq.exe" ]; then
   JQ_BIN="${LOCALAPPDATA}/Microsoft/WinGet/Links/jq.exe"
+elif [ -x /opt/homebrew/bin/jq ]; then
+  JQ_BIN=/opt/homebrew/bin/jq
+elif [ -x /usr/local/bin/jq ]; then
+  JQ_BIN=/usr/local/bin/jq
 fi
 if [ -z "$JQ_BIN" ]; then
   printf '%s\n' "${RED}⚠ jq${R}"
   exit 0
+fi
+
+# ---- stat flavour, decided once, without a fork. ----
+# GNU stat (Git Bash, Linux) wants `-c %Y`; BSD stat (macOS) wants `-f %m` and reads `-c`
+# as an error. $OSTYPE is a bash variable, so Windows pays nothing for this. On BSD the PATH
+# may still put coreutils' gnubin `stat` first, so ask bash's own command hash which file
+# `stat` resolves to (BASH_CMDS, filled by `hash`: no fork either) and use the BSD format
+# only for the system one.
+STAT_FMT=(-c '%Y')
+case "${OSTYPE:-}" in
+  darwin*|*bsd*)
+    hash stat 2>/dev/null
+    case "${BASH_CMDS[stat]:-}" in /usr/bin/stat|'') STAT_FMT=(-f '%m') ;; esac ;;
+esac
+
+# ---- node: which machine is this bar being drawn on? ----
+# Over Remote-SSH the window looks identical on every machine; this says which one runs
+# the session. Same mapping as `uname -s` (Darwin, MINGW*/MSYS*/CYGWIN*, Linux) but read
+# from $OSTYPE, which bash already holds: no fork. CC_NODE overrides it (a name of your
+# own, e.g. "casa", or a fixed value so the golden tests read the same on every OS).
+if [ -n "${CC_NODE:-}" ]; then NODE=$CC_NODE
+else
+  case "${OSTYPE:-}" in
+    darwin*)              NODE=mac ;;
+    msys*|cygwin*|win*)   NODE=win ;;
+    linux*)               NODE=linux ;;
+    *)                    NODE=${OSTYPE:-} ;;
+  esac
 fi
 
 # Serialises rules/thresholds.json into ONE field: thresholds joined by \u001e, the fields of
@@ -238,8 +305,8 @@ drift_scan() {
   local -a mt=() statargs=("$D_FILE")
   local p
   for p in "${dirty[@]}"; do statargs+=("$dirfs/$p"); done
-  # One stat call for HANDOFF.md and every dirty file at once.
-  if statout=$(stat -c '%Y' -- "${statargs[@]}" 2>/dev/null); then
+  # One stat call for HANDOFF.md and every dirty file at once (format: STAT_FMT, above).
+  if statout=$(stat "${STAT_FMT[@]}" -- "${statargs[@]}" 2>/dev/null); then
     while IFS= read -r ln; do mt+=("${ln%$'\r'}"); done <<<"$statout"
     hm=${mt[0]:-}
   fi
@@ -354,6 +421,7 @@ render() {                       # render <json>
   local line1
   if [ "$model" = "$S" ]; then line1="${B}${AMB}⚠ modelo${R}"; else line1="${B}${model}${R}"; fi
   if [ "$effort" != "$S" ] && [ "$effort" != "$E" ]; then line1+=" ·${effort}"; fi
+  if [ -n "$NODE" ]; then line1+=" @${NODE}"; else line1+=" @${WARN}"; fi
 
   local ac_k=0 win="?" used_k=-1 pct=0 ctx
   if [ "$size" != "$S" ] && (( size > 0 )); then

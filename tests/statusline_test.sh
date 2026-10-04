@@ -22,6 +22,10 @@ mkdir -p "$EXP"
 export CC_NOW=1800000000
 export CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000
 export CC_CTX_GREEN_K=150 CC_CTX_RED_K=300 CC_BAR_WIDTH=20
+# The node segment (@mac/@win/@linux) depends on the OS running the suite; pin it, or a
+# golden blessed on Windows fails on the Mac. "test" is a value no OS produces, so a golden
+# that shows it was pinned on purpose. One case below runs unpinned and checks the real OS.
+export CC_NODE=test
 # Every render writes a snapshot for /ahora. Point it at a throwaway directory, or running
 # the tests would drop fixture sessions into this machine's real ~/.claude/state.
 SNAPDIR=$(mktemp -d) || SNAPDIR=""
@@ -29,6 +33,14 @@ export CC_STATE_DIR="$SNAPDIR"
 trap '[ -n "$SNAPDIR" ] && rm -rf "$SNAPDIR"' EXIT
 
 pass=0; fail=0
+
+# GNU (Git Bash, Linux) vs BSD (macOS) userland. These tests set and read mtimes, so each
+# helper tries the GNU spelling and falls back to the BSD one. Plain `date +%s` instead of
+# `printf '%(%s)T'`: the runner must stay bash-3.2 clean so that `/bin/bash tests/...` on a
+# Mac exercises the status line's re-exec guard instead of skipping it.
+set_mtime() { touch -d "@$1" "$2" 2>/dev/null || touch -t "$(date -r "$1" +%Y%m%d%H%M.%S)" "$2"; }
+get_mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1"; }
+iso_utc()   { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$1" +%Y-%m-%dT%H:%M:%SZ; }
 red=$'\033[31m'; grn=$'\033[32m'; rst=$'\033[0m'
 
 check() {                     # check <name> <actual>
@@ -57,7 +69,7 @@ assert() {                    # assert <name> <condition-description> <0|1>
 
 echo "Fixtures (salida exacta contra golden)"
 for f in session-new session-long fields-missing unknown-shape; do
-  out=$(bash "$SL" < "$FX/$f.json")
+  out=$("$BASH" "$SL" < "$FX/$f.json")
   check "$f" "$out"
 done
 
@@ -65,13 +77,13 @@ echo
 echo "Invariantes: un campo ausente nunca se imprime como 0 ni como booleano"
 # The 2.1.275 regression printed the literal "❄true%/0". Both halves are now banned.
 for f in fields-missing unknown-shape session-new; do
-  out=$(bash "$SL" < "$FX/$f.json")
+  out=$("$BASH" "$SL" < "$FX/$f.json")
   case "$out" in
     *true*|*false*) assert "$f: sin booleanos crudos" "imprimió true/false" 1 ;;
     *)              assert "$f: sin booleanos crudos" "" 0 ;;
   esac
 done
-out=$(bash "$SL" < "$FX/fields-missing.json")
+out=$("$BASH" "$SL" < "$FX/fields-missing.json")
 case "$out" in
   *"⚠"*) assert "fields-missing: marca ⚠ lo que falta" "" 0 ;;
   *)     assert "fields-missing: marca ⚠ lo que falta" "no hay ninguna ⚠" 1 ;;
@@ -82,12 +94,12 @@ case "$out" in
   *)         assert "fields-missing: un cero real sigue siendo 0.00" "se comió el cero" 1 ;;
 esac
 # A payload of pure nonsense must still render two lines and exit 0.
-out=$(bash "$SL" < "$FX/unknown-shape.json"); rc=$?
+out=$("$BASH" "$SL" < "$FX/unknown-shape.json"); rc=$?
 assert "unknown-shape: exit 0" "exit $rc" "$(( rc == 0 ? 0 : 1 ))"
 assert "unknown-shape: 2 líneas" "salieron $(printf '%s\n' "$out" | wc -l)" \
        "$(( $(printf '%s\n' "$out" | wc -l) == 2 ? 0 : 1 ))"
 # Truncated / non-JSON input must fail loud, not silently render zeros.
-out=$(printf 'no soy json' | bash "$SL")
+out=$(printf 'no soy json' | "$BASH" "$SL")
 case "$out" in
   *"⚠ JSON"*) assert "entrada no-JSON: ⚠ JSON en rojo" "" 0 ;;
   *)          assert "entrada no-JSON: ⚠ JSON en rojo" "salió: $out" 1 ;;
@@ -126,7 +138,7 @@ else
   cp "$SL" "$thtmp/statusline.sh"
   # 1. Change ONE number in the file: the bar must change its advice, with no code edited.
   jq '(.thresholds[] | select(.id=="quota-5h") | .condition.value) = 0' "$TH" > "$thtmp/rules/thresholds.json"
-  out=$(bash "$thtmp/statusline.sh" < "$FX/session-long.json")
+  out=$("$BASH" "$thtmp/statusline.sh" < "$FX/session-long.json")
   case "$out" in
     *"límite 5h"*) assert "bajar quota-5h en el JSON cambia el hint" "" 0 ;;
     *)             assert "bajar quota-5h en el JSON cambia el hint" "siguió: ${out#*$'\n'}" 1 ;;
@@ -135,7 +147,7 @@ else
   #     worse than a missing file, because `[ -f ]` says yes: it must land on exactly the same
   #     "⚠ umbrales, no advice" path, not on a half-loaded table.
   printf '{"thresholds": [ {"id": "roto",\n' > "$thtmp/rules/thresholds.json"
-  out=$(bash "$thtmp/statusline.sh" < "$FX/session-long.json"); rc=$?
+  out=$("$BASH" "$thtmp/statusline.sh" < "$FX/session-long.json"); rc=$?
   assert "thresholds.json corrupto: exit 0" "exit $rc" "$(( rc == 0 ? 0 : 1 ))"
   case "$out" in
     *"⚠ umbrales"*) assert "thresholds.json corrupto: lo dice" "" 0 ;;
@@ -146,7 +158,7 @@ else
     *)                          assert "thresholds.json corrupto: ningún hint inventado" "" 0 ;;
   esac
   # Same for /ahora: it must name the file, not print three lines of numbers with no rule.
-  out=$(CC_STATE_DIR="$SNAPDIR" bash "$thtmp/statusline.sh" --ahora 00000000-0000-0000-0000-000000000000)
+  out=$(CC_STATE_DIR="$SNAPDIR" "$BASH" "$thtmp/statusline.sh" --ahora 00000000-0000-0000-0000-000000000000)
   n=$(printf '%s\n' "$out" | wc -l)
   assert "thresholds.json corrupto: /ahora sigue dando 3 líneas" "salieron $n" "$(( n == 3 ? 0 : 1 ))"
   case "$out" in
@@ -156,7 +168,7 @@ else
 
   # 2. No thresholds file: no bands, no hints, and it SAYS so. Never a hardcoded fallback.
   rm -f "$thtmp/rules/thresholds.json"
-  out=$(bash "$thtmp/statusline.sh" < "$FX/session-long.json"); rc=$?
+  out=$("$BASH" "$thtmp/statusline.sh" < "$FX/session-long.json"); rc=$?
   assert "sin thresholds.json: exit 0" "exit $rc" "$(( rc == 0 ? 0 : 1 ))"
   case "$out" in
     *"⚠ umbrales"*) assert "sin thresholds.json: lo dice" "" 0 ;;
@@ -172,10 +184,10 @@ fi
 echo
 echo "/ahora: tres líneas, del snapshot que escribió la barra"
 SID=00000000-0000-0000-0000-000000000000
-bash "$SL" < "$FX/session-long.json" >/dev/null
-n=$(bash "$SL" --ahora "$SID" | wc -l)
+"$BASH" "$SL" < "$FX/session-long.json" >/dev/null
+n=$("$BASH" "$SL" --ahora "$SID" | wc -l)
 assert "responde exactamente 3 líneas" "salieron $n" "$(( n == 3 ? 0 : 1 ))"
-out=$(bash "$SL" --ahora "$SID")
+out=$("$BASH" "$SL" --ahora "$SID")
 case "$out" in
   *"contexto 334k"*) assert "línea 1: los números que vio la barra" "" 0 ;;
   *)                 assert "línea 1: los números que vio la barra" "salió: ${out%%$'\n'*}" 1 ;;
@@ -185,8 +197,8 @@ case "$out" in
   *) assert "línea 3: cita el umbral y su condición" "salió: ${out##*$'\n'}" 1 ;;
 esac
 # The advice must be the bar's advice, not a second opinion.
-barra=$(bash "$SL" < "$FX/session-long.json" | tail -1)
-accion=$(bash "$SL" --ahora "$SID" | sed -n '2s/^hacé: //p')
+barra=$("$BASH" "$SL" < "$FX/session-long.json" | tail -1)
+accion=$("$BASH" "$SL" --ahora "$SID" | sed -n '2s/^hacé: //p')
 case "$barra" in
   *"$accion"*) assert "da el MISMO consejo que la barra" "" 0 ;;
   *)           assert "da el MISMO consejo que la barra" "barra≠ahora: «$accion»" 1 ;;
@@ -198,7 +210,7 @@ jq -n --arg d "$(pwd -W 2>/dev/null || pwd)" --arg s "11111111-2222-3333-4444-55
      limit_k:400, cache_pct:99, session_min:5, ahead:0, behind:0, modified:0, untracked:0,
      handoff:"ok", handoff_age:"1h", handoff_dirty:0, handoff_sessions:0, fresh:1,
      causes:"", branch:"master", dir:$d, cost_usd:0, hint_id:"quota-5h"}'    > "$CC_STATE_DIR/11111111-2222-3333-4444-555555555555.json"
-out=$(bash "$SL" --ahora)
+out=$("$BASH" "$SL" --ahora)
 case "$out" in
   *"elegida por directorio"*) assert "sin argumento: encuentra la sesión por directorio" "" 0 ;;
   *) assert "sin argumento: encuentra la sesión por directorio" "salió: ${out%%$'\n'*}" 1 ;;
@@ -209,9 +221,9 @@ case "$out" in
 esac
 rm -f "$CC_STATE_DIR/11111111-2222-3333-4444-555555555555.json"
 
-n=$(bash "$SL" --ahora sesion-que-no-existe | wc -l)
+n=$("$BASH" "$SL" --ahora sesion-que-no-existe | wc -l)
 assert "sin snapshot: sigue respondiendo 3 líneas" "salieron $n" "$(( n == 3 ? 0 : 1 ))"
-case "$(bash "$SL" --ahora sesion-que-no-existe)" in
+case "$("$BASH" "$SL" --ahora sesion-que-no-existe)" in
   *"no hay snapshot"*) assert "sin snapshot: lo dice, no inventa números" "" 0 ;;
   *)                   assert "sin snapshot: lo dice, no inventa números" "no lo dijo" 1 ;;
 esac
@@ -229,7 +241,7 @@ else
   # These cases compare mtimes against real files, so they must run on the real clock,
   # not the frozen CC_NOW the golden fixtures use: a faked future "now" would put the
   # HANDOFF's mtime ahead of every file git creates and every counter would read 0.
-  printf -v real_now '%(%s)T' -1
+  real_now=$(date +%s)
   hm=$(( real_now - 7200 ))                 # HANDOFF written 2h ago
   : > "$fakehome/.claude/logs/events.jsonl"    # present but empty -> ·0s, not ·?s
   (
@@ -237,10 +249,10 @@ else
     git config user.email t@t; git config user.name t; git config commit.gpgsign false
     echo "# handoff" > HANDOFF.md
     git add -A && git commit -qm "handoff"
-    touch -d "@$hm" HANDOFF.md
+    set_mtime "$hm" HANDOFF.md
   ) >/dev/null 2>&1
   payload=$("${JQ:-jq}" --arg d "$repo" '.workspace.current_dir=$d | .cwd=$d' "$FX/session-long.json")
-  drift() { printf '%s' "$payload" | CC_NOW="$real_now" HOME="$fakehome" bash "$SL"; }
+  drift() { printf '%s' "$payload" | CC_NOW="$real_now" HOME="$fakehome" "$BASH" "$SL"; }
 
   # 1. nothing changed after it -> ✓HANDOFF. (No commit is newer: the only commit IS
   #    the one that saved HANDOFF.md, which must not count as work done after it.)
@@ -303,7 +315,7 @@ else
     qsnapdir=$(mktemp -d)
     "${JQ:-jq}" --arg d "$qrepo" --arg s "$QSID" \
       '.workspace.current_dir=$d | .cwd=$d | .session_id=$s' "$FX/session-long.json" \
-      | CC_STATE_DIR="$qsnapdir" bash "$SL" >/dev/null
+      | CC_STATE_DIR="$qsnapdir" "$BASH" "$SL" >/dev/null
     qsnap="$qsnapdir/$QSID.json"
     if [ ! -f "$qsnap" ]; then
       assert "rama con comillas: la barra escribe el snapshot" "no se creó $qsnap" 1
@@ -320,7 +332,7 @@ else
       seend=${seend//\\//}
       assert "rama con comillas: .dir sigue siendo una ruta entera" "guardó «$seend»" \
              "$( [ "${seend##*/}" = "repo" ] && echo 0 || echo 1 )"
-      out=$(CC_STATE_DIR="$qsnapdir" bash "$SL" --ahora "$QSID")
+      out=$(CC_STATE_DIR="$qsnapdir" "$BASH" "$SL" --ahora "$QSID")
       case "$out" in
         *"no se deja leer"*) assert "rama con comillas: /ahora lo lee" "dijo que no lo puede leer" 1 ;;
         *)                   assert "rama con comillas: /ahora lo lee" "" 0 ;;
@@ -330,6 +342,50 @@ else
   fi
   rm -rf "$qtmp"
 fi
+
+echo
+echo "Nodo: @mac / @win / @linux según el SO que corre la barra"
+case "${OSTYPE:-}" in
+  darwin*)            want=mac ;;
+  msys*|cygwin*|win*) want=win ;;
+  linux*)             want=linux ;;
+  *)                  want=${OSTYPE:-} ;;
+esac
+out=$(CC_NODE= "$BASH" "$SL" < "$FX/session-new.json" | head -1)
+case "$out" in
+  *" @$want "*) assert "sin CC_NODE: dice @$want en este equipo" "" 0 ;;
+  *)            assert "sin CC_NODE: dice @$want en este equipo" "salió «$(printf '%s' "$out" | cat -v)»" 1 ;;
+esac
+out=$(CC_NODE=casa "$BASH" "$SL" < "$FX/session-new.json" | head -1)
+case "$out" in
+  *" @casa "*) assert "CC_NODE=casa le pone nombre propio" "" 0 ;;
+  *)           assert "CC_NODE=casa le pone nombre propio" "salió «$(printf '%s' "$out" | cat -v)»" 1 ;;
+esac
+
+echo
+echo "Guard de bash >= 4.2 (macOS trae 3.2)"
+# This box has no bash 3.2, so the guard is driven by its test seam: CC_TEST_BASH_MAJOR fakes
+# an old bash for the FIRST hop only. Candidate = the bash running this suite, so the re-exec
+# really happens and the output must be byte-identical to the golden — which is the proof that
+# stdin crossed the `exec`. On the Mac, `/bin/bash tests/statusline_test.sh` hits it for real.
+out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES="$BASH" "$BASH" "$SL" < "$FX/session-long.json")
+assert "bash viejo + bash nuevo disponible: re-exec con stdin intacto (= golden)" \
+       "salió «$(printf '%s' "$out" | head -1 | cat -v)»" \
+       "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" < "$FX/session-long.json"); rc=$?
+assert "bash viejo sin bash nuevo: ⚠ bash4 y exit 0" "rc=$rc, salió «$out»" \
+       "$( [ "$rc" = 0 ] && [ "$out" = $'\033[33m⚠ bash4\033[0m' ] && echo 0 || echo 1 )"
+n=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" --ahora x | wc -l)
+assert "bash viejo sin bash nuevo: --ahora sigue dando 3 líneas" "dio $(( n ))" \
+       "$( (( n == 3 )) && echo 0 || echo 1 )"
+out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" --drift .)
+assert "bash viejo sin bash nuevo: --drift no imprime nada (los hooks callan)" "salió «$out»" \
+       "$( [ -z "$out" ] && echo 0 || echo 1 )"
+# The sentinel: a candidate that is itself "old" must not loop. CC_BASH_REEXEC set up front
+# makes the guard read the real version, so on this (new) bash it simply renders.
+out=$(CC_BASH_REEXEC=1 CC_TEST_BASH_MAJOR=3 "$BASH" "$SL" < "$FX/session-long.json")
+assert "tras el salto, la versión falsa se ignora (sin bucle de exec)" "salió «$(printf '%s' "$out" | head -1 | cat -v)»" \
+       "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
 
 echo
 if [ "$fail" -eq 0 ]; then

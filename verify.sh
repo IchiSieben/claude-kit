@@ -13,6 +13,13 @@ ok()   { printf '  OK    %s\n' "$1"; }
 falla(){ printf '  FALLA %s\n' "$1"; fallos=$((fallos+1)); }
 check(){ if eval "$2" >/dev/null 2>&1; then ok "$1"; else falla "$1"; fi; }
 
+# python3 first (macOS has no `python`), but chosen by RUNNING it, not by `command -v`:
+# on Windows `python3` resolves to the Microsoft Store stub, which exists and exits 49.
+PY=""
+for c in python3 python; do
+  if "$c" -c 'import sys' >/dev/null 2>&1; then PY=$c; break; fi
+done
+
 echo "Fase A - statusline"
 check "statusline.sh es bash valido y es la version de tokens absolutos" \
       'bash -n home/.claude/statusline.sh && grep -q CLAUDE_CODE_AUTO_COMPACT_WINDOW home/.claude/statusline.sh'
@@ -55,7 +62,7 @@ check "el hook de deriva lee el umbral del JSON, no del codigo" \
 check "la skill /ahora existe y usa el evaluador de la barra" \
       'test -f home/.claude/skills/ahora/SKILL.md && grep -q -- "--ahora" home/.claude/skills/ahora/SKILL.md'
 check "statusline.sh --ahora responde exactamente 3 lineas" \
-      '[ "$(bash home/.claude/statusline.sh --ahora sesion-que-no-existe | wc -l)" = 3 ]'
+      '(( $(bash home/.claude/statusline.sh --ahora sesion-que-no-existe | wc -l) == 3 ))'
 
 echo "Fase B - repo"
 check "el arbol esta limpio (nada a medias de la sesion anterior)" \

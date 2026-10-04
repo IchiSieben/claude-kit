@@ -23,6 +23,14 @@ bad()  { printf '%s  FALLA %s — %s%s\n' "$red" "$1" "$2" "$rst"; fail=$(( fail
 has()  { case "$3" in *"$2"*) ok "$1" ;; *) bad "$1" "no contiene «$2»" ;; esac; }
 hasnt(){ case "$3" in *"$2"*) bad "$1" "no debía contener «$2»" ;; *) ok "$1" ;; esac; }
 
+# GNU (Git Bash, Linux) vs BSD (macOS) userland. These tests set and read mtimes, so each
+# helper tries the GNU spelling and falls back to the BSD one. Plain `date +%s` instead of
+# `printf '%(%s)T'`: the runner must stay bash-3.2 clean so that `/bin/bash tests/...` on a
+# Mac exercises the status line's re-exec guard instead of skipping it.
+set_mtime() { touch -d "@$1" "$2" 2>/dev/null || touch -t "$(date -r "$1" +%Y%m%d%H%M.%S)" "$2"; }
+get_mtime() { stat -c %Y "$1" 2>/dev/null || stat -f %m "$1"; }
+iso_utc()   { date -u -d "@$1" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$1" +%Y-%m-%dT%H:%M:%SZ; }
+
 tmp=$(mktemp -d) || { echo "no se pudo crear tmp"; exit 1; }
 trap 'rm -rf "$tmp"' EXIT
 repo="$tmp/repo"; fake="$tmp/home"
@@ -38,7 +46,7 @@ git -C "$repo" init -q
   && git config commit.gpgsign false ) >/dev/null 2>&1
 
 run() {                 # run <hook script> <json payload>
-  printf '%s' "$2" | HOME="$fake" bash "$REPO_ROOT/$H/$1" 2>&1
+  printf '%s' "$2" | HOME="$fake" "$BASH" "$REPO_ROOT/$H/$1" 2>&1
 }
 
 # ---------------------------------------------------------------- PostToolUseFailure
@@ -144,9 +152,9 @@ has "sin HANDOFF avisa" "no tiene HANDOFF.md" "$out"
 # Fresh HANDOFF -> completely silent. This is the property that keeps it readable.
 printf '# handoff\n' > "$repo/HANDOFF.md"
 ( cd "$repo" && git add -A && git commit -qm "handoff" ) >/dev/null 2>&1
-printf -v now '%(%s)T' -1
-touch -d "@$(( now - 600 ))" "$repo/HANDOFF.md"
-touch -d "@$(( now - 900 ))" "$repo/b.txt" 2>/dev/null
+now=$(date +%s)
+set_mtime "$(( now - 600 ))" "$repo/HANDOFF.md"
+set_mtime "$(( now - 900 ))" "$repo/b.txt" 2>/dev/null
 out=$(CC_NOW=$now run session-drift-warn.sh "$ss")
 [ -z "$out" ] && ok "handoff fresco: silencio absoluto" \
               || bad "handoff fresco: silencio" "dijo: $out"
@@ -165,9 +173,9 @@ has "y dice cómo verificarla" "verify.sh" "$out"
 
 # Red by sessions: 2+ SessionStart since the handoff.
 rm -f "$repo"/dirty*.txt
-hm=$(stat -c %Y "$repo/HANDOFF.md")
+hm=$(get_mtime "$repo/HANDOFF.md")
 for k in 1 2; do
-  jq -nc --arg d "$repo" --arg t "$(TZ=UTC date -u -d "@$(( hm + 60 * k ))" +%Y-%m-%dT%H:%M:%SZ)" \
+  jq -nc --arg d "$repo" --arg t "$(iso_utc "$(( hm + 60 * k ))")" \
     '{ts:$t, event:"SessionStart", session:"s\($t)", cwd:$d}' >> "$fake/.claude/logs/events.jsonl"
 done
 out=$(CC_NOW=$now run session-drift-warn.sh "$ss")
@@ -197,9 +205,9 @@ seed_state() {
   rm -rf "$statedir"; mkdir -p "$statedir"
   : > "$statedir/fresh.json"
   : > "$statedir/viejo.json"
-  touch -d "@$(( $(date +%s) - 100000 ))" "$statedir/viejo.json"   # ~27h ago
+  set_mtime "$(( $(date +%s) - 100000 ))" "$statedir/viejo.json"   # ~27h ago
   : > "$statedir/viejo.txt"                                        # not a snapshot
-  touch -d "@$(( $(date +%s) - 100000 ))" "$statedir/viejo.txt"
+  set_mtime "$(( $(date +%s) - 100000 ))" "$statedir/viejo.txt"
 }
 ev() { printf '{"hook_event_name":"%s","session_id":"%s","cwd":"%s"}' "$1" "$SID" "$repo"; }
 
