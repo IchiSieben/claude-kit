@@ -232,8 +232,10 @@ test.
 
 ## macOS
 
-The kit runs on macOS (Apple Silicon or Intel) next to Windows + Git Bash, from the same
-files. Install the three things macOS does not ship in a usable version:
+**Ported, not yet verified on a Mac.** The code below was written and tested on Windows +
+Git Bash only (the guard's re-exec path through a test seam); nothing has run on macOS yet,
+and nothing at all on Intel Macs. The target is the same files on both systems. Install the
+three things macOS does not ship in a usable version:
 
 ```bash
 brew install jq bash coreutils
@@ -263,5 +265,5 @@ fork). Over Remote-SSH every window looks the same, so this is how you tell them
 one of the `PORTABLE` keys the mirror copies to every machine, so every node would get the
 same name. Export it in the environment that launches Claude Code on that machine instead.
 
-Not verified on a Mac yet — see `HANDOFF.md` for the checklist: both suites under `/bin/bash`
-and under Homebrew bash, the Cost column, and a screenshot of the bar in VS Code.
+What verifying it on a Mac means: both test suites under `/bin/bash` (the guard for real) and
+under Homebrew bash, `verify.sh`, the Cost column above, and a screenshot of the bar in VS Code.

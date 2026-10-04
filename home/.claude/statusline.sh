@@ -53,7 +53,9 @@ if [ "$_cc_major" -lt 4 ] || { [ "$_cc_major" -eq 4 ] && [ "$_cc_minor" -lt 2 ];
   esac
   exit 0
 fi
-unset _cc_major _cc_minor _cc_b
+# The sentinel has been read; drop it so nothing this script starts (e.g. --selftest's
+# runner, which drives the guard on purpose) inherits "already re-exec'd".
+unset _cc_major _cc_minor _cc_b CC_BASH_REEXEC
 
 set -u
 

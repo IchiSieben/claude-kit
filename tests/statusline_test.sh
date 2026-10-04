@@ -364,14 +364,27 @@ esac
 
 echo
 echo "Guard de bash >= 4.2 (macOS trae 3.2)"
-# This box has no bash 3.2, so the guard is driven by its test seam: CC_TEST_BASH_MAJOR fakes
-# an old bash for the FIRST hop only. Candidate = the bash running this suite, so the re-exec
-# really happens and the output must be byte-identical to the golden — which is the proof that
-# stdin crossed the `exec`. On the Mac, `/bin/bash tests/statusline_test.sh` hits it for real.
-out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES="$BASH" "$BASH" "$SL" < "$FX/session-long.json")
-assert "bash viejo + bash nuevo disponible: re-exec con stdin intacto (= golden)" \
-       "salió «$(printf '%s' "$out" | head -1 | cat -v)»" \
-       "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+# A machine without bash 3.2 drives the guard through its test seam: CC_TEST_BASH_MAJOR fakes
+# an old bash for the FIRST hop only. On the Mac, `/bin/bash tests/statusline_test.sh` makes
+# "$BASH" a real 3.2 and the seam is not even needed. Either way the hop needs a bash >= 4.2 to
+# land on — GOOD_BASH, which is NOT "$BASH" when this runner itself was started by 3.2 (only
+# the Mac can exercise that branch). Output byte-identical to the golden = stdin crossed exec.
+GOOD_BASH=""
+if [ "${BASH_VERSINFO[0]}" -gt 4 ] || { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 2 ]; }; then
+  GOOD_BASH=$BASH
+else
+  for b in /opt/homebrew/bin/bash /usr/local/bin/bash; do
+    if [ -x "$b" ]; then GOOD_BASH=$b; break; fi
+  done
+fi
+if [ -n "$GOOD_BASH" ]; then
+  out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES="$GOOD_BASH" "$BASH" "$SL" < "$FX/session-long.json")
+  assert "bash viejo + bash nuevo disponible: re-exec con stdin intacto (= golden)" \
+         "salió «$(printf '%s' "$out" | head -1 | cat -v)»" \
+         "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+else
+  printf '  SKIP  re-exec: este runner corre en bash %s y no hay bash >= 4.2 al que saltar\n' "$BASH_VERSION"
+fi
 out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" < "$FX/session-long.json"); rc=$?
 assert "bash viejo sin bash nuevo: ⚠ bash4 y exit 0" "rc=$rc, salió «$out»" \
        "$( [ "$rc" = 0 ] && [ "$out" = $'\033[33m⚠ bash4\033[0m' ] && echo 0 || echo 1 )"
@@ -383,9 +396,16 @@ assert "bash viejo sin bash nuevo: --drift no imprime nada (los hooks callan)" "
        "$( [ -z "$out" ] && echo 0 || echo 1 )"
 # The sentinel: a candidate that is itself "old" must not loop. CC_BASH_REEXEC set up front
 # makes the guard read the real version, so on this (new) bash it simply renders.
-out=$(CC_BASH_REEXEC=1 CC_TEST_BASH_MAJOR=3 "$BASH" "$SL" < "$FX/session-long.json")
-assert "tras el salto, la versión falsa se ignora (sin bucle de exec)" "salió «$(printf '%s' "$out" | head -1 | cat -v)»" \
-       "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+if [ -n "$GOOD_BASH" ]; then
+  out=$(CC_BASH_REEXEC=1 CC_TEST_BASH_MAJOR=3 "$GOOD_BASH" "$SL" < "$FX/session-long.json")
+  assert "tras el salto, la versión falsa se ignora (sin bucle de exec)" "salió «$(printf '%s' "$out" | head -1 | cat -v)»" \
+         "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+  # And the sentinel must not leak: --selftest re-runs this very suite, which fakes an old
+  # bash on purpose; an inherited CC_BASH_REEXEC would silently switch that fake off.
+  out=$(CC_BASH_REEXEC=1 "$GOOD_BASH" -c '. "$1" </dev/null >/dev/null 2>&1; printf %s "${CC_BASH_REEXEC-unset}"' _ "$SL")
+  assert "el centinela no se hereda a lo que la barra lanza" "quedó CC_BASH_REEXEC=«$out»" \
+         "$( [ "$out" = unset ] && echo 0 || echo 1 )"
+fi
 
 echo
 if [ "$fail" -eq 0 ]; then
