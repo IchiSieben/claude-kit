@@ -1,5 +1,5 @@
 # Master instructions (user scope)
-<!-- Keep under 70 lines (60 until 2026-09-18). The cap is a CONTEXT BUDGET, not a style rule: this file is re-read every session. Shrink it by cutting prose — the why lives in MANUAL.md — never by cutting a rule. Every rule here must trace to a repeated failure. Audit monthly with /doctor. -->
+<!-- Keep under 72 lines (70 until 2026-10-04, 60 until 2026-09-18; raised for safety rules, never trimmed to fit). The cap is a CONTEXT BUDGET, not a style rule: this file is re-read every session. Shrink it by cutting prose — the why lives in MANUAL.md — never by cutting a rule. Every rule here must trace to a repeated failure. Audit monthly with /doctor. -->
 <!-- The WHY behind every rule below, with examples and open questions: MANUAL.md — `/manual`, `/manual <1-7>`. Rules live HERE; if the two disagree, this file wins and the manual is stale. -->
 
 ## Language
@@ -46,13 +46,14 @@ this, or only ORCHESTRATE it?"
   prompt. There is no third attempt.
 - Small diffs. Do not refactor or dedupe what I did not ask about; propose it separately.
 - Never stop a process by name (`Stop-Process`/`taskkill`/`pkill`) — kill by the PID the
-  tool that started it gave you.
-- Never redirect a background process's stdout if you need to read its log later — read
-  the log file it already writes instead.
+  tool that started it gave you. Never touch processes you did not launch.
+- Recursive delete (`rm -r`, `rm -rf`, `del /s`, `Remove-Item -Recurse`) only inside the repo or
+  a scratch dir created THIS session. Before it: list the full contents and show me; anything
+  you did not create, do not delete — ask. Prefer moving to `_papelera_claude/`.
+- Never redirect a background process's stdout if you need its log later — read the log file it writes.
 
 ## Status line: propose the action, do not wait to be asked
 <!-- Values, order and wording: rules/thresholds.json — never a number here. `/ahora` prints the live one, `/manual 7` the why. -->
-
 | Signal the bar shows, highest priority first | What I propose, unprompted |
 |---|---|
 | 5h quota past its threshold | stop here, or drop to the `sonnet` lane |
