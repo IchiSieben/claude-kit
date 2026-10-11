@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "slug": "claude-kit",
+  "name": {"es": "Claude Kit", "en": "Claude Kit"},
+  "oneLiner": {
+    "es": "Kit de configuración de Claude Code: reglas, agentes, hooks y barra de estado que se espejan a cada máquina sin borrar nada.",
+    "en": "Claude Code configuration kit: rules, agents, hooks and a status line mirrored to every machine without deleting anything."
+  },
+  "machines": ["PC Windows", "Mac mini", "GitHub"],
+  "containers": 12,
+  "calls": 17,
+  "flows": 4,
+  "views": ["c4", "flows", "deploy", "decisions"],
+  "hasCore": false,
+  "updated": "2026-10-10",
+  "status": "done",
+  "landing": {"projectSlug": "claude-kit", "order": 70}
+}

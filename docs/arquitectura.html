@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arquitectura Claude Kit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a drafting-table page. One sticky tab bar; each tab is a view of the same system
+   (C4 containers → hexagonal components → data → UML flows → deployment → user stories → repository).
+   Dark-first (control room / blueprint); light theme mirrors it. */
+:root{
+  --bg:#0a1020; --paper:#111a2e; --paper2:#162238; --ink:#e7edf8; --ink2:#9fb0cc; --line:#263654; --grid:rgba(127,166,234,.07);
+  --blue:#7fa6ea; --cyan:#4cc9f0; --amber:#f0b545; --green:#5fcf8f; --red:#f08a7c; --violet:#b58cf5;
+  --blue-soft:#18284a; --cyan-soft:#0f2b3a; --amber-soft:#3a2d0f; --green-soft:#12301f; --red-soft:#3b1a16; --violet-soft:#2a1f45;
+  --font-display:"Archivo","Archivo Narrow","Arial Narrow",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg:#eef2f8; --paper:#ffffff; --paper2:#f5f8fd; --ink:#15213a; --ink2:#4b5873; --line:#d3dbea; --grid:rgba(31,78,156,.06);
+  --blue:#1f4e9c; --cyan:#0a7ea4; --amber:#b56f00; --green:#1d7a4b; --red:#b8382c; --violet:#6b3fc2;
+  --blue-soft:#e3ebfa; --cyan-soft:#dff3fa; --amber-soft:#fff3d6; --green-soft:#dff3e7; --red-soft:#fbe3df; --violet-soft:#ece3fb;
+  color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#eef2f8; --paper:#ffffff; --paper2:#f5f8fd; --ink:#15213a; --ink2:#4b5873; --line:#d3dbea; --grid:rgba(31,78,156,.06);
+  --blue:#1f4e9c; --cyan:#0a7ea4; --amber:#b56f00; --green:#1d7a4b; --red:#b8382c; --violet:#6b3fc2;
+  --blue-soft:#e3ebfa; --cyan-soft:#dff3fa; --amber-soft:#fff3d6; --green-soft:#dff3e7; --red-soft:#fbe3df; --violet-soft:#ece3fb;
+  color-scheme:light}
+
+*{box-sizing:border-box}
+body{background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;color:var(--ink);font-family:var(--font-body);font-size:14.5px;line-height:1.5;padding-inline:clamp(16px,3vw,40px);padding-block:18px 70px}
+h1,h2,h3,h4{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(26px,3.6vw,42px);font-weight:800;font-stretch:85%;letter-spacing:-.01em}
+h2{font-size:clamp(19px,2.2vw,25px);font-weight:700;font-stretch:90%}
+h3{font-size:15.5px;font-weight:700;font-stretch:90%}
+h4{font-size:13.5px;font-weight:700;font-stretch:90%;color:var(--ink2)}
+p{margin:0}
+a{color:var(--cyan)}
+code,pre{font-family:var(--font-mono)}
+code{font-size:12.5px;background:var(--paper2);border:1px solid var(--line);padding:1px 5px;border-radius:4px}
+pre{font-size:12px;line-height:1.5;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;margin:0}
+pre code{background:none;border:0;padding:0;font-size:inherit}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.wrap{max-width:1280px;margin:0 auto;display:grid;gap:22px}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:14px 30px}
+.head .sub{color:var(--ink2);max-width:66ch;margin-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;gap:4px;overflow-x:auto;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:8px 0;scrollbar-width:thin}
+.tab{appearance:none;border:1px solid transparent;background:none;color:var(--ink2);padding:7px 12px;border-radius:8px;white-space:nowrap;font-weight:500;display:flex;gap:8px;align-items:center}
+.tab .k{font-family:var(--font-mono);font-size:10.5px;color:var(--cyan);opacity:.9}
+.tab[aria-selected="true"]{background:var(--paper);border-color:var(--line);color:var(--ink)}
+.view{display:none;gap:18px}
+.view.active{display:grid}
+
+/* panels */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:grid;gap:10px;min-width:0;align-content:start}
+.panel.flush{padding:0;overflow:hidden}
+.two{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.8fr);gap:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--blue-soft);color:var(--blue);font-weight:500;border:1px solid transparent}
+.chip.cyan{background:var(--cyan-soft);color:var(--cyan)}.chip.amber{background:var(--amber-soft);color:var(--amber)}.chip.green{background:var(--green-soft);color:var(--green)}.chip.violet{background:var(--violet-soft);color:var(--violet)}.chip.red{background:var(--red-soft);color:var(--red)}.chip.ghost{background:transparent;border-color:var(--line);color:var(--ink2)}
+.btn{border:1px solid var(--line);background:var(--paper2);color:var(--ink);border-radius:8px;padding:7px 12px;font-weight:500;font-size:13px}
+.btn[aria-pressed="true"]{border-color:var(--cyan);box-shadow:inset 0 0 0 1px var(--cyan);color:var(--cyan)}
+.btn.sm{padding:4px 9px;font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);font-weight:500}
+.tbl{overflow-x:auto}
+td .m{font-family:var(--font-mono);font-size:12px}
+.ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:13px}
+.kv dt{color:var(--ink2);font-family:var(--font-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding-top:2px}
+.kv dd{margin:0;min-width:0}
+.note{border-left:3px solid var(--cyan);padding:8px 12px;background:var(--cyan-soft);border-radius:0 8px 8px 0;font-size:13.5px}
+.note.amber{border-color:var(--amber);background:var(--amber-soft)}
+.note.green{border-color:var(--green);background:var(--green-soft)}
+.verdict{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-weight:600;font-family:var(--font-display);font-stretch:90%;font-size:15px}
+.verdict.ok{background:var(--green-soft);color:var(--green)}.verdict.warn{background:var(--amber-soft);color:var(--amber)}.verdict.bad{background:var(--red-soft);color:var(--red)}
+
+/* diagram */
+.dia{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.dia svg{width:100%;height:auto;display:block;font-family:var(--font-body)}
+.dia text{fill:var(--ink)}
+.dia .mono{font-family:var(--font-mono)}
+.dia .muted{fill:var(--ink2)}
+.node{cursor:pointer}
+.node rect.box{fill:var(--paper2);stroke:var(--line);stroke-width:1.2;transition:stroke .2s,filter .2s}
+.node:hover rect.box,.node.sel rect.box{stroke:var(--cyan);stroke-width:1.8;filter:drop-shadow(0 0 8px color-mix(in srgb,var(--cyan) 45%,transparent))}
+.node.ext rect.box{stroke-dasharray:5 4}
+.node .kind{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;fill:var(--ink2)}
+.node .ttl{font-family:var(--font-display);font-weight:700;font-stretch:90%;font-size:14px}
+.node .tech{font-size:10.5px;fill:var(--ink2)}
+.node .tag{font-family:var(--font-mono);font-size:9.5px}
+.edge{fill:none;stroke:var(--line);stroke-width:1.6;transition:stroke .3s,stroke-width .3s}
+.edge.hot{stroke:var(--cyan);stroke-width:2.6;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--cyan) 60%,transparent))}
+.edge.dim{opacity:.25}
+.elabel{font-family:var(--font-mono);font-size:9.5px;fill:var(--ink2);paint-order:stroke;stroke:var(--paper);stroke-width:3px;stroke-linejoin:round}
+.pk{fill:var(--cyan);opacity:.55}
+.pk.one{opacity:1;fill:var(--amber)}
+.dia .toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:12px 12px 4px;border-bottom:1px dashed var(--line);align-items:center}
+.steps{display:grid;gap:6px;list-style:none;padding:0;margin:0;counter-reset:s}
+.steps li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;opacity:.45;transition:opacity .3s}
+.steps li.on{opacity:1}
+.steps li::before{counter-increment:s;content:counter(s);font-family:var(--font-mono);font-size:11px;color:var(--cyan);border:1px solid var(--line);border-radius:50%;width:20px;height:20px;display:grid;place-items:center}
+.steps li.on::before{background:var(--cyan);color:var(--bg);border-color:var(--cyan)}
+
+/* hexagonal view */
+.hex{display:grid;grid-template-columns:1fr 1fr 1.1fr 1fr 1fr;gap:10px;align-items:start}
+.col{display:grid;gap:8px}
+.col h4{text-align:center;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+.cell{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12.5px;display:grid;gap:3px;transition:border-color .2s,box-shadow .2s}
+.cell b{font-family:var(--font-display);font-stretch:90%;font-size:13.5px;font-weight:700}
+.cell small{color:var(--ink2);font-size:11.5px}
+.cell.core{border-color:var(--blue);background:var(--blue-soft)}
+.cell.port{border-style:dashed}
+.cell.lit{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 14px color-mix(in srgb,var(--cyan) 35%,transparent)}
+.cell.off{opacity:.35}
+.routes{display:flex;flex-wrap:wrap;gap:6px}
+
+/* deploy */
+.deploy{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:start}
+.deploy .arrow{align-self:center;font-family:var(--font-mono);color:var(--ink2);padding-top:40px}
+.svc{display:grid;gap:6px}
+.svc div{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;background:var(--paper2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:12.5px}
+.svc div .m{font-family:var(--font-mono);font-size:11px;color:var(--ink2);white-space:nowrap}
+.svc div.k{border-color:var(--cyan)}
+.svc div.x{border-color:var(--violet)}
+.hu{display:grid;gap:10px}
+.hu .card{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px;font-size:13px}
+.hu .card .id{font-family:var(--font-mono);font-size:11px;color:var(--cyan)}
+.hu .card ul{margin:0;padding-left:18px;color:var(--ink2);font-size:12.5px}
+.mermaid{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:10px;overflow-x:auto;font-family:var(--font-mono);font-size:12px;color:var(--ink2);white-space:pre}
+.foot{color:var(--ink2);font-size:12.5px;display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+@media (max-width:980px){.two{grid-template-columns:1fr}.hex{grid-template-columns:1fr 1fr}.deploy{grid-template-columns:1fr}.deploy .arrow{display:none}}
+@media (max-width:560px){.hex{grid-template-columns:1fr}.kv{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.edge,.node rect.box,.cell{transition:none}}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="head">
+    <div>
+      <div class="eyebrow">Claude Kit · configuración de Claude Code · bash + jq</div>
+      <h1>Arquitectura de Claude Kit</h1>
+      <p class="sub">Un repo es la fuente de verdad de la configuración de Claude Code (reglas, agentes, skills, hooks, barra de estado). Scripts de espejo la copian a cada máquina sin borrar nada, y los hooks y la barra de estado corren dentro de cada sesión. Cuatro vistas: contenedores, flujos, despliegue y decisiones. Haz clic en una caja; reproduce un flujo para ver el recorrido.</p>
+    </div>
+    <div class="legend">
+      <span style="--c:var(--blue)">este repo y lo que instala</span>
+      <span style="--c:var(--violet)">externo o fuera del repo</span>
+      <span style="--c:var(--amber)">servicio externo</span>
+      <span style="--c:var(--cyan)">tráfico</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button class="tab" role="tab" data-v="c4" aria-selected="true"><span class="k">C4·2</span>Contenedores</button>
+    <button class="tab" role="tab" data-v="flows"><span class="k">UML</span>Flujos</button>
+    <button class="tab" role="tab" data-v="deploy"><span class="k">OPS</span>Despliegue</button>
+    <button class="tab" role="tab" data-v="decisions"><span class="k">ADR</span>Decisiones</button>
+  </nav>
+
+  <section class="view active" data-v="c4">
+    <div class="two">
+      <div class="dia" id="c4dia">
+        <div class="toolbar" id="flowbar"></div>
+        <svg viewBox="0 0 1200 690" id="c4svg" aria-label="Diagrama de contenedores"></svg>
+      </div>
+      <div class="panel" id="c4panel">
+        <div class="eyebrow">Detalle</div>
+        <h3 id="pn-t">Haz clic en un contenedor</h3>
+        <p id="pn-r" style="color:var(--ink2)">Cada caja es una pieza que corre por separado: un script, un hook, la barra de estado o la sesión de Claude Code. Las líneas son llamadas reales: protocolo y qué viaja.</p>
+        <dl class="kv" id="pn-kv"></dl>
+        <div class="chips" id="pn-chips"></div>
+        <div id="pn-steps-wrap" hidden>
+          <div class="eyebrow" style="margin-top:6px">Flujo en curso</div>
+          <ol class="steps" id="pn-steps"></ol>
+        </div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="panel"><h3>Por qué un espejo</h3><p style="color:var(--ink2);font-size:13.5px">La configuración vive en un directorio de usuario que no se versiona. El repo guarda la copia buena y los scripts la llevan a cada máquina; si una máquina cambia algo a mano, el verificador lo informa como deriva en vez de pisarlo.</p></div>
+      <div class="panel"><h3>Por qué los umbrales en un archivo</h3><p style="color:var(--ink2);font-size:13.5px">Los números a los que reacciona el kit viven en un solo JSON. La barra, el hook de arranque y el comando de estado lo leen; ninguno lleva un número escrito. Si el archivo falta, la barra lo dice en vez de inventar un valor.</p></div>
+      <div class="panel"><h3>Por qué pruebas con archivos de referencia</h3><p style="color:var(--ink2);font-size:13.5px">La barra se prueba contra salidas guardadas con fecha y ancho fijos, y los hooks contra cargas sintéticas con un HOME falso. Así una prueba no lee la configuración real de la máquina que la corre.</p></div>
+    </div>
+  </section>
+
+  <section class="view" data-v="flows">
+    <div class="grid2">
+      <div class="panel">
+        <div class="eyebrow">Secuencia · instalar o actualizar el kit</div>
+        <pre class="mermaid">sequenceDiagram
+    autonumber
+    actor P as Persona
+    participant K as kit-update.sh
+    participant G as GitHub
+    participant S as sync-to-home.sh
+    participant H as Directorio de usuario
+    participant V as verify.sh
+    P->>K: bash kit-update.sh
+    K->>G: git pull --ff-only
+    K->>S: ejecuta el espejo
+    S->>H: respalda lo que reemplaza y copia con LF
+    S->>H: fusiona solo las claves portables de settings.json
+    K->>V: ejecuta la verificación
+    V->>V: sintaxis, umbrales, deriva, dos suites de pruebas
+    K-->>P: reinicia Claude Code (la configuración carga al arrancar)</pre>
+      </div>
+      <div class="panel">
+        <div class="eyebrow">Secuencia · una sesión lee las reglas y un hook actúa</div>
+        <pre class="mermaid">sequenceDiagram
+    autonumber
+    participant C as Sesión de Claude Code
+    participant H as Directorio de usuario
+    participant K as Hooks (bash + jq)
+    participant B as statusline.sh
+    participant L as Registros locales
+    C->>H: carga reglas, agentes, skills y settings
+    C->>K: SessionStart (JSON por stdin)
+    K->>B: statusline.sh --drift (deriva del traspaso)
+    K->>H: lee los umbrales de deriva
+    K->>L: log-event.sh agrega una línea a events.jsonl
+    K-->>C: solo si la deriva es alta: aviso de arranque
+    C->>K: PreCompact
+    K->>L: borrador con commits, archivos sucios y comandos fallidos</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" data-v="deploy">
+    <div class="panel">
+      <div class="eyebrow">Despliegue · lo que hay y lo que cambiaría</div>
+      <h2>Hoy dos máquinas con el mismo comando. Mañana más máquinas, sin cambiar el código.</h2>
+      <p style="color:var(--ink2);max-width:80ch">No hay servidor: el kit es un repo de archivos y un puñado de scripts. Cada máquina se actualiza sola con una orden y la verificación dice si algo no aterrizó.</p>
+      <div class="deploy">
+        <div class="panel" style="background:var(--paper2)">
+          <h3>Hoy · PC Windows y Mac mini</h3>
+          <div class="svc">
+            <div class="k"><span>git pull --ff-only del repo público</span><span class="m">kit-update.sh</span></div>
+            <div class="k"><span>copia con LF y respaldo fechado de lo reemplazado</span><span class="m">sync-to-home.sh</span></div>
+            <div class="k"><span>solo claves portables de settings.json</span><span class="m">jq</span></div>
+            <div class="k"><span>verificación: sintaxis, umbrales, deriva</span><span class="m">verify.sh</span></div>
+            <div class="k"><span>dos suites de pruebas</span><span class="m">bash</span></div>
+            <div><span>reinicio manual de Claude Code</span><span class="m">carga al arrancar</span></div>
+          </div>
+          <p style="font-size:12.5px;color:var(--ink2)">Requisitos: bash, jq y git; la barra pide bash 4.2 o superior y en macOS se relanza sola con el de Homebrew.</p>
+        </div>
+        <div class="arrow">→ mismo espejo →</div>
+        <div class="panel" style="background:var(--paper2)">
+          <h3>Al escalar · más máquinas</h3>
+          <div class="svc">
+            <div class="k"><span>el mismo comando en cada máquina nueva</span><span class="m">sin cambios</span></div>
+            <div class="k"><span>la deriva se informa por máquina</span><span class="m">verify.sh</span></div>
+            <div class="x"><span>inventario central de máquinas y versiones</span><span class="m">no existe hoy</span></div>
+            <div class="x"><span>orden de actualización en lote</span><span class="m">hoy: a mano</span></div>
+          </div>
+          <p style="font-size:12.5px;color:var(--ink2)">Qué gana: cada máquina se pone al día con una orden. Qué no gana: una vista conjunta de qué máquina va atrasada.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" data-v="decisions">
+    <div class="panel">
+      <div class="eyebrow">Decisiones · inferidas del código, con la alternativa descartada</div>
+      <h2>Cada decisión dice qué se eligió, qué se dejó y por qué</h2>
+      <div class="tbl"><table>
+        <tr><th>Decisión</th><th>Por qué</th><th>Descartado</th></tr>
+        <tr><td>Los scripts de espejo nunca borran</td><td>Lo que reemplazan queda en un respaldo fechado y lo sobrante solo se informa</td><td>Sincronizar con borrado: una máquina con un cambio local lo perdería sin aviso</td></tr>
+        <tr><td>Fusionar settings.json, no copiarlo</td><td>Solo viajan cinco claves portables; plugins, tema y modelo son de cada máquina</td><td>Copiar el archivo entero: pisaba el modelo elegido en esa máquina</td></tr>
+        <tr><td>Una sola lista de lo que se espeja</td><td>Un script de biblioteca decide qué archivos entran; ampliar el ignore de git no copia más cosas</td><td>Que cada script tenga su propia lista: acaban distintas</td></tr>
+        <tr><td>Umbrales en un JSON, ninguno en el código</td><td>Un número en dos sitios se desincroniza; sin el archivo la barra avisa en vez de inventar</td><td>Valores por defecto escritos en la barra y en el hook</td></tr>
+        <tr><td>Los hooks siempre terminan con éxito</td><td>Un hook que falla no debe impedir cerrar una sesión ni compactar</td><td>Salir con error ante un fallo interno</td></tr>
+        <tr><td>El registro de fallos redacta secretos antes de escribir</td><td>Un token escrito en claro en disco sigue siendo un token expuesto; solo se guarda la primera línea del error</td><td>Truncar el comando: no cubre un secreto al principio</td></tr>
+        <tr><td>El borrador previo a compactar solo trae hechos</td><td>El criterio (dónde estamos y por qué) lo escribe una persona o una skill; un párrafo plausible generado sería peor que uno en blanco</td><td>Que el hook redacte el resumen</td></tr>
+        <tr><td>Pruebas con archivos de referencia y HOME falso</td><td>Resultados deterministas que no leen la configuración real de la máquina</td><td>Probar contra la instalación en uso</td></tr>
+      </table></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>Arquitectura v1 · 2026-10-10 · Claude Kit</span>
+    <span>C4 · UML (secuencia) · despliegue · decisiones</span>
+  </footer>
+</div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- tabs ---------- */
+const tabs = [...document.querySelectorAll(".tab")], views = [...document.querySelectorAll(".view")];
+function showTab(v){
+  tabs.forEach(t=>t.setAttribute("aria-selected", String(t.dataset.v===v)));
+  views.forEach(s=>s.classList.toggle("active", s.dataset.v===v));
+  try{ localStorage.setItem("arq-tab", v); }catch(e){}
+}
+tabs.forEach(t=>t.addEventListener("click", ()=>showTab(t.dataset.v)));
+let initial = "c4"; try{ initial = localStorage.getItem("arq-tab") || "c4"; }catch(e){}
+if(location.hash && tabs.some(t=>t.dataset.v===location.hash.slice(1))) initial = location.hash.slice(1);
+if(!tabs.some(t=>t.dataset.v===initial)) initial = tabs[0].dataset.v; // stored tab may belong to another page on this origin
+showTab(initial);
+
+/* ---------- C4 containers ---------- */
+const N = {
+  src:  {x:20,y:90,w:200,h:110,kind:"repo fuente · fuera de este repo",ttl:"Fuente privada y filtro",tech:"tools/build-kit.sh (el script no está en este repo)",color:"violet",ext:true,
+         resp:"De ahí sale el árbol público. Este repo solo menciona el script en sus notas; qué filtra y cómo se verifica no se ve desde aquí, así que no se detalla.",
+         kv:{"Produce":"el contenido de este repo público","Visible aquí":"solo la mención en docs"}},
+  gh:   {x:20,y:270,w:200,h:90,kind:"externo · git",ttl:"GitHub",tech:"repo público, rama main",color:"amber",ext:true,
+         resp:"Origen que cada máquina clona y actualiza. Una máquina nueva parte de un git clone; las demás con git pull.",
+         kv:{"Rama":"main","Acceso":"lectura pública"}},
+  kit:  {x:310,y:90,w:220,h:130,kind:"repo · clon local",ttl:"Repo Claude Kit",tech:"home/.claude · templates · docs · tests",color:"blue",
+         resp:"La fuente de verdad de lo que viaja: CLAUDE.md, MANUAL.md, settings.json, reglas, 6 agentes, 10 skills, 5 hooks, la barra de estado y el JSON de umbrales. Las plantillas de contrato (SPEC, TASK, AGENTS, REVIEW) y la documentación van aquí.",
+         kv:{"Corre en":"PC Windows · Mac mini (un clon en cada una)","Lenguajes":"bash · jq · Python (herramientas de archivo)"}},
+  sync: {x:310,y:290,w:220,h:130,kind:"scripts · bash",ttl:"Scripts de espejo",tech:"sync-to-home.sh · sync-from-home.sh · mirror-lib.sh · kit-update.sh",color:"blue",
+         resp:"mirror-lib.sh define la única lista de archivos que viaja y las cinco claves portables de settings.json. sync-to-home copia al directorio de usuario con respaldo y fusión; sync-from-home hace el camino inverso; kit-update encadena pull, espejo y verificación.",
+         kv:{"Nunca":"borra ni toca plugins, tema, modelo ni notificaciones","Respaldo":"carpeta fechada junto al directorio de usuario","Extra":"copia visor.py a una carpeta de archivo del usuario"}},
+  ver:  {x:310,y:465,w:220,h:85,kind:"script · bash",ttl:"verify.sh",tech:"comprobaciones con eval · jq · git",color:"blue",
+         resp:"Comprueba que el espejo aterrizó: sintaxis bash, umbrales válidos, hooks registrados, árbol limpio, LF, nada sensible versionado y deriva entre el repo y el directorio de usuario. La deriva se informa, no falla.",
+         kv:{"Sale con":"el número de comprobaciones que fallan"}},
+  tst:  {x:310,y:575,w:220,h:45,kind:"pruebas · bash",ttl:"Pruebas",tech:"statusline_test.sh · hooks_test.sh",color:"blue",
+         resp:"Dos suites. La barra se compara contra salidas guardadas con reloj y ancho fijos (se regeneran a propósito con BLESS=1). Los hooks se prueban con cargas sintéticas, un repo temporal y un HOME falso fuera de él.",
+         kv:{"Casos":"4 cargas de la barra + hooks incl. redacción de secretos falsos","Falsos secretos":"permitidos a propósito en la config de gitleaks"}},
+  home: {x:620,y:90,w:220,h:130,kind:"directorio de usuario · cada máquina",ttl:"Configuración instalada",tech:"~/.claude",color:"blue",
+         resp:"Lo que Claude Code lee de verdad: reglas, agentes, skills, settings, hooks, barra y umbrales. Se carga al arrancar el proceso, por eso tras cada actualización hay que reiniciar.",
+         kv:{"Corre en":"PC Windows · Mac mini","Diferencias":"plugins, tema, modelo y notificaciones son locales de cada máquina"}},
+  cc:   {x:620,y:290,w:220,h:100,kind:"externo · sesión de trabajo",ttl:"Sesión de Claude Code",tech:"proceso de Claude Code",color:"violet",ext:true,
+         resp:"Carga la configuración al arrancar, lanza los hooks en cada evento del ciclo (inicio, compactación, cierre, fallo de una herramienta) y le pasa a la barra un JSON por stdin en cada repintado.",
+         kv:{"Eventos":"SessionStart · PreCompact · PostCompact · SubagentStop · SessionEnd · PostToolUseFailure"}},
+  hk:   {x:620,y:450,w:220,h:110,kind:"hooks · bash + jq",ttl:"Cinco hooks",tech:"log-event · session-drift-warn · precompact-draft · compact-reinject · log-tool-failure",color:"blue",
+         resp:"Registran el ciclo de la sesión, avisan al arrancar si el archivo de traspaso quedó muy atrás, escriben un borrador de hechos antes de compactar y vuelven a anclar el contexto después. Todos terminan con éxito.",
+         kv:{"Entrada":"JSON por stdin","Límite":"un hook nunca bloquea compactar ni cerrar"}},
+  th:   {x:930,y:90,w:240,h:90,kind:"datos · JSON",ttl:"Umbrales",tech:"rules/thresholds.json",color:"blue",
+         resp:"El único lugar con los números del kit: cuota de cinco horas, bandas de contexto, suelo de caché, duración de sesión, commits sin subir y deriva roja del traspaso. Cada uno trae condición, prioridad y fuente.",
+         kv:{"Lo leen":"la barra · el hook de arranque · el comando de estado"}},
+  sl:   {x:930,y:250,w:240,h:100,kind:"script · bash &gt;= 4.2",ttl:"Barra de estado",tech:"statusline.sh · jq · git",color:"blue",
+         resp:"Pinta dos líneas con contexto en tokens absolutos, estado de la caché, cuota, git y frescura del traspaso. Un dato que falta se muestra como aviso, nunca como cero. También responde a --drift y --ahora.",
+         kv:{"Entrada":"JSON de la sesión por stdin","Salida":"texto de la barra · snapshot JSON por sesión"}},
+  state:{x:930,y:410,w:240,h:110,kind:"archivos locales",ttl:"Registros y estado",tech:"events.jsonl · tool-failures.jsonl · snapshots · docs/handoffs",color:"blue",
+         resp:"Una línea JSON por evento y por comando fallido, un snapshot por sesión que lee el comando de estado y borradores de traspaso ignorados por git. Al cerrar una sesión se barren los snapshots de más de 24 horas.",
+         kv:{"Sin base de datos":"todo son archivos de texto","Nunca al repo":"los registros y los borradores"}},
+};
+const E = [
+  {id:"e1",a:"src",as:"b",b:"gh",bs:"t",l:"publica filtrado",ay:0,by:0},
+  {id:"e2",a:"gh",as:"r",b:"kit",bs:"l",l:"git pull --ff-only",ay:0,by:0},
+  {id:"e3",a:"kit",as:"b",b:"sync",bs:"t",l:"lista del espejo",ay:0,by:0},
+  {id:"e4",a:"sync",as:"r",b:"home",bs:"l",l:"sync-to-home",ay:-25,by:40},
+  {id:"e5",a:"home",as:"l",b:"kit",bs:"r",l:"sync-from-home",ay:-35,by:25},
+  {id:"e6",a:"ver",as:"r",b:"home",bs:"l",l:"compara deriva",ay:-20,by:60},
+  {id:"e7",a:"ver",as:"b",b:"tst",bs:"t",l:"corre suites",ay:0,by:0},
+  {id:"e8",a:"cc",as:"t",b:"home",bs:"b",l:"carga al arrancar",ay:0,by:0},
+  {id:"e9",a:"cc",as:"b",b:"hk",bs:"t",l:"JSON por stdin",ay:0,by:0},
+  {id:"e10",a:"cc",as:"r",b:"sl",bs:"l",l:"payload por stdin",ay:15,by:15},
+  {id:"e11",a:"sl",as:"t",b:"th",bs:"b",l:"lee umbrales",ay:0,by:0},
+  {id:"e12",a:"hk",as:"r",b:"state",bs:"l",l:"logs y borradores",ay:25,by:0},
+  {id:"e13",a:"sl",as:"b",b:"state",bs:"t",l:"snapshot de sesión",ay:0,by:0},
+  {id:"e14",a:"hk",as:"r",b:"sl",bs:"l",l:"--drift",ay:-35,by:35},
+  {id:"e15",a:"tst",as:"r",b:"hk",bs:"l",l:"hooks, HOME falso",ay:0,by:35},
+  {id:"e16",a:"hk",as:"t",b:"th",bs:"l",l:"umbrales de deriva",ay:30,by:0},
+  {id:"e17",a:"sl",as:"l",b:"cc",bs:"r",l:"texto de la barra",ay:-25,by:-25},
+];
+const FLOWS = [
+  {id:"instalar",t:"Instalar o actualizar el kit",steps:[["e2","kit-update.sh trae el repo con git pull --ff-only; si hay commits locales se detiene"],["e3","El espejo lee la lista única de archivos que viajan"],["e4","sync-to-home respalda lo que reemplaza, copia con LF y fusiona solo las claves portables de settings.json"],["e6","verify.sh compara el repo con el directorio de usuario e informa la deriva"],["e7","Corre las dos suites de pruebas"],["e8","La persona reinicia Claude Code: la configuración se carga al arrancar"]]},
+  {id:"sesion",t:"Una sesión lee las reglas y un hook actúa",steps:[["e8","Al arrancar, la sesión carga reglas, agentes, skills y settings"],["e9","SessionStart lanza los hooks con el JSON del evento por stdin"],["e14","session-drift-warn pregunta a la barra cuánta deriva tiene el traspaso (--drift)"],["e16","Lee del JSON los dos umbrales de deriva roja; sin el archivo se calla"],["e12","log-event agrega una línea al registro; solo si la deriva es alta se imprime un aviso que entra al contexto"]]},
+  {id:"barra",t:"La barra de estado se repinta",steps:[["e10","Claude Code le pasa a la barra el JSON de la sesión por stdin"],["e11","Lee los umbrales; si faltan, muestra un aviso en vez de colorear"],["e13","Escribe un snapshot por sesión que el comando de estado reutiliza"],["e17","Devuelve las dos líneas de texto a la sesión"]]},
+  {id:"publicar",t:"Publicar la versión pública filtrada",steps:[["e1","El filtro de publicación genera el árbol público y lo lleva a GitHub (su interior está fuera de este repo)"],["e2","Cada máquina recibe el cambio con su próximo kit-update"]]},
+];
+const svg = $("#c4svg"), NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs={}, parent=svg){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; }
+function anchor(n, side, off=0){ const c=N[n]; const m={l:[c.x,c.y+c.h/2+off],r:[c.x+c.w,c.y+c.h/2+off],t:[c.x+c.w/2+off,c.y],b:[c.x+c.w/2+off,c.y+c.h]}; return m[side]; }
+function pathFor(e){
+  const [x1,y1]=anchor(e.a,e.as,e.ay), [x2,y2]=anchor(e.b,e.bs,e.by);
+  const h = (e.as==="l"||e.as==="r"), k = Math.max(40, Math.abs(h?x2-x1:y2-y1)/2);
+  const c1 = h ? [x1+(e.as==="r"?k:-k), y1] : [x1, y1+(e.as==="b"?k:-k)];
+  const c2 = (e.bs==="l"||e.bs==="r") ? [x2+(e.bs==="l"?-k:k), y2] : [x2, y2+(e.bs==="t"?-k:k)];
+  return {d:`M${x1},${y1} C${c1[0]},${c1[1]} ${c2[0]},${c2[1]} ${x2},${y2}`, mid:[(x1+x2)/2,(y1+y2)/2]};
+}
+const defs = el("defs");
+const mk = el("marker",{id:"arr",viewBox:"0 0 10 10",refX:"9",refY:"5",markerWidth:"7",markerHeight:"7",orient:"auto-start-reverse"},defs);
+el("path",{d:"M0,0 L10,5 L0,10 z",fill:"var(--line)"},mk);
+const gE = el("g"), gL = el("g"), gN = el("g"), gP = el("g");
+E.forEach(e=>{
+  const p = pathFor(e);
+  const path = el("path",{id:"p-"+e.id,d:p.d,class:"edge","marker-end":"url(#arr)"},gE);
+  if(e.dash) path.setAttribute("stroke-dasharray","4 4");
+  e.path = path;
+  if(e.l){ el("text",{x:p.mid[0],y:p.mid[1]-6,class:"elabel","text-anchor":"middle"},gL).textContent = e.l; }
+  if(!reduce && !e.dash){ // ambient traffic
+    const c = el("circle",{r:"3.2",class:"pk"},gP);
+    const am = el("animateMotion",{dur:(2.8+Math.random()*1.6).toFixed(1)+"s",repeatCount:"indefinite",begin:(Math.random()*3).toFixed(1)+"s"},c);
+    const mp = el("mpath",{},am); mp.setAttribute("href","#p-"+e.id); mp.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href","#p-"+e.id);
+  }
+});
+const COL = {blue:"var(--blue)",violet:"var(--violet)",amber:"var(--amber)"};
+Object.entries(N).forEach(([id,n])=>{
+  const g = el("g",{class:"node"+(n.ext?" ext":""),"data-id":id,tabindex:"0",role:"button"},gN);
+  el("rect",{class:"box",x:n.x,y:n.y,width:n.w,height:n.h,rx:"10"},g);
+  el("rect",{x:n.x,y:n.y,width:"5",height:n.h,rx:"2.5",fill:COL[n.color]},g);
+  el("text",{x:n.x+16,y:n.y+18,class:"kind"},g).textContent = n.kind;
+  el("text",{x:n.x+16,y:n.y+38,class:"ttl"},g).textContent = n.ttl;
+  // wrap tech line
+  const words = n.tech.split(" "); let line="", ly=n.y+56, lines=[];
+  words.forEach(w=>{ if((line+" "+w).length>Math.max(18,Math.floor(n.w/6.2))){lines.push(line);line=w;} else line=(line?line+" ":"")+w; }); lines.push(line);
+  lines.slice(0, Math.floor((n.h-60)/14)).forEach((t,i)=>{ el("text",{x:n.x+16,y:ly+i*14,class:"tech"},g).textContent=t; });
+  if(id==="usr"){ ["Operador","Revisor","Validador ×4","Analista","Auditor","Admin plantillas"].forEach((r,i)=>{ const y=n.y+90+i*19; el("rect",{x:n.x+16,y:y-11,width:"110",height:"16",rx:"8",fill:"var(--violet-soft)"},g); el("text",{x:n.x+24,y:y+1,class:"tag",fill:"var(--violet)"},g).textContent=r; }); }
+  if(id==="wrk"){ ["normalizar","clasificar","extraer"].forEach((r,i)=>{ const x=n.x+16+i*64; el("rect",{x:x,y:n.y+118,width:"58",height:"18",rx:"9",fill:"var(--blue-soft)"},g); el("text",{x:x+29,y:n.y+130,class:"tag","text-anchor":"middle",fill:"var(--blue)"},g).textContent=r; }); }
+  if(id==="api"){ ["dominio","reglas","puertos"].forEach((r,i)=>{ const x=n.x+16+i*64; el("rect",{x:x,y:n.y+100,width:"58",height:"18",rx:"9",fill:"var(--blue-soft)"},g); el("text",{x:x+29,y:n.y+112,class:"tag","text-anchor":"middle",fill:"var(--blue)"},g).textContent=r; }); }
+  g.addEventListener("click", ()=>selectNode(id));
+  g.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();selectNode(id);} });
+});
+// frame labels
+el("text",{x:20,y:640,class:"mono muted","font-size":"10"}).textContent = "C4 · nivel 2 (contenedores) · tráfico ambiente = llamadas reales · clic en una caja para el detalle";
+el("text",{x:20,y:660,class:"mono muted","font-size":"10"}).textContent = "línea continua = HTTP/SQL · punteada = adaptador elegido por configuración · caja punteada = existe fuera del proyecto";
+
+function selectNode(id){
+  document.querySelectorAll(".node").forEach(n=>n.classList.toggle("sel", n.dataset.id===id));
+  const n = N[id];
+  $("#pn-t").textContent = n.ttl; $("#pn-r").textContent = n.resp;
+  $("#pn-kv").innerHTML = Object.entries(n.kv||{}).map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join("");
+  $("#pn-chips").innerHTML = `<span class="chip ${n.color==='violet'?'violet':n.color==='amber'?'amber':''}">${n.kind}</span>` + n.tech.split("·").map(t=>`<span class="chip ghost">${t.trim()}</span>`).join("");
+  $("#pn-steps-wrap").hidden = true;
+  // dim unrelated edges
+  E.forEach(e=>{ e.path.classList.toggle("dim", !(e.a===id||e.b===id)); e.path.classList.remove("hot"); });
+}
+let flowTimers = [];
+function runFlow(f){
+  flowTimers.forEach(clearTimeout); flowTimers=[];
+  document.querySelectorAll(".node").forEach(n=>n.classList.remove("sel"));
+  document.querySelectorAll("#flowbar .btn").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.f===f.id)));
+  E.forEach(e=>{ e.path.classList.remove("hot"); e.path.classList.toggle("dim", true); });
+  $("#pn-t").textContent = f.t; $("#pn-r").textContent = "Mira el recorrido en el diagrama. Cada paso enciende la llamada real que lo cumple.";
+  $("#pn-kv").innerHTML = ""; $("#pn-chips").innerHTML = "";
+  const ol = $("#pn-steps"); ol.innerHTML = f.steps.map(s=>`<li>${s[1]}</li>`).join(""); $("#pn-steps-wrap").hidden = false;
+  const gap = reduce ? 150 : 1100;
+  f.steps.forEach((s,i)=>{
+    flowTimers.push(setTimeout(()=>{
+      const e = E.find(x=>x.id===s[0]); e.path.classList.remove("dim"); e.path.classList.add("hot");
+      [...ol.children].forEach((li,k)=>li.classList.toggle("on", k===i));
+      [e.a,e.b].forEach(id=>document.querySelector(`.node[data-id="${id}"]`).classList.add("sel"));
+      if(!reduce){
+        const c = el("circle",{r:"5",class:"pk one"},gP);
+        const am = el("animateMotion",{dur:"1s",begin:"indefinite",fill:"freeze"},c);
+        const mp = el("mpath",{},am); mp.setAttribute("href","#p-"+e.id); mp.setAttributeNS("http://www.w3.org/1999/xlink","xlink:href","#p-"+e.id);
+        am.beginElement(); setTimeout(()=>c.remove(), 1200);
+      }
+    }, i*gap));
+  });
+  flowTimers.push(setTimeout(()=>{ E.forEach(e=>e.path.classList.remove("dim")); }, f.steps.length*gap+800));
+}
+$("#flowbar").innerHTML = `<span class="chip cyan" style="align-self:center">reproducir flujo</span>` + FLOWS.map(f=>`<button class="btn sm" data-f="${f.id}" aria-pressed="false">${f.t}</button>`).join("");
+$("#flowbar").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; runFlow(FLOWS.find(f=>f.id===b.dataset.f)); });
+if(reduce && svg.pauseAnimations) svg.pauseAnimations();
+
+/* ---------- hexagonal ---------- */
+const HEX = {cols:[],cells:[],routes:[]};
+if($("#hex")){ // the hex view is optional (manual §1.5): its section may be deleted
+$("#hex").innerHTML = HEX.cols.map((c,i)=>`<div class="col"><h4>${c}</h4>${HEX.cells[i].map(x=>`<div class="cell ${x.core?'core':''} ${x.port?'port':''}" data-id="${x.id}"><b>${x.b}</b><small>${x.s}</small></div>`).join("")}</div>`).join("");
+$("#routes").innerHTML = HEX.routes.map(r=>`<button class="btn sm" data-r="${r.id}" aria-pressed="false">${r.t}</button>`).join("");
+$("#routes").addEventListener("click", e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  const r = HEX.routes.find(x=>x.id===b.dataset.r);
+  const same = b.getAttribute("aria-pressed")==="true";
+  document.querySelectorAll("#routes .btn").forEach(x=>x.setAttribute("aria-pressed","false"));
+  document.querySelectorAll("#hex .cell").forEach(c=>{ c.classList.remove("lit","off"); });
+  if(same) return;
+  b.setAttribute("aria-pressed","true");
+  document.querySelectorAll("#hex .cell").forEach(c=>{ c.classList.toggle("lit", r.on.includes(c.dataset.id)); c.classList.toggle("off", !r.on.includes(c.dataset.id)); });
+});
+}
+
+/* ---------- user stories ---------- */
+const HU = [];
+if($("#hulist")) $("#hulist").innerHTML = HU.map(h=>`<div class="card"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span class="id">${h.id} · semana ${h.w.slice(1)}</span><span class="chips">${h.comp.map(c=>`<span class="chip ghost">${c}</span>`).join("")}</span></div><div><b>Como</b> ${h.como}, <b>quiero</b> ${h.quiero}, <b>para</b> ${h.para}.</div><ul>${h.crit.map(c=>`<li>${c}</li>`).join("")}</ul></div>`).join("");
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+(function(){
+  const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({startOnLoad:false, theme: dark?'dark':'default', securityLevel:'loose'});
+  function render(){ const v=document.querySelector('.view.active'); if(!v) return;
+    const n=[...v.querySelectorAll('pre.mermaid:not([data-processed])')]; if(n.length) mermaid.run({nodes:n}); }
+  document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>setTimeout(render,30)));
+  window.addEventListener('load',render);
+})();
+</script>
+</body></html>
