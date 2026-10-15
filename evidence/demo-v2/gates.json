@@ -1,0 +1,159 @@
+{
+ "lighthouse": [
+  {
+   "perf": 88,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1565,
+   "cls": 0,
+   "tbt": 434,
+   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "a11yFails": []
+  },
+  {
+   "perf": 95,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1552,
+   "cls": 0,
+   "tbt": 172,
+   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "a11yFails": []
+  },
+  {
+   "perf": 87,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1590,
+   "cls": 0,
+   "tbt": 434,
+   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "a11yFails": []
+  },
+  {
+   "perf": 80,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1683,
+   "cls": 0,
+   "tbt": 706,
+   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "a11yFails": []
+  },
+  {
+   "perf": 88,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1780,
+   "cls": 0,
+   "tbt": 402,
+   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "a11yFails": []
+  }
+ ],
+ "axe": {
+  "light": [],
+  "dark": [],
+  "tour": [],
+  "session": [],
+  "m390": []
+ },
+ "flicker": [
+  {
+   "id": "load",
+   "nav": true,
+   "frames": 44,
+   "cuts": []
+  },
+  {
+   "id": "first-visit",
+   "nav": true,
+   "frames": 87,
+   "cuts": []
+  },
+  {
+   "id": "context",
+   "nav": false,
+   "frames": 148,
+   "cuts": []
+  },
+  {
+   "id": "cache",
+   "nav": false,
+   "frames": 223,
+   "cuts": []
+  },
+  {
+   "id": "git",
+   "nav": false,
+   "frames": 159,
+   "cuts": []
+  },
+  {
+   "id": "session",
+   "nav": false,
+   "frames": 178,
+   "cuts": []
+  },
+  {
+   "id": "theme",
+   "nav": false,
+   "frames": 85,
+   "cuts": []
+  },
+  {
+   "id": "tour",
+   "nav": false,
+   "frames": 252,
+   "cuts": []
+  },
+  {
+   "id": "scroll",
+   "nav": false,
+   "frames": 119,
+   "cuts": []
+  },
+  {
+   "id": "mobile-git",
+   "nav": false,
+   "frames": 89,
+   "cuts": []
+  },
+  {
+   "id": "reduced-cache",
+   "nav": false,
+   "frames": 131,
+   "cuts": []
+  }
+ ],
+ "shots": [
+  "outfull\\light-hero.png",
+  "outfull\\light-significado.png",
+  "outfull\\light-llevas.png",
+  "outfull\\light-sesion.png",
+  "outfull\\dark-hero.png",
+  "outfull\\dark-significado.png",
+  "outfull\\dark-llevas.png",
+  "outfull\\dark-sesion.png",
+  "outfull\\390-hero.png",
+  "outfull\\390-significado.png",
+  "outfull\\390-llevas.png",
+  "outfull\\390-sesion.png",
+  "outfull\\tour-1.png",
+  "outfull\\tour-3.png",
+  "outfull\\tour-6.png"
+ ],
+ "clip": "outfull\\clip.webm",
+ "pass": {
+  "perf": false,
+  "a11y": true,
+  "cls": true,
+  "axe": true,
+  "flicker": true
+ }
+}

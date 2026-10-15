@@ -76,7 +76,8 @@ run() {
       [ "$(wc -c < docs/media/demo-preview.mp4)" -le $MAX ] && { ok=1; echo "mp4 x264 crf $crf"; break; }
     done
     [ $ok = 1 ] || return 23
-    ffmpeg -v error -y -i docs/media/demo-preview.mp4 -frames:v 1 "$OUT/poster.png" || return 23
+    # the frame where the first cause -> effect is complete (red bar, wires, caption); frame 0 is the hero fading in
+    ffmpeg -v error -y -ss "${DEMO_POSTER_S:-5.6}" -i docs/media/demo-preview.mp4 -frames:v 1 "$OUT/poster.png" || return 23
     python3 -c 'import PIL' 2>/dev/null || python3 -m pip install --user --quiet pillow || return 23
     python3 - "$OUT/poster.png" docs/media/demo-poster.webp <<'PY' || return 23
 import os, sys
