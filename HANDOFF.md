@@ -111,10 +111,16 @@ En vivo: **https://kit.ichisieben.dev/**. Los archivos publicados son iguales po
   - `kit-demo-gates` se colgó después de descargar Chromium de Playwright.
   - La lane se arregló (`96e52d5`): reinicia una corrida muerta o colgada, pone tope a
     `playwright install` y a `curl`, y deja marcas de progreso.
-  - Se relanzó como `kit-demo-gates-2`. Si termina bien, sus resultados reemplazan a los de Windows
-    con `git show mac/kit-demo-gates-2:<ruta>`, nunca con checkout. Si vuelve a quedarse en
-    `playwright install`, la causa probable es el proceso colgado de la primera corrida, que
-    retiene el candado de `~/Library/Caches/ms-playwright`; hay que matarlo en la Mac (el owner).
+  - `kit-demo-gates-2` y `-3` (`407636b`: salta la instalación si Chromium está completo en la
+    caché) terminaron con **exit 21**. Playwright se niega a instalar mientras otro proceso tenga
+    `~/Library/Caches/ms-playwright/__dirlock`, y el Chromium de la primera corrida quedó a medio
+    extraer. **BLOQUEADO, lo hace el owner en la Mac:** matar el proceso colgado de la primera
+    corrida (`pgrep -fl "playwright install"`), borrar `~/Library/Caches/ms-playwright/__dirlock`
+    y `chromium-1140`, y relanzar:
+    `python ../enjambre/enjambre.py run --repo claude-kit --task TASK-kit-demo-gates-3.md --node mac
+    --detach --budget 2 --model sonnet` (la lane arranca sola de cero en un commit nuevo).
+  - Mientras tanto valen los gates de Windows. Si la Mac entrega, sus resultados se traen con
+    `git show mac/<job>:<ruta>`, nunca con checkout.
 - **Pendiente, propuesto**:
   - El TBT restante es sobre todo estilo/layout. Lo más pesado es una tarea de ~450 ms cuando llega
     `grid.json`: el segundo `applyLang()` reconstruye controles, árbol, tarjetas y glosario de una
