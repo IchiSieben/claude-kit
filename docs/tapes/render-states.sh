@@ -15,10 +15,10 @@
 # Requires: jq, git, python3 with Pillow, and `freeze` (charmbracelet) — set FREEZE to its
 # path if it is not on PATH (a project-local copy under .tools/ is fine; .tools/ is ignored).
 #
-# Known limit: freeze renders with its bundled JetBrains Mono only (`--font.family` and
-# `--font.file` had no effect in 0.2.2 on Windows), and that font has no glyph for `⎇`
-# (branch) or `❄` (cold cache), so those two print as a box in these images. The real
-# captures in docs/img/statusline-*.png show them as the terminal draws them.
+# Font: freeze has no fallback chain, and its bundled JetBrains Mono has no `⎇` or `❄` (they
+# printed as boxes). docs/tapes/fonts/KitMono-Regular.ttf is JetBrains Mono merged with the
+# demo's DejaVu symbol subsets (docs/tapes/build-term-font.py), passed with --font.file.
+# On Windows freeze 0.2.2 ignored --font.file; on the Mac it is honoured (check the PNGs).
 #
 # Fixture fields the script overrides at render time:
 #   .workspace.current_dir / .cwd  -> a throwaway git repo built here (so git and HANDOFF
@@ -82,7 +82,7 @@ for row in "${STATES[@]}"; do
   CC_NOW=$NOW HOME="$FAKEHOME" CC_NODE=mac CC_ENJ_SUMMARY=/nonexistent \
     bash "$SL" < "$TMP/$fx.json" > "$TMP/$fx.ans"
   if [ -n "$ANS_DIR" ]; then cp "$TMP/$fx.ans" "$ANS_DIR/$n-$label.ans"; continue; fi
-  "$FREEZE" --output "$OUT/statusline-$label.png" --theme dracula --font.size 14 \
+  "$FREEZE" --output "$OUT/statusline-$label.png" --theme dracula --font.size 14             --font.file docs/tapes/fonts/KitMono-Regular.ttf --font.family "Kit Mono" \
             --padding 12 --window=false < "$TMP/$fx.ans" >/dev/null
   echo "  $label: $(sed "s/${ESC}\[[0-9;]*m//g" "$TMP/$fx.ans" | head -1 | cut -c1-70)…"
   frames+=("$OUT/statusline-$label.png")
