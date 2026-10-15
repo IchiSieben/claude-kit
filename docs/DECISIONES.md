@@ -107,3 +107,10 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   fotograma 0 con ffmpeg y escribe el WebP con Pillow, y con ese mismo método generé aquí
   `statusline-poster.webp` (1280x720) y `statusline-poster-mobile.webp` (640x360). Los PNG de la
   leyenda y el GIF siguen pendientes de un `kit-media-3`, que lanza V2b.
+- **Medios · los videos se marcan binarios.** Con `* text=auto eol=lf` y sin regla para
+  `mp4`/`webm`/`webp`, git tomó los videos por texto: la copia de trabajo salió 1–2 bytes más
+  corta y con errores de decodificación, y el check de LF de `verify.sh` falló. Los blobs
+  commiteados eran correctos (idénticos a los de `mac/kit-media-2`, 0 errores con ffmpeg). Se
+  agregaron `*.mp4 *.webm *.webp binary` a `.gitattributes`, el check de LF ahora ignora los blobs
+  binarios (`i/-text`) y los archivos se restauraron desde HEAD. `2b31a0e` se pusheó con ese check
+  en rojo (mi cadena de comandos no cortaba ante el fallo); este commit lo deja en verde.

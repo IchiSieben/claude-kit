@@ -70,7 +70,7 @@ echo "Fase B - repo"
 check "el arbol esta limpio (nada a medias de la sesion anterior)" \
       'git diff --quiet && git diff --cached --quiet'
 check "todo lo versionado esta en LF en indice y arbol (salvo .ps1/.cmd/.bat e imagenes)" \
-      '! git ls-files --eol | grep -vE "\.(ps1|cmd|bat|png|gif)$" | grep -v "i/lf.*w/lf"'
+      '! git ls-files --eol | grep -v "i/-text" | grep -vE "\.(ps1|cmd|bat|png|gif)$" | grep -v "i/lf.*w/lf"'
 
 echo "Fase E - espejo de ~/.claude en home/.claude"
 check "mirror-lib.sh, sync-from-home.sh y sync-to-home.sh son bash valido" \
