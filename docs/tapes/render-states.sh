@@ -91,7 +91,7 @@ done
 if [ -n "$ANS_DIR" ]; then rm -rf "$TMP"; echo "wrote $n states -> $ANS_DIR"; exit 0; fi
 
 # GIF: 1.6 s per frame, looped, downscaled so it stays well under 3 MB.
-"$PY" -"${frames[@]}" <<'PY'
+"$PY" - "${frames[@]}" <<'PY'
 import sys
 from PIL import Image
 frames=[Image.open(p).convert("RGB") for p in sys.argv[1:]]
