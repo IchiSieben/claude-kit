@@ -64,6 +64,8 @@ references to change as the evidence does.
 **The bar rendered from fixtures: warm cache → cooling → cold → near auto-compact → stale HANDOFF.** Regenerate with `docs/tapes/render-states.sh`; its bundled font has no `⎇`/`❄` glyph, so those two show as a box here and as themselves in the real captures above.
 ![Status line states](docs/img/statusline-states.gif)
 
+*This GIF predates the 2026-10-15 cache redesign: it still shows the old cache segment (hit ratio and TTL), not `⚡ enfriando · 4m`. It is re-recorded on the Mac by `TASK-kit-media.md`.*
+
 New to the bar? Start with the lesson [`docs/leccion-01-lee-tu-barra.en.md`](docs/leccion-01-lee-tu-barra.en.md): the 18 sectors by group, with [a diagram](docs/img/statusline-sectores.en.svg) and a self-check.
 
 

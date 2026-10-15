@@ -30,8 +30,12 @@ Prompt: `../docs/PROMPT-ecosistema-claude-code.md` §3 (V1). Modo dormido: sin p
   "supervisor not confirmed in 10 s" y `collect kit-media` da `state unknown, beats 0`: el
   trabajo nunca arrancó en la Mac, mientras los trabajos del Landing en la misma Mac terminan
   `ok`. Hipótesis: la Mac no tiene clon de `claude-kit` y el supervisor muere antes del primer
-  latido (mismo síntoma que `cert-media`). No se insistió más. Sin video ni GIF nuevos; el GIF
-  del README sigue siendo el de fixtures.
+  latido (mismo síntoma que `cert-media`). Para probarla lancé `clone-claude-kit` desde
+  `enjambre-sandbox` (el remedio que pre-autoriza el prompt): ese supervisor sí arrancó y el
+  trabajo terminó `ok`, pero el agente informó rc 127, `tools/clone-repos.sh: No such file or
+  directory`. El script está en `origin/main` (`ea9bb40`), así que el worktree del nodo salió de
+  una copia vieja del sandbox. No seguí: arreglar el sandbox del nodo no es de este repo. Sin
+  video ni GIF nuevos; el README avisa que el GIF es anterior al rediseño.
   Para relanzar: `python ../enjambre/enjambre.py run --repo claude-kit --task TASK-kit-media.md
   --node mac --detach --budget 2 --model sonnet`, después `status --follow kit-media`.
 - **Ítem 3 hecho**: `home/.claude/modules/enjambre/` (guardia de ssh PreToolUse + regla + README),
@@ -44,7 +48,7 @@ Prompt: `../docs/PROMPT-ecosistema-claude-code.md` §3 (V1). Modo dormido: sin p
 
 FICHA-READY: be62c5c
 
-- `verify.sh` rc=0 (128 pruebas; la deriva contra `~/.claude` es la esperada).
+- `verify.sh` rc=0 (128 pruebas; la deriva contra `~/.claude` es la esperada). `origin/main` = el commit que trae esta línea (fast-forward desde la rama `ecosistema/2026-10-15`).
 - `~/.claude` NO se re-sincronizó (4 barras vivas): cuando quieras la barra nueva, en el repo
   privado de origen corre `bash sync-to-home.sh`, y reinicia Claude Code.
 
@@ -53,6 +57,8 @@ FICHA-READY: be62c5c
 1. **/route**: el `/route` del repo privado lee `rules/models.json` y `routing.json`, que no se
    publican, así que el público conserva su versión vieja. ¿Se agregan esos dos archivos a la
    allowlist de build-kit (y se publica la tabla de modelos) o se mantiene el /route público?
-2. **Trabajo de la Mac**: ¿la Mac tiene un clon de `claude-kit` donde enjambre lo espera? Si no,
-   ¿lo clono con un trabajo `script` y relanzo `kit-media`?
+2. **Trabajo de la Mac**: el supervisor arranca para `enjambre-sandbox` pero no para
+   `claude-kit` (ni para `cert-media`), y el clon del sandbox en la Mac está atrasado respecto de
+   `origin/main`. ¿Actualizas ese clon (`git pull` en la Mac) y confirmas si existe
+   `~/Documents/Portfolio/claude-kit`, para relanzar `kit-media`?
 3. **Ficha**: dice "128 tests" en vez de los "79" del prompt (la cifra de hoy). ¿Vale así?
