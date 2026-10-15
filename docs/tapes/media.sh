@@ -98,13 +98,22 @@ run() {
   [ $ok = 1 ] || return 22
 
   echo "== poster (frame 0)"
-  ok=0
-  for q in 90 82 74 66 58; do
-    ffmpeg -v error -y -i "$OUT/raw.mp4" -frames:v 1 -vf "scale=1280:720:flags=lanczos" \
-      -c:v libwebp -quality "$q" docs/media/statusline-poster.webp || return 23
-    [ "$(wc -c < docs/media/statusline-poster.webp)" -le 122880 ] && { ok=1; echo "poster webp q $q"; break; }
-  done
-  [ $ok = 1 ] || return 23
+  # Homebrew's ffmpeg has no libwebp encoder (kit-media-2 died here with exit 23), so ffmpeg only
+  # extracts frame 0 as PNG and Pillow writes the WebP.
+  python3 -c 'import PIL' 2>/dev/null || python3 -m pip install --user --quiet pillow || return 23
+  ffmpeg -v error -y -i "$OUT/raw.mp4" -frames:v 1 -vf "scale=1280:720:flags=lanczos" "$OUT/poster.png" || return 23
+  python3 - "$OUT/poster.png" docs/media/statusline-poster.webp <<'PY' || return 23
+import sys
+from PIL import Image
+src, dst = sys.argv[1], sys.argv[2]
+im = Image.open(src).convert("RGB")
+for q in (90, 82, 74, 66, 58):
+    im.save(dst, "WEBP", quality=q, method=6)
+    import os
+    if os.path.getsize(dst) <= 122880:
+        print("poster webp q", q); sys.exit(0)
+sys.exit(1)
+PY
 
   echo "== PNGs + GIF (render-states.sh, freeze)"
   python3 -c 'import PIL' 2>/dev/null || python3 -m pip install --user --quiet pillow || return 24

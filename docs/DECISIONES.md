@@ -101,3 +101,9 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   (ignorado por git, escrito por el hook al compactar) tenía rutas locales y el escaneo de
   `build-kit` recorre el disco, no solo lo versionado. Se movió al scratchpad de la sesión, no se
   borró.
+- **Medios · video de `mac/kit-media-2`, póster local.** V2b clonó el repo en la Mac y la lane
+  grabó el webm (112 KB) y el mp4 (86 KB), pero murió en el póster: el ffmpeg de Homebrew no trae
+  `libwebp`. Tomé solo `docs/media/*` de la rama (no `result.json`). `media.sh` ahora extrae el
+  fotograma 0 con ffmpeg y escribe el WebP con Pillow, y con ese mismo método generé aquí
+  `statusline-poster.webp` (1280x720) y `statusline-poster-mobile.webp` (640x360). Los PNG de la
+  leyenda y el GIF siguen pendientes de un `kit-media-3`, que lanza V2b.
