@@ -71,6 +71,8 @@ FICHA-READY: be62c5c
   barra y no se regenera la rejilla. La lección 01 y los README enlazan a la demo.
 - **Ítem 3 hecho**: video de `mac/kit-media-3`, PNG de `-6`, GIF de `-7`; `FICHA-LANDING.md` con
   `demoUrl`, 140 tests y el bloque `media` con su mapeo. Aviso a V4 (`landing-d5`) enviado.
+  V4 confirmó: ficha importada (medios sha256 idénticos, lección 01 re-importada) en el commit
+  `1e01302` de la rama `v4b/a11y-nav` del Landing; pasa a main tras el último gate de la Mac.
 - Arreglos de la lane `media` en el camino: póster con Pillow (sin `libwebp`), freeze desde el
   Cellar con `--help` capturado (SIGPIPE 141 con `pipefail`), `"$PY" -` separado. Videos marcados
   binarios en `.gitattributes`. Hubo una corrupción del árbol sin causa encontrada (DECISIONES).
