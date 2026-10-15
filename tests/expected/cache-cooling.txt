@@ -1,0 +1,2 @@
+[1mOpus 5.5[0m ·medium @test [33m▓▓▓▓▓▓▓▓▓▓░░░░░┋░░░░ 209k[0m/400k · 20% of 1M · $5.38 · 13m · [33m⚡ enfriando · 4m[0m
+5h 10%  7d 37%  [32m+165[0m/[31m-32[0m  [33m⚠ sin HANDOFF[0m  [captura 2.1.300, 4 min]  [35m→ manda un turno corto para recalentar, o /handoff si vas a parar[0m

@@ -23,10 +23,12 @@ statusline.sh`.
 |---|---|---|---|---|---|
 | `quota-5h` | cuota de 5 horas usada | `five_pct >=` | 90 | 10 | parar, o bajar a `sonnet` |
 | `context-red` | tamaño del contexto | `context_k >=` | 300 (k tokens) | 20 | `/handoff` primero, después `/clear` |
-| `cache-cold` | hit rate de la caché de prompt | `cache_pct <` | 60 | 30 | nombrar la causa (o `/usage` si no se sabe) |
+| `cache-cooling` | minutos que le quedan a una caché viva | `cache_left_min <=` | 5 | 25 | un turno corto para recalentar, o `/handoff` si vas a parar (`-1` cuando está fría, así que nunca dispara sobre una caché fría) |
+| `cache-cold` | hit rate de la caché de prompt | `cache_pct <` | 60 | 30 | nombrar la causa (o `/usage` si no se sabe); la pista ya no repite «frío» |
 | `session-long` | duración de la sesión | `session_min >=` | 480 (8h) | 40 | `/handoff` antes de `/clear` (condicionado a `context-amber`) |
 | `unpushed` | commits sin pushear | `ahead >` | 0 | 50 | `git push` (`param: 7200`s de gracia antes de que el contador se ponga ámbar) |
 | `context-amber` | tamaño del contexto | `context_k >=` | 150 (k tokens) | 60 | solo banda, sin consejo |
+| `cache-hit-ok` | hit rate de la caché de prompt | `cache_pct >=` | 85 | 65 | solo banda: desde ese valor la barra oculta `hit N%` (era un 85 fijo en el script) |
 | `handoff-drift-files` | archivos sucios más nuevos que HANDOFF.md | `handoff_dirty >` | 20 | 70 | solo banda, sin consejo |
 | `handoff-drift-sessions` | sesiones desde HANDOFF.md | `handoff_sessions >=` | 2 | 71 | solo banda, sin consejo |
 
@@ -40,6 +42,17 @@ cumpla para que su consejo dispare.
 Una métrica que el llamador no pudo medir se reporta como `-1` y nunca
 cumple ninguna condición — lo desconocido a propósito no es lo mismo que
 cero.
+
+## Labels y las bandas visor-*
+
+`labels` (al nivel de `thresholds`) guarda las tres palabras del segmento de caché:
+`cache-warm` → `caliente`, `cache-cooling` → `enfriando`, `cache-cold` → `fría · próximo turno
+reescribe`. El texto que muestra la barra también es dato: sin ese bloque, la barra imprime
+solo `⚡`/`❄` y el número.
+
+Las entradas `visor-*` (prioridad 200 en adelante, todas `hint: false`) son el semáforo del
+visor de [enjambre](https://github.com/IchiSieben/enjambre). La barra nunca mide sus métricas
+(`disk_used_pct`, `mem_used_pct`, trabajos), así que para ella son inertes.
 
 ## Quién lo lee
 

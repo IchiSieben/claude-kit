@@ -78,13 +78,13 @@ esac
 GREEN_K=-1 RED_K=-1 TH_OK=0
 # The metrics the thresholds are measured against. -1 means NOT MEASURED, which never
 # matches a condition: the whole point of this bar is that unknown and zero differ.
-five_i=-1 used_k=-1 hit_i=-1 rt_m=-1 ahead=-1 MD_F=-1 MD_S=-1 fresh=0 CAUSES_TXT=""
+five_i=-1 used_k=-1 hit_i=-1 cl_m=-1 rt_m=-1 ahead=-1 MD_F=-1 MD_S=-1 fresh=0 CAUSES_TXT=""
 HINT_ID="" HINT="" MV=-1
 
 # Real ESC bytes, not "\033" strings: the final printf uses %s, so a backslash inside a
 # session name or a Windows path can never be re-interpreted as an escape sequence.
 R=$'\033[0m'; B=$'\033[1m'
-RED=$'\033[31m'; AMB=$'\033[33m'; GRN=$'\033[32m'; MAG=$'\033[35m'
+RED=$'\033[31m'; AMB=$'\033[33m'; GRN=$'\033[32m'; MAG=$'\033[35m'; CYN=$'\033[36m'
 WARN="${AMB}⚠${R}"
 
 # Sentinels emitted by the jq program below. They cannot occur in real data.
@@ -158,6 +158,11 @@ JQ_TH='(($TH[0] // {}).thresholds // []
               | join("\u001d"))
         | join("\u001e"))'
 
+# The words of the cache segment, from the same file (`labels`): warm, cooling, cold.
+JQ_LABELS='((($TH[0] // {}).labels // {}) as $l
+           | [($l["cache-warm"] // ""), ($l["cache-cooling"] // ""), ($l["cache-cold"] // "")]
+           | map(if type=="string" then . else "" end) | join("\u001d"))'
+
 # The jq program, kept in a variable so the quoting is written once.
 JQ_PROG='
   def S: "\u0001";
@@ -198,7 +203,8 @@ JQ_PROG='
     cache(if ((.prompt_cache.last_miss_cause.causes? // null)|type)=="array"
           then (.prompt_cache.last_miss_cause.causes|map(tostring)|join(",")) else E end),
     txt(.session_id? // null),
-    '"$JQ_TH"'
+    '"$JQ_TH"',
+    '"$JQ_LABELS"'
   ] | join("\u001f")
 '
 
@@ -222,10 +228,11 @@ th_load() {
     TH_GATE[$id]=$g TH_PARAM[$id]=$pm TH_A[$id]=$a TH_AF[$id]=$af TH_AN[$id]=$an
     TH_ORDER+=("$id")
   done
-  # The five the bar cannot render without. A file that lost one of them is a broken file,
+  # The seven the bar cannot render without. A file that lost one of them is a broken file,
   # not a file that says "no threshold": either way the bar must not invent the number.
   local need
-  for need in context-amber context-red cache-cold handoff-drift-files handoff-drift-sessions; do
+  for need in context-amber context-red cache-cold cache-cooling cache-hit-ok \
+              handoff-drift-files handoff-drift-sessions; do
     [ -n "${TH_VALUE[$need]:-}" ] || return 1
   done
   return 0
@@ -237,6 +244,7 @@ th_metric() {
     five_pct)         MV=$five_i ;;
     context_k)        MV=$used_k ;;
     cache_pct)        MV=$hit_i ;;
+    cache_left_min)   MV=$cl_m ;;
     session_min)      MV=$rt_m ;;
     ahead)            MV=$ahead ;;
     handoff_dirty)    MV=$MD_F ;;
@@ -415,13 +423,13 @@ render() {                       # render <json>
   local i
   for i in "${!F[@]}"; do F[i]=${F[i]%$'\r'}; done   # jq.exe (native Windows) emits CRLF
   # A payload that yields fewer fields than we asked for is a schema change, not data.
-  while (( ${#F[@]} < 20 )); do F+=("$S"); done
+  while (( ${#F[@]} < 21 )); do F+=("$S"); done
 
   local model=${F[0]}  effort=${F[1]}   size=${F[2]}  cost=${F[3]}  ms=${F[4]}
   local five=${F[5]}   week=${F[6]}     name=${F[7]}  addl=${F[8]}  dell=${F[9]}
   local dir=${F[10]}   used=${F[11]}    hit=${F[12]}  warm=${F[13]} ttl=${F[14]}
   local miss=${F[15]}  expires=${F[16]} causes=${F[17]}
-  local sid=${F[18]}   thblob=${F[19]}
+  local sid=${F[18]}   thblob=${F[19]}  labels=${F[20]}
 
   # ---- thresholds ----
   # CC_CTX_* stay as per-machine overrides; the defaults are the file's, never this file's.
@@ -490,6 +498,51 @@ render() {                       # render <json>
   if [ "$ms" != "$S" ]; then rt_m=$(( ms / 60000 )); line1+=" · ${rt_m}m"
   else line1+=" · ${WARN}m"; fi
 
+  # ---- cache: ONE word and ONE number, in ONE place (here, next to cost and time). ----
+  # The question it answers is "how long do I have before the next turn pays to rewrite
+  # the context?", so the number is minutes left on `expires_at`, never the hit ratio (that
+  # moved to line 2) and never the TTL label. `prompt_cache: null` (before the first call)
+  # prints nothing; a cache object we cannot read prints ⚠.
+  # cl_m is the metric `cache-cooling` is measured against: minutes left WHILE WARM. A cold
+  # cache has no countdown, so it is -1 there too and cooling cannot fire on it — "cold" is
+  # stated by cstate, not smuggled into the number.
+  # The words come from thresholds.json `labels`; without that file only the symbols show.
+  local hit_i=-1 cl_m=-1 cstate=none lw="" lc="" lx=""
+  [ "$hit" = "$S" ] || [ "$hit" = "$E" ] || hit_i=$hit
+  if (( TH_OK )); then IFS=$'\035' read -r lw lc lx <<<"$labels"; fi
+  if [ "$warm" != "$E" ]; then
+    if [ "$warm" = 0 ]; then
+      cstate=cold
+    elif [ "$expires" != "$S" ] && [ "$expires" != "$E" ]; then
+      if (( expires - now <= 0 )); then cstate=cold
+      else cl_m=$(( (expires - now) / 60 )); cstate=warm; fi
+    elif [ "$warm" = 1 ]; then
+      cstate=warm
+    else
+      cstate=unknown
+    fi
+    (( TH_OK )) && [ "$cstate" = warm ] && th_fires cache-cooling && cstate=cooling
+    local cnum=""
+    if (( cl_m == 0 )); then cnum="<1m"; elif (( cl_m > 0 )); then cnum="${cl_m}m"; fi
+    local cseg=""
+    case "$cstate" in
+      warm|cooling)
+        local ccol2=""; (( TH_OK )) && ccol2=$GRN
+        local word=$lw; [ "$cstate" = cooling ] && { ccol2=$AMB; word=$lc; }
+        cseg="⚡"; [ -n "$word" ] && cseg+=" ${word}"
+        if [ -n "$cnum" ]; then
+          if [ -n "$word" ]; then cseg+=" · ${cnum}"; else cseg+=" ${cnum}"; fi
+        fi
+        cseg="${ccol2}${cseg}${R}" ;;
+      cold)
+        cseg="❄"; [ -n "$lx" ] && cseg+=" ${lx}"
+        (( TH_OK )) && cseg="${CYN}${cseg}${R}" ;;
+      *)
+        cseg="${AMB}⚠ caché${R}" ;;
+    esac
+    line1+=" · ${cseg}"
+  fi
+
   # ---------------------------------------------------------------- line 2: the rest
   # NOTE: `.permission_mode` was dropped from the payload in 2.1.275 (0/35 renders in
   # the captured sample, across 2.1.274/275/276). There is no substitute field, so the
@@ -502,39 +555,21 @@ render() {                       # render <json>
   elif [ "$week" = "$S" ]; then line2+="  7d ${WARN}"
   else printf -v tmp '  7d %.0f%%' "$week"; line2+=$tmp; fi
 
-  # Cache. `prompt_cache: null` is the expected state before the first call, so it
-  # prints nothing; an object we cannot read is a schema break, so it prints ⚠.
-  local hit_i=-1
+  # Hit ratio: line 2, and only when it tells you something. At or above `cache-hit-ok` it
+  # is noise next to the state on line 1; below it, it is the reason that state matters.
+  # No thresholds file = no way to call it "fine", so it is always shown, uncoloured.
   if [ "$hit" = "$S" ]; then
-    line2+="  ${AMB}⚠ caché${R}"
-  elif [ "$hit" != "$E" ]; then
-    hit_i=$hit
-    # 85 is cosmetic (green vs amber). 60 is the one you act on, so it comes from the file.
-    local ccol="" cold=${TH_VALUE[cache-cold]:-0}
+    line2+="  hit ${WARN}"
+  elif [ "$hit" != "$E" ] && { (( ! TH_OK )) || ! th_fires cache-hit-ok; }; then
+    local ccol=""
     if (( TH_OK )); then
-      if   (( hit_i >= 85 ));   then ccol=$GRN
-      elif (( hit_i >= cold )); then ccol=$AMB
-      else                           ccol=$RED; fi
+      if th_fires cache-cold; then ccol=$RED; else ccol=$AMB; fi
     fi
-    local sym
-    case "$warm" in 1) sym="⚡" ;; 0) sym="❄" ;; *) sym="⚠" ;; esac
-    line2+="  ${ccol}${sym}${hit_i}%${R}"
-    # TTL left, from expires_at. Falls back to the literal ttl string ("1h") when the
-    # epoch is missing: a countdown is the useful number, the label is the fallback.
-    local left=""
-    if [ "$expires" != "$S" ] && [ "$expires" != "$E" ]; then
-      local rem=$(( expires - now ))
-      if   (( rem <= 0 ));   then left="exp"
-      elif (( rem < 3600 )); then left="$(( rem / 60 ))m"
-      else left="$(( rem / 3600 ))h$(( (rem % 3600) / 60 ))m"; fi
-    elif [ "$ttl" != "$S" ] && [ "$ttl" != "$E" ]; then
-      left="$ttl"
-    elif [ "$ttl" = "$S" ]; then
-      left="⚠"
-    fi
-    [ -n "$left" ] && line2+="/${left}"
+    line2+="  ${ccol}hit ${hit_i}%${R}"
     if   [ "$miss" = "$S" ]; then line2+=" (${AMB}⚠${R} miss)"
     elif [ "$miss" != "$E" ] && (( miss > 0 )); then line2+=" (${miss} miss)"; fi
+  elif [ "$miss" = "$S" ]; then
+    line2+="  (${AMB}⚠${R} miss)"
   fi
 
   if [ "$addl" = "$S" ] || [ "$dell" = "$S" ]; then
@@ -644,6 +679,7 @@ render() {                       # render <json>
     "$JQ_BIN" -nc \
       --arg ts "$now" --arg session "$sid_safe" --arg five "$five_i" --arg week "$week_i" \
       --arg ck "$used_k" --arg cp "$pct" --arg lk "$ac_k" --arg cache "$hit_i" \
+      --arg cleft "$cl_m" --arg cstate "$cstate" \
       --arg smin "$rt_m" --arg ahead "$ahead" --arg behind "$behind" \
       --arg modified "$modified" --arg untracked "$untracked" \
       --arg handoff "$D_STATE" --arg handoff_age "$D_HAGE" \
@@ -654,6 +690,7 @@ render() {                       # render <json>
         five_pct:($five|tonumber? // -1), week_pct:($week|tonumber? // -1),
         context_k:($ck|tonumber? // -1), context_pct:($cp|tonumber? // -1),
         limit_k:($lk|tonumber? // -1), cache_pct:($cache|tonumber? // -1),
+        cache_left_min:($cleft|tonumber? // -1), cache_state:$cstate,
         session_min:($smin|tonumber? // -1), ahead:($ahead|tonumber? // -1),
         behind:($behind|tonumber? // -1), modified:($modified|tonumber? // -1),
         untracked:($untracked|tonumber? // -1), handoff:$handoff,
@@ -761,12 +798,13 @@ if [ "${1:-}" = "--ahora" ]; then
   raw=$("$JQ_BIN" -rj '[(.ts//-1),(.five_pct//-1),(.week_pct//-1),(.context_k//-1),
         (.context_pct//-1),(.limit_k//-1),(.cache_pct//-1),(.session_min//-1),(.ahead//-1),
         (.handoff//"?"),(.handoff_age//"?"),(.handoff_dirty//-1),(.handoff_sessions//-1),
-        (.fresh//0),(.causes//""),(.branch//"")] | map(tostring) | join("\u001f")'         "$snap" 2>/dev/null)
+        (.fresh//0),(.causes//""),(.branch//""),(.cache_left_min//-1),
+        (.cache_state//"none")] | map(tostring) | join("\u001f")'         "$snap" 2>/dev/null)
   [ -n "$raw" ] || say3     "ahora: el snapshot existe pero no se deja leer (${snap})"     "hacé: borralo; la barra lo reescribe en el próximo render"     "por qué: un snapshot a medio escribir no es un cero, y estas tres líneas no inventan números"
 
   IFS=$'\037' read -r -a A <<<"$raw"
   five_i=${A[1]} used_k=${A[3]} hit_i=${A[6]} rt_m=${A[7]} ahead=${A[8]}
-  MD_F=${A[11]} MD_S=${A[12]} fresh=${A[13]} CAUSES_TXT=${A[14]}
+  MD_F=${A[11]} MD_S=${A[12]} fresh=${A[13]} CAUSES_TXT=${A[14]} cl_m=${A[16]:--1}
 
   thblob=""
   [ -n "$TH_FILE" ] && thblob=$("$JQ_BIN" -rj -n --slurpfile TH "$TH_FILE" "$JQ_TH" 2>/dev/null)
@@ -788,7 +826,11 @@ if [ "${1:-}" = "--ahora" ]; then
   fi
   (( five_i >= 0 )) && l1="$l1 · 5h ${five_i}%"
   (( A[2] >= 0 ))   && l1="$l1 · 7d ${A[2]}%"
-  (( hit_i >= 0 ))  && l1="$l1 · caché ${hit_i}%"
+  case "${A[17]:-none}" in
+    warm|cooling) l1="$l1 · caché ${A[17]}"; (( cl_m >= 0 )) && l1="$l1 ${cl_m}m" ;;
+    cold)         l1="$l1 · caché fría" ;;
+  esac
+  (( hit_i >= 0 ))  && l1="$l1 · hit ${hit_i}%"
   (( rt_m >= 0 ))   && l1="$l1 · sesión $(( rt_m / 60 ))h$(( rt_m % 60 ))m"
   (( ahead >= 0 ))  && l1="$l1 · ↑${ahead}"
   l1="$l1 · HANDOFF ${A[9]} ${A[10]} · snapshot de hace ${agetxt}"

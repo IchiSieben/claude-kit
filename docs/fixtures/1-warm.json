@@ -9,8 +9,8 @@
   },
   "session_name": "warm cache",
   "model": {
-    "id": "claude-opus-5[1m]",
-    "display_name": "Opus 5 (1M context)"
+    "id": "claude-opus-5-5",
+    "display_name": "Opus 5.5"
   },
   "workspace": {
     "current_dir": "C:\\work\\demo-project",
@@ -22,7 +22,7 @@
       "name": "demo-project"
     }
   },
-  "version": "2.1.275",
+  "version": "2.1.300",
   "output_style": {
     "name": "default"
   },

@@ -1,0 +1,76 @@
+{
+  "session_id": "00000000-0000-0000-0000-000000000000",
+  "transcript_path": "C:\\work\\tmp\\transcript.jsonl",
+  "cwd": "C:\\nonexistent\\demo-project",
+  "scratchpad_dir": "C:\\work\\tmp\\scratchpad",
+  "prompt_id": "11111111-1111-1111-1111-111111111111",
+  "effort": {
+    "level": "medium"
+  },
+  "session_name": "captura 2.1.292",
+  "model": {
+    "id": "claude-opus-5-5",
+    "display_name": "Opus 5.5"
+  },
+  "workspace": {
+    "current_dir": "C:\\nonexistent\\demo-project",
+    "project_dir": "C:\\nonexistent\\demo-project",
+    "added_dirs": [],
+    "repo": {
+      "host": "github.com",
+      "owner": "example",
+      "name": "demo-project"
+    }
+  },
+  "version": "2.1.292",
+  "output_style": {
+    "name": "default"
+  },
+  "cost": {
+    "total_cost_usd": 0.3722896,
+    "total_duration_ms": 373257423,
+    "total_api_duration_ms": 5492,
+    "total_lines_added": 0,
+    "total_lines_removed": 0
+  },
+  "context_window": {
+    "total_input_tokens": 84813,
+    "total_output_tokens": 323,
+    "context_window_size": 1000000,
+    "current_usage": {
+      "input_tokens": 2,
+      "output_tokens": 323,
+      "cache_creation_input_tokens": 44563,
+      "cache_read_input_tokens": 40248
+    },
+    "used_percentage": 8,
+    "remaining_percentage": 92
+  },
+  "exceeds_200k_tokens": false,
+  "prompt_cache": {
+    "warm": false,
+    "caching_observed": true,
+    "ttl": "1h",
+    "expires_at": 1799996400,
+    "requests": 1,
+    "misses": 0,
+    "expected_rebuilds": 0,
+    "hit_ratio": 0.4745498921155955,
+    "cache_write_tokens": 44563,
+    "miss_recache_tokens": 0,
+    "last_miss_at": null,
+    "last_miss_cause": null,
+    "miss_causes": {},
+    "recache_tokens_if_cold": 84813
+  },
+  "fast_mode": false,
+  "thinking": {
+    "enabled": true
+  },
+  "rate_limits": {
+    "seven_day": {
+      "used_percentage": 22,
+      "resets_at": 1792155600
+    }
+  }
+}

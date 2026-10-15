@@ -87,7 +87,12 @@ growing a second copy that could disagree with the bar.
 the command's stdin on every render.
 
 **Verified against Claude Code 2.1.274, 2.1.275 and 2.1.276** (35 captured renders,
-three sessions). `claude --version` on this machine reported 2.1.276 at the time.
+three sessions), and **re-captured on 2026-10-15 against 2.1.292–2.1.300** (24 renders from
+four live sessions; the `prompt_cache` and `context_window` shapes were unchanged, one cold
+render included). The 2.1.300 warm render and the 2.1.292 cold one are the sanitised
+fixtures `tests/fixtures/capture-2.1.300.json` and `cache-cold.json`. One shape worth knowing:
+an idle session can carry `rate_limits.seven_day` with **no** `five_hour` object, which the
+bar prints as `5h ⚠` (missing field), not as blank.
 
 ### The rule the script is built around
 

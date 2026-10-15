@@ -17,3 +17,30 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   allowlist (los genera `model-intel.py`, que tampoco se publica; quedarían viejos).
   Revertir / decidir: añadir `rules/models.json` + `rules/routing.json` (+ `tools/model-intel.py`)
   a `AS_IS` en `build-kit.sh` y dejar de restaurar el archivo. **Pregunta para el owner.**
+- **Ítem 1 · símbolo de "enfriando".** Elegido: `⚡ enfriando · 4m` en ámbar, no el
+  `⚠ enfriando` del prompt. Por qué: en esta barra `⚠` significa "dato faltante o ilegible"
+  (la regla sobre la que está construida); usarlo para un estado real lo rompería. El símbolo
+  dice el hecho (sigue caliente), el color y la palabra dicen la urgencia. Revertir: cambiar
+  `cseg="⚡"` por `cseg="⚠"` en la rama `cooling` del segmento de caché de `statusline.sh`.
+- **Ítem 1 · fría en cian.** `❄ fría · próximo turno reescribe` va en cian, no en rojo: una
+  caché fría tras una pausa es normal, no un error. Revertir: `CYN` → `RED` en esa línea.
+- **Ítem 1 · cuándo se muestra el hit.** `hit N%` solo por debajo de `cache-hit-ok` (85, el
+  número cosmético que vivía en el código y ahora está en thresholds.json). Sin thresholds.json
+  se muestra siempre. Revertir: subir `cache-hit-ok` a 101 lo muestra siempre.
+- **Ítem 1 · `cache_left_min` vale -1 en una caché fría.** Así `cache-cooling` (cuenta atrás)
+  no puede disparar sobre una caché ya expirada; "fría" lo dice el estado, no el número.
+- **Ítem 1 · numeración del mapa.** Los sectores #10–#12 conservan su número aunque el estado
+  de caché pasó a la línea 1; `statusline-map.png` no se re-numeró (es una captura de terminal
+  real, no se regenera en Windows). El SVG nuevo del ítem 2 dibuja el orden actual.
+- **Ítem 1 · GIF.** `docs/tapes/render-states.sh` necesita `freeze` (charmbracelet), que no
+  está en esta máquina; descargar un binario de terceros de madrugada no estaba pre-aprobado.
+  El regenerado va en el trabajo de la Mac (ítem 4). Revertir: correr el script donde haya
+  `freeze`.
+- **Ítem 1 · render budget.** Medido con la máquina cargada (4 sesiones vivas): 440–580 ms el
+  piso y 790–930 ms el render completo, vieja y nueva versión dentro del mismo ruido. El
+  cambio no añade forks (las palabras viajan en la misma llamada a jq). No se optimizó a
+  ciegas: la mejora candidata (quitar el `jq` que escribe el snapshot de /ahora, ~60 ms) cambia
+  una decisión de seguridad documentada (comillas en ramas). Queda para medir en frío.
+- **Ítem 1 · `5h ⚠` en sesiones inactivas.** La captura 2.1.292 trae `rate_limits.seven_day`
+  sin `five_hour`. La barra lo pinta como campo faltante (`5h ⚠`). Se dejó así (regla del
+  repo); si molesta, tratar `five_hour` ausente como "sin dato" en blanco.

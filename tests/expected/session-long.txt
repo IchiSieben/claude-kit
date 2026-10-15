@@ -1,2 +1,2 @@
-[1mOpus 5 (1M context)[0m ·high @test [31m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓┋░░░░ 334k[0m/400k ⚠ · 33% of 1M · $12.35 · 525m
-5h 41%  7d 87%  [32m⚡96%[0m/47m (1 miss)  [32m+213[0m/[31m-15[0m  [33m⚠ sin HANDOFF[0m  [sesion larga]  [35m→ /handoff PRIMERO, luego /clear[0m
+[1mOpus 5 (1M context)[0m ·high @test [31m▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓┋░░░░ 334k[0m/400k ⚠ · 33% of 1M · $12.35 · 525m · [32m⚡ caliente · 47m[0m
+5h 41%  7d 87%  [32m+213[0m/[31m-15[0m  [33m⚠ sin HANDOFF[0m  [sesion larga]  [35m→ /handoff PRIMERO, luego /clear[0m

@@ -41,15 +41,26 @@
       "source": "statusline.sh (RED_K, banda roja y marca ┋) · MANUAL.md §2 (banda absoluta, /clear por defecto) · confirmado por el owner 2026-09-18"
     },
     {
+      "id": "cache-cooling",
+      "priority": 25,
+      "hint": true,
+      "condition": { "metric": "cache_left_min", "op": "<=", "value": 5 },
+      "actions": {
+        "default": "→ manda un turno corto para recalentar, o /handoff si vas a parar",
+        "fresh": "→ manda un turno corto para recalentar (HANDOFF al día)"
+      },
+      "source": "PROMPT-ecosistema-claude-code §3 ítem 1 («p. ej. ≤ 5 min») · 2026-10-15, modo dormido, ver docs/DECISIONES.md · cache_left_min = minutos hasta expires_at mientras la caché está caliente; -1 si está fría o sin dato, así que nunca dispara sobre una caché ya fría"
+    },
+    {
       "id": "cache-cold",
       "priority": 30,
       "hint": true,
       "condition": { "metric": "cache_pct", "op": "<", "value": 60 },
       "actions": {
-        "default": "caché frío: {causes}",
-        "nodata": "caché frío → /usage dice la causa"
+        "default": "hit bajo por {causes} → no cambies modelo ni esfuerzo",
+        "nodata": "hit bajo → /usage dice la causa"
       },
-      "source": "statusline.sh (banda ámbar de caché y bloque de hints) · MANUAL.md §7 · confirmado por el owner 2026-09-18"
+      "source": "statusline.sh (banda ámbar de caché y bloque de hints) · MANUAL.md §7 · confirmado por el owner 2026-09-18 · textos 2026-10-15: la pista ya no repite «frío», que ahora es el estado del segmento de caché"
     },
     {
       "id": "session-long",
@@ -79,6 +90,14 @@
       "condition": { "metric": "context_k", "op": ">=", "value": 150 },
       "actions": {},
       "source": "statusline.sh (GREEN_K, banda de trabajo) · MANUAL.md §2 · confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "cache-hit-ok",
+      "priority": 65,
+      "hint": false,
+      "condition": { "metric": "cache_pct", "op": ">=", "value": 85 },
+      "actions": {},
+      "source": "statusline.sh (el 85 «cosmético» verde/ámbar que vivía en el código) · movido aquí 2026-10-15: a partir de este valor el hit no se muestra, porque no informa"
     },
     {
       "id": "handoff-drift-files",
@@ -168,5 +187,11 @@
       "actions": {},
       "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
     }
-  ]
+  ],
+  "labels": {
+    "_readme": "Palabras del segmento de caché (línea 1). Sin este bloque la barra muestra solo ⚡/❄ y el número.",
+    "cache-warm": "caliente",
+    "cache-cooling": "enfriando",
+    "cache-cold": "fría · próximo turno reescribe"
+  }
 }

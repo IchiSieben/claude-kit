@@ -22,10 +22,12 @@ owner confirmed every value below unchanged from statusline.sh`.
 |---|---|---|---|---|---|
 | `quota-5h` | 5-hour quota used | `five_pct >=` | 90 | 10 | stop, or drop to `sonnet` |
 | `context-red` | context size | `context_k >=` | 300 (k tokens) | 20 | `/handoff` first, then `/clear` |
-| `cache-cold` | prompt-cache hit rate | `cache_pct <` | 60 | 30 | name the cause (or `/usage` if unknown) |
+| `cache-cooling` | minutes left on a warm cache | `cache_left_min <=` | 5 | 25 | send a short turn to re-warm, or `/handoff` if you are stopping (`-1` when cold, so it never fires on a cold cache) |
+| `cache-cold` | prompt-cache hit rate | `cache_pct <` | 60 | 30 | name the cause (or `/usage` if unknown); the hint no longer repeats "cold" |
 | `session-long` | session length | `session_min >=` | 480 (8h) | 40 | `/handoff` before `/clear` (gated on `context-amber`) |
 | `unpushed` | commits ahead of upstream | `ahead >` | 0 | 50 | `git push` (`param: 7200`s grace before the counter turns amber) |
 | `context-amber` | context size | `context_k >=` | 150 (k tokens) | 60 | band only, no hint |
+| `cache-hit-ok` | prompt-cache hit rate | `cache_pct >=` | 85 | 65 | band only: at or above it the bar hides `hit N%` (it was a hardcoded 85 in the script) |
 | `handoff-drift-files` | dirty files newer than HANDOFF.md | `handoff_dirty >` | 20 | 70 | band only, no hint |
 | `handoff-drift-sessions` | sessions since HANDOFF.md | `handoff_sessions >=` | 2 | 71 | band only, no hint |
 
@@ -37,6 +39,17 @@ example, requires `context-amber` to also hold before its hint fires.
 
 A metric the caller could not measure is reported as `-1` and never matches
 any condition — unknown is deliberately not the same as zero.
+
+## Labels and the visor-* bands
+
+`labels` (top level, next to `thresholds`) holds the three words of the cache segment:
+`cache-warm` → `caliente`, `cache-cooling` → `enfriando`, `cache-cold` → `fría · próximo turno
+reescribe`. Text the bar shows is data too: without the block the bar prints only `⚡`/`❄`
+and the number.
+
+The `visor-*` entries (priority 200 and up, all `hint: false`) are the traffic-light bands of
+[enjambre](https://github.com/IchiSieben/enjambre)'s visor. The bar never measures their
+metrics (`disk_used_pct`, `mem_used_pct`, jobs), so for it they are inert.
 
 ## Who reads it
 

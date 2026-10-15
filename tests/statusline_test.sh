@@ -72,10 +72,49 @@ assert() {                    # assert <name> <condition-description> <0|1>
 }
 
 echo "Fixtures (salida exacta contra golden)"
-for f in session-new session-long fields-missing unknown-shape; do
+for f in session-new session-long fields-missing unknown-shape \
+         capture-2.1.300 cache-cooling cache-cold; do
   out=$("$BASH" "$SL" < "$FX/$f.json")
   check "$f" "$out"
 done
+
+echo
+echo "Caché: una palabra y un número, en un solo lugar"
+# capture-2.1.300 and cache-cold are sanitised real renders (2.1.300 warm, 2.1.292 cold);
+# expires_at was re-pinned against CC_NOW so the countdown is deterministic.
+esc=$'\033'                   # a real ESC byte: BSD sed has no \x1b
+plain() { printf '%s\n' "$1" | sed "s/${esc}\[[0-9;]*m//g"; }
+out=$(plain "$("$BASH" "$SL" < "$FX/capture-2.1.300.json")")
+case "$out" in
+  *"⚡ caliente · 42m"*) assert "caliente: minutos hasta expires_at" "" 0 ;;
+  *)                     assert "caliente: minutos hasta expires_at" "salió: ${out%%$'\n'*}" 1 ;;
+esac
+case "$out" in
+  *"hit "*) assert "hit ≥ cache-hit-ok no se muestra" "apareció el hit" 1 ;;
+  *)        assert "hit ≥ cache-hit-ok no se muestra" "" 0 ;;
+esac
+out=$(plain "$("$BASH" "$SL" < "$FX/cache-cooling.json")")
+case "$out" in
+  *"⚡ enfriando · 4m"*"turno corto"*) assert "enfriando: estado en línea 1, qué hacer en la pista" "" 0 ;;
+  *)                                   assert "enfriando: estado en línea 1, qué hacer en la pista" "salió: $out" 1 ;;
+esac
+out=$(plain "$("$BASH" "$SL" < "$FX/cache-cold.json")")
+case "$out" in
+  *"❄ fría · próximo turno reescribe"*) assert "fría: ❄ y qué pasa en el próximo turno" "" 0 ;;
+  *)                                    assert "fría: ❄ y qué pasa en el próximo turno" "salió: ${out%%$'\n'*}" 1 ;;
+esac
+# A cold cache has no countdown, so cache-cooling (a countdown threshold) must not fire on it.
+case "$out" in
+  *"turno corto"*) assert "fría: la pista de enfriando no dispara" "disparó" 1 ;;
+  *)               assert "fría: la pista de enfriando no dispara" "" 0 ;;
+esac
+# The state is said ONCE: neither the pista nor line 2 repeats frío/fría.
+n=$(printf '%s\n' "$out" | grep -o -E 'fr[ií][oa]' | wc -l)
+assert "fría: el estado aparece una sola vez" "apareció $n veces" "$(( n == 1 ? 0 : 1 ))"
+case "$out" in
+  *"hit 47%"*) assert "fría: hit bajo pasa a la línea 2" "" 0 ;;
+  *)           assert "fría: hit bajo pasa a la línea 2" "salió: ${out#*$'\n'}" 1 ;;
+esac
 
 echo
 echo "Invariantes: un campo ausente nunca se imprime como 0 ni como booleano"
@@ -175,6 +214,21 @@ else
   case "$out" in
     *"no puedo leer los umbrales"*) assert "thresholds.json corrupto: /ahora lo dice" "" 0 ;;
     *)                              assert "thresholds.json corrupto: /ahora lo dice" "salió: ${out%%$'\n'*}" 1 ;;
+  esac
+
+  # 1c. The cooling window is a number in the file: widen it and the warm capture cools.
+  jq '(.thresholds[] | select(.id=="cache-cooling") | .condition.value) = 60' "$TH" > "$thtmp/rules/thresholds.json"
+  out=$("$BASH" "$thtmp/statusline.sh" < "$FX/capture-2.1.300.json")
+  case "$out" in
+    *"enfriando"*) assert "subir cache-cooling en el JSON enfría la captura" "" 0 ;;
+    *)             assert "subir cache-cooling en el JSON enfría la captura" "salió: ${out%%$'\n'*}" 1 ;;
+  esac
+  # 1d. The words are in the file too: without `labels` only the symbol and the number show.
+  jq 'del(.labels)' "$TH" > "$thtmp/rules/thresholds.json"
+  out=$(plain "$("$BASH" "$thtmp/statusline.sh" < "$FX/capture-2.1.300.json")")
+  case "$out" in
+    *"· ⚡ 42m"*) assert "sin labels: solo ⚡ y el número" "" 0 ;;
+    *)           assert "sin labels: solo ⚡ y el número" "salió: ${out%%$'\n'*}" 1 ;;
   esac
 
   # 2. No thresholds file: no bands, no hints, and it SAYS so. Never a hardcoded fallback.

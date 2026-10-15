@@ -281,6 +281,10 @@ ser una barra de estado y se convirtió en un dashboard.
 | ` ⚠` después de los tokens | pasaste el umbral rojo | igual que rojo |
 | `33% of 1M` | porcentaje de la ventana real | contexto, no la métrica principal |
 | `$12.35 · 525m` | costo acumulado y minutos de sesión | ver §7 |
+| `⚡ caliente · 42m` verde | caché viva: minutos hasta que expira la última escritura (`expires_at`) | nada |
+| `⚡ enfriando · 4m` ámbar | quedan ≤ `cache-cooling` (hoy 5) minutos | lo dice la pista: un turno corto la recalienta; si vas a parar, `/handoff` antes |
+| `❄ fría · próximo turno reescribe` | la caché expiró (o `warm=false`): el próximo mensaje paga reescribir todo el contexto | con contexto grande, `/handoff` + `/clear` sale más barato que seguir |
+| `⚠ caché` | el objeto `prompt_cache` llegó con otra forma | re-capturar la muestra |
 | `⚠ contexto` | **no se pudo leer el uso de tokens** | normal en el primer render; si persiste, el JSON cambió |
 
 ### Línea 2 — cuota, caché, git, HANDOFF
@@ -288,12 +292,8 @@ ser una barra de estado y se convirtió en un dashboard.
 | Símbolo | Significado | Qué hacer |
 |---|---|---|
 | `5h 41%` / `7d 87%` | cuota consumida en cada ventana | ver §7 |
-| `⚡` | caché caliente | — |
-| `❄` | caché fría | ver §7 |
-| `96%` verde ≥85 · ámbar desde `cache-cold` · **rojo por debajo** (hoy <60) | tasa de acierto de caché | rojo: la barra te dice la causa |
-| `/47m` | **cuánto le queda** a la caché (de `expires_at`) | si va a bajar de 0, no dejes la sesión quieta |
-| `/exp` | la caché ya expiró | el próximo mensaje re-lee todo |
-| `(1 miss)` | fallos de caché en la sesión | — |
+| `hit 72%` ámbar · **rojo** bajo `cache-cold` (hoy <60) | tasa de acierto de caché; **solo aparece bajo `cache-hit-ok`** (hoy 85): arriba de eso no informa | rojo: la pista dice la causa |
+| `(1 miss)` | fallos de caché en la sesión, junto al hit | — |
 | `+213/-15` | líneas añadidas / quitadas | — |
 | `⎇ master` | rama | — |
 | `↑2 ↓0` | commits sin pushear / sin traer | `↑` en **ámbar** = lleva >2h sin push → `git push` |
@@ -458,7 +458,8 @@ estas filas está cruzada en este momento sin que tengas que mirar la barra:
 |---|---|---|
 | **cuota 5h cruzada** (hoy ≥90%) | `límite 5h al N% → para o baja a sonnet` | parar, o bajar de carril |
 | **contexto en rojo** (`┋`, hoy 300k) | `→ /handoff PRIMERO, luego /clear` · o `estado guardado → /clear seguro` si el handoff está fresco | lo que dice |
-| **caché bajo su piso** (hoy <60%) | `caché frío: <causa>` — el JSON ahora nombra la causa real | si la causa fue idle, no dejes la sesión quieta; si fue `model_changed`, no cambies de modelo a mitad |
+| **caché enfriando** (hoy ≤5 min) | `→ manda un turno corto para recalentar, o /handoff si vas a parar` | lo que dice |
+| **hit bajo su piso** (hoy <60%) | `hit bajo por <causa> → no cambies modelo ni esfuerzo` — el JSON nombra la causa real | si la causa fue idle, no dejes la sesión quieta; si fue `model_changed`, no cambies de modelo a mitad |
 | **sesión larga** (hoy ≥8h) y contexto en ámbar | `sesión de Nh → /clear seguro` o `→ /handoff antes de /clear` | cortar |
 | **commits sin pushear** | `↑N sin push → git push` | pushear |
 
