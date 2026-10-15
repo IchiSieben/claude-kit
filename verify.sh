@@ -47,6 +47,7 @@ check "suite de los hooks en verde"     'bash tests/hooks_test.sh'
 check "suite del modulo enjambre en verde" 'bash tests/enjambre_module_test.sh'
 check "suite de /route en verde"           'bash tests/route_test.sh'
 check "suite de harvest v2 / partidas en verde" 'bash tests/partidas_test.sh'
+check "suite de la bitacora en verde"      'bash tests/bitacora_test.sh'
 # The export's guards (planted leak fails the build, binaries survive it). Private repo only:
 # build-kit.sh does not ship, so the kit has no such test and skips this line.
 if [ -f tests/build_kit_test.sh ]; then
