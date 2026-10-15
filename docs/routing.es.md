@@ -69,14 +69,25 @@ una tarea descrita, antes de arrancar el trabajo. Responde en una tabla fija (ti
 effort, dónde, costo de caché, necesita SPEC.md, necesita plan mode, review externo después)
 más una línea de razonamiento.
 
-Su cascada barato-primero: trabajo mecánico es sonnet/medium; una feature en código conocido
-es opus/high (o sonnet/high si el patrón ya existe en el repo); debugging de causa incierta
-es opus/high arrancando desde un comando de reproducción; arquitectura, modelo de datos,
-frontera de seguridad o corrida autónoma larga es fable/high-xhigh con plan mode y SPEC.md
-primero; investigación o exploración va al subagente `Explore`; y para review, el revisor
-tiene que ser al menos tan fuerte como el autor — código escrito por sonnet lo revisa opus,
-por opus lo revisa fable, y por fable van tests más un review externo por CLI (un review del
-mismo modelo sobre sí mismo no agrega casi nada).
+No recuerda ningún modelo: lee dos archivos cada vez y los cita en la tabla.
+
+- **`rules/models.json` — los hechos.** Ids, nivel (fast < balanced < flagship < frontier),
+  contexto, salida máxima, precios por millón de tokens y esfuerzo por defecto de cada modelo.
+  Lo escribe `python tools/model-intel.py` leyendo la documentación pública de Anthropic, sin
+  gastar un token de modelo. No se edita a mano: se regenera.
+- **`rules/routing.json` — el criterio.** Cada carril (`mecanico`, `operario`, `redactor`,
+  `investigador`, `profundo`, `reviewer`, `session-default`) con su familia de modelo, su
+  esfuerzo y el porqué. Se edita a mano después de cada cambio de catálogo; `decisions` es un
+  log fechado de esos cambios (el kit lo publica vacío).
+
+La cascada barato-primero va de tipo de tarea a carril: trivial → `mecanico`; mecánico →
+`operario`; prosa → `redactor`; feature en código conocido → `session-default` (u `operario` si
+el patrón ya existe); debugging de causa incierta → `profundo`, desde un comando de
+reproducción; arquitectura o corrida autónoma larga → `session-default` con plan mode y
+SPEC.md; exploración → `investigador`; review → `reviewer`, cuyo nivel tiene que ser al menos el
+del autor. El modelo y el esfuerzo son los que ese carril diga hoy. Si un archivo falta o no
+parsea, `/route` lo dice y se detiene. `tests/route_test.sh` resuelve cinco casos desde los dos
+archivos y los compara con `tests/expected/route-cases.txt`.
 
 El skill nombra el costo de caché de forma explícita: cada modelo (y, en la mayoría de
 modelos, cada nivel de effort) tiene su propia caché de prompt, así que cambiar cualquiera de

@@ -1,0 +1,5 @@
+trivial	mecanico	claude-haiku-5-5	default(medium)
+prose	redactor	claude-sonnet-5-5	medium
+research	investigador	claude-sonnet-5-5	medium
+debug	profundo	claude-opus-5-5	xhigh
+review	reviewer	claude-opus-5-5	high

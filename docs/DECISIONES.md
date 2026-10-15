@@ -46,7 +46,7 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   repo); si molesta, tratar `five_hour` ausente como "sin dato" en blanco.
 - **Ítem 3 · el módulo es una versión genérica, no el hook del owner.** Elegido:
   `modules/enjambre/` con `enjambre-ssh-guard.sh` (hosts desde el `nodes.toml` del usuario o
-  `ENJAMBRE_GUARD_HOSTS`, sin `mac`/`mac6` ni rutas fijas) y `rules/kit-enjambre.md`. Por qué:
+  `ENJAMBRE_GUARD_HOSTS`, sin nombres de nodos del owner ni rutas fijas) y `rules/kit-enjambre.md`. Por qué:
   PUBLISH.md vetaba el hook y la regla personales porque nombran máquinas y rutas del owner; el
   prompt pide que lo compartido viva en el kit. Los personales siguen sin publicarse; el escaneo
   de `build-kit.sh` ahora busca esos marcadores personales en vez de `ENJAMBRE_RAW_SSH`.
@@ -83,3 +83,21 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   `src/content/architectures/claude-kit.json` con este flujo nuevo. La ventana del Landing los
   commiteó en `aa469aa` antes de que yo los revirtiera; el contenido es el mismo de este commit,
   así que no hay nada que deshacer. No toqué ningún otro archivo de ese worktree.
+
+## V1b · 2026-10-15 (respuestas del owner, prompt §12)
+
+- **Ítem 1 · `models.json` y `routing.json` publicados.** Auditoría: `models.json` son datos de
+  la documentación pública de Anthropic (ids, contexto, precios); `routing.json` no tiene secretos
+  ni terceros. Se exporta `routing.json` con `decisions: []` (el log fechado es privado, como pidió
+  el owner); también `tools/model-intel.py`, porque el SKILL lo nombra y sin él el kit diría una
+  herramienta que no trae. El `/route` público es ahora byte a byte el del repo privado.
+  Revertir: quitar las dos líneas del `AS_IS` y la línea `jq '.decisions = []'` de `build-kit.sh`.
+- **Ítem 1 · la prueba "misma recomendación" es determinista.** `/route` es un skill (lo ejecuta un
+  modelo), así que el test resuelve lo que el skill lee: tipo → carril → familia + esfuerzo →
+  id `current`, para 5 casos, contra `tests/expected/route-cases.txt`. El archivo esperado es el
+  mismo en los dos repos; la suite en verde en ambos es la prueba. Además: el SKILL no puede
+  escribir un id de modelo, y cada familia de carril tiene exactamente un modelo `current`.
+- **Ítem 1 · el draft de compactación salió del árbol.** `docs/handoffs/2026-10-15-draft.md`
+  (ignorado por git, escrito por el hook al compactar) tenía rutas locales y el escaneo de
+  `build-kit` recorre el disco, no solo lo versionado. Se movió al scratchpad de la sesión, no se
+  borró.

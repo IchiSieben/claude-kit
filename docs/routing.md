@@ -68,13 +68,25 @@ described task, before work starts. It answers in a fixed table (type, model, ef
 where, cache cost, needs SPEC.md, needs plan mode, external review after) plus one line of
 reasoning.
 
-Its cheap-first cascade: mechanical work is sonnet/medium; a feature in known code is
-opus/high (or sonnet/high if the pattern already exists); unclear-cause debugging is
-opus/high starting from a reproduction command; architecture/security/long autonomous runs
-are fable/high-xhigh with plan mode and a SPEC.md first; research/exploration goes to the
-`Explore` subagent; and for review, the reviewer must be at least as strong as the author —
-sonnet-written code gets an opus review, opus-written gets fable, and fable-written gets
-tests plus an external CLI review (same-model self-review adds ~nothing).
+It remembers no model: it reads two files every time and cites them in the table.
+
+- **`rules/models.json` — the facts.** Ids, tier (fast < balanced < flagship < frontier),
+  context, max output, prices per million tokens and default effort for each model. Written by
+  `python tools/model-intel.py` from Anthropic's public docs, without spending a model token.
+  Do not hand-edit it: regenerate it.
+- **`rules/routing.json` — the judgement.** Each lane (`mecanico`, `operario`, `redactor`,
+  `investigador`, `profundo`, `reviewer`, `session-default`) with its model family, effort and
+  why. Edited by hand after every catalogue change; `decisions` is a dated log of those changes
+  (the kit ships it empty).
+
+The cheap-first cascade maps task type to lane: trivial → `mecanico`; mechanical →
+`operario`; prose → `redactor`; feature in known code → `session-default` (or `operario` if the
+pattern already exists); unclear-cause debugging → `profundo`, from a reproduction command;
+architecture or a long autonomous run → `session-default` with plan mode and a SPEC.md;
+exploration → `investigador`; review → `reviewer`, whose tier must be at least the author's.
+The model and effort are whatever that lane says today. If either file is missing or does not
+parse, `/route` says so and stops. `tests/route_test.sh` resolves five cases from both files and
+compares them with `tests/expected/route-cases.txt`.
 
 The skill names the prompt-cache cost explicitly: each model (and, on most models, each
 effort level) has its own prompt cache, so switching either mid-session forces the next

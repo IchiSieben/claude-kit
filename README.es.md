@@ -141,6 +141,14 @@ recomienda el carril (`mecanico`, `operario`, `redactor`, `investigador`, `profu
 de ejecución (sesión principal, subagente, worktree, background) antes de gastar el primer
 token.
 
+**Qué modelo, desde datos.** `/route` nunca nombra un modelo de memoria. Lee
+`home/.claude/rules/models.json` (los hechos: ids, contexto, precios, esfuerzo por defecto; lo
+regenera `python tools/model-intel.py` desde la documentación pública de Anthropic) y
+`home/.claude/rules/routing.json` (el criterio: carril → familia de modelo + esfuerzo + porqué).
+Para cambiar el modelo de un carril, edita `routing.json` y corre `bash tests/route_test.sh`;
+cuando cambia el catálogo, corre `model-intel.py` y revisa los carriles. Detalle en
+[`docs/routing.es.md`](docs/routing.es.md).
+
 **Construir con subagentes.** La sesión principal decide el qué y el cómo; los seis agentes de
 [`docs/routing.es.md`](docs/routing.es.md) hacen la lectura y la escritura mecánica, y solo su
 resumen vuelve a la sesión que está pagando el contexto.

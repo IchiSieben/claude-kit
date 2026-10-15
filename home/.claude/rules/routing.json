@@ -1,0 +1,50 @@
+{
+  "_readme": [
+    "Hand-curated routing table: which model + effort each lane of CLAUDE.md gets, and why.",
+    "models.json (harvested weekly by tools/model-intel.py) is the FACT layer: ids, context, prices.",
+    "This file is the JUDGEMENT layer: it is edited by a human after every catalogue change.",
+    "Rule of thumb that motivated the file: a newer model at medium effort often beats an older one",
+    "at high; so lanes are re-decided per release, never carried over by habit. Log each decision below.",
+    "`/route` should read both files and cite them, never remember a model name."
+  ],
+  "version": 1,
+  "reviewed": "2026-09-26",
+  "lanes": {
+    "mecanico": {
+      "model": "haiku",
+      "effort": null,
+      "why": "search/list/extract: cost floor; no thinking needed"
+    },
+    "operario": {
+      "model": "sonnet",
+      "effort": "low",
+      "why": "decision already made; writing only"
+    },
+    "redactor": {
+      "model": "sonnet",
+      "effort": "medium",
+      "why": "prose quality without flagship cost"
+    },
+    "investigador": {
+      "model": "sonnet",
+      "effort": "medium",
+      "why": "recon returns summaries; breadth over depth"
+    },
+    "profundo": {
+      "model": "opus",
+      "effort": "xhigh",
+      "why": "ambiguity and trade-offs; escalate to fable only when opus fails twice"
+    },
+    "reviewer": {
+      "model": "opus",
+      "effort": "high",
+      "why": "reviewer >= author; fable reviews fable via tests + external CLI"
+    },
+    "session-default": {
+      "model": "fable",
+      "effort": "high",
+      "why": "long autonomous runs and architecture; cache-friendly effort moves on fable"
+    }
+  },
+  "decisions": []
+}
