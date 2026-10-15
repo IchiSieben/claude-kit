@@ -34,7 +34,13 @@ run() {
       lighthouse@12.2.1 chrome-launcher@1.1.2 jpeg-js@0.4.4) || return 21
   fi
   # perl alarm = a timeout that exists on stock macOS; the 2026-10-15 run hung after this download
-  (cd "$W" && perl -e 'alarm shift; exec @ARGV' 900 npx playwright install chromium) || return 21
+  # A browser already in the shared cache needs no install, and `install` refuses to run while another
+  # process holds the cache lock (2026-10-15: a hung earlier run held it).
+  if ls "$HOME"/Library/Caches/ms-playwright/chromium-1140/INSTALLATION_COMPLETE >/dev/null 2>&1; then
+    echo "== chromium-1140 already in the cache, skipping install"
+  else
+    (cd "$W" && perl -e 'alarm shift; exec @ARGV' 900 npx playwright install chromium) || return 21
+  fi
   echo "== playwright ready"
   cp docs/tapes/demo-gates.mjs "$W/demo-gates.mjs"
 
