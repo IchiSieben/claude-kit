@@ -214,7 +214,10 @@ export function createTutorial(opts) {
     next.textContent = index === list.length - 1 ? labels.done : labels.next;
 
     if (el) {
-      el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+      // Solo se desplaza si el objetivo no se ve entero: un scroll sin necesidad mueve el recorte
+      // fotograma a fotograma y eso cuenta como desplazamiento de layout (CLS).
+      const v = el.getBoundingClientRect();
+      if (v.top < 0 || v.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
       const r = el.getBoundingClientRect();
       spot.hidden = false;
       spot.style.left = `${r.left - 6}px`;
@@ -226,7 +229,7 @@ export function createTutorial(opts) {
       spot.hidden = true;
       place(card, null);
     }
-    next.focus();
+    next.focus({ preventScroll: true });
     if (entered !== index) {
       entered = index;
       onStep?.(step, index);
