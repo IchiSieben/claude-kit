@@ -67,3 +67,19 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
 - **Ítem 2 · el SVG se genera.** `docs/tapes/statusline-sectores.py` escribe la versión ES y EN
   con texto real y colores por variables CSS (claro/oscuro por `prefers-color-scheme` y por
   `data-theme`). El texto de la barra dentro del dibujo es el del estado "enfriando".
+- **Ítem 5 · la ficha dice 128 tests, no 79.** El prompt pedía `"Open source · 79 tests"`; 79 era
+  la cifra del 2026-09-22. Hoy: statusline 67 + hooks 38 + módulo enjambre 23 = 128, verificado
+  corriendo las tres suites. Los badges de los dos README también pasan de 79 a 128. Revertir:
+  reemplazar 128 por 79 en `docs/FICHA-LANDING.md` y los badges.
+- **Ítem 5 · `media` va aparte en la ficha.** El esquema del Landing valida que los archivos
+  existan en `public/media/claude-kit/`, y no existen hasta que vuelva el trabajo `kit-media` de
+  la Mac. El bloque queda listo para pegar debajo del frontmatter; pegarlo antes rompe el build.
+- **Ítem 5 · el flujo "módulo enjambre" no añade caja.** Reutiliza `sync`, `hk` y las aristas e4,
+  e8 y e9; la caja de hooks lista el guardia como "Opcional". Contenedores y llamadas no cambian
+  (12 y 18), los flujos pasan a 5. `import-arquitecturas.py --check <ruta>` → `check ok`.
+- **Ítem 5 · incidente: el importador escribió en el worktree del Landing.** Corrí
+  `import-arquitecturas.py` sin argumento (hace la importación completa, no el check) dentro de
+  `wt/landing-ecosistema`. Escribió `public/arquitecturas/claude-kit/index.html` y
+  `src/content/architectures/claude-kit.json` con este flujo nuevo. La ventana del Landing los
+  commiteó en `aa469aa` antes de que yo los revirtiera; el contenido es el mismo de este commit,
+  así que no hay nada que deshacer. No toqué ningún otro archivo de ese worktree.

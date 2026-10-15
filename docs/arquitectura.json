@@ -9,10 +9,10 @@
   "machines": ["PC Windows", "Mac mini", "GitHub"],
   "containers": 12,
   "calls": 18,
-  "flows": 4,
+  "flows": 5,
   "views": ["c4", "flows", "deploy", "decisions"],
   "hasCore": false,
-  "updated": "2026-10-10",
+  "updated": "2026-10-15",
   "status": "done",
   "landing": {"projectSlug": "claude-kit", "order": 70}
 }

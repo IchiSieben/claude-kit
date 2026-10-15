@@ -3,7 +3,7 @@
 Un kit personal para operar Claude Code: enrutamiento, subagentes, una puerta de revisión,
 hooks y una barra de estado que mantiene `~/.claude` honesto en todas las máquinas.
 
-![licencia](https://img.shields.io/badge/licencia-Apache--2.0-blue) ![shell](https://img.shields.io/badge/shell-bash-4EAA25) ![tests](https://img.shields.io/badge/tests-79%20passing-brightgreen) ![Claude Code](https://img.shields.io/badge/Claude%20Code-kit-5A45FF)
+![licencia](https://img.shields.io/badge/licencia-Apache--2.0-blue) ![shell](https://img.shields.io/badge/shell-bash-4EAA25) ![tests](https://img.shields.io/badge/tests-128%20passing-brightgreen) ![Claude Code](https://img.shields.io/badge/Claude%20Code-kit-5A45FF)
 
 [English](README.md) · Español
 

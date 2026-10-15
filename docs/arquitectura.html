@@ -289,7 +289,7 @@ td .m{font-family:var(--font-mono);font-size:12px}
             <div class="k"><span>copia con LF y respaldo fechado de lo reemplazado</span><span class="m">sync-to-home.sh</span></div>
             <div class="k"><span>solo claves portables de settings.json</span><span class="m">jq</span></div>
             <div class="k"><span>verificación: sintaxis, umbrales, deriva</span><span class="m">verify.sh</span></div>
-            <div class="k"><span>dos suites de pruebas</span><span class="m">bash</span></div>
+            <div class="k"><span>tres suites de pruebas</span><span class="m">bash</span></div>
             <div><span>reinicio manual de Claude Code</span><span class="m">carga al arrancar</span></div>
           </div>
           <p style="font-size:12.5px;color:var(--ink2)">Requisitos: bash, jq y git; la barra pide bash 4.2 o superior y en macOS se relanza sola con el de Homebrew.</p>
@@ -662,8 +662,8 @@ const N = {
   ver:  {x:310,y:465,w:220,h:85,kind:"script · bash",ttl:"verify.sh",tech:"comprobaciones con eval · jq · git",color:"blue",
          resp:"Comprueba que el espejo aterrizó: sintaxis bash, umbrales válidos, hooks registrados, árbol limpio, LF, nada sensible versionado y deriva entre el repo y el directorio de usuario. La deriva se informa, no falla.",
          kv:{"Sale con":"el número de comprobaciones que fallan"}},
-  tst:  {x:310,y:575,w:220,h:45,kind:"pruebas · bash",ttl:"Pruebas",tech:"statusline_test.sh · hooks_test.sh",color:"blue",
-         resp:"Dos suites. La barra se compara contra salidas guardadas con reloj y ancho fijos (se regeneran a propósito con BLESS=1). Los hooks se prueban con cargas sintéticas, un repo temporal y un HOME falso fuera de él.",
+  tst:  {x:310,y:575,w:220,h:45,kind:"pruebas · bash",ttl:"Pruebas",tech:"statusline_test.sh · hooks_test.sh · enjambre_module_test.sh",color:"blue",
+         resp:"Tres suites. La barra se compara contra salidas guardadas con reloj y ancho fijos (se regeneran a propósito con BLESS=1). Los hooks se prueban con cargas sintéticas, un repo temporal y un HOME falso fuera de él. La tercera prueba la instalación del módulo enjambre y su guardia de ssh.",
          kv:{"Casos":"4 cargas de la barra + hooks incl. redacción de secretos falsos","Falsos secretos":"permitidos a propósito en la config de gitleaks"}},
   home: {x:620,y:90,w:220,h:130,kind:"directorio de usuario · cada máquina",ttl:"Configuración instalada",tech:"~/.claude",color:"blue",
          resp:"Lo que Claude Code lee de verdad: reglas, agentes, skills, settings, hooks, barra y umbrales. Se carga al arrancar el proceso, por eso tras cada actualización hay que reiniciar.",
@@ -673,7 +673,7 @@ const N = {
          kv:{"Eventos":"SessionStart · PreCompact · PostCompact · SubagentStop · SessionEnd · PostToolUseFailure"}},
   hk:   {x:620,y:450,w:220,h:110,kind:"hooks · bash + jq",ttl:"Cinco hooks",tech:"log-event · session-drift-warn · precompact-draft · compact-reinject · log-tool-failure",color:"blue",
          resp:"Registran el ciclo de la sesión, avisan al arrancar si el archivo de traspaso quedó muy atrás, escriben un borrador de hechos antes de compactar y vuelven a anclar el contexto después. Todos terminan con éxito.",
-         kv:{"Entrada":"JSON por stdin","Límite":"un hook nunca bloquea compactar ni cerrar"}},
+         kv:{"Entrada":"JSON por stdin","Límite":"un hook nunca bloquea compactar ni cerrar","Opcional":"enjambre-ssh-guard.sh (PreToolUse), solo con sync-to-home.sh --with enjambre"}},
   th:   {x:930,y:90,w:240,h:90,kind:"datos · JSON",ttl:"Umbrales",tech:"rules/thresholds.json",color:"blue",
          resp:"El único lugar con los números del kit: cuota de cinco horas, bandas de contexto, suelo de caché, duración de sesión, commits sin subir y deriva roja del traspaso. Cada uno trae condición, prioridad y fuente.",
          kv:{"Lo leen":"la barra · el hook de arranque · el comando de estado"}},
@@ -712,9 +712,9 @@ const FLOWS = [
     ["e4","Respalda lo que reemplaza y copia con LF"],
     ["e4","Fusiona solo las claves portables de settings.json"],
     ["e18","Ejecuta la verificación"],
-    ["ver","Sintaxis, umbrales, deriva y dos suites de pruebas"],
+    ["ver","Sintaxis, umbrales, deriva y tres suites de pruebas"],
     ["e6","Compara el repo con el directorio de usuario e informa la deriva"],
-    ["e7","Corre las dos suites de pruebas"],
+    ["e7","Corre las tres suites de pruebas"],
     ["sync","Pide reiniciar Claude Code: la configuración carga al arrancar"]]},
   {id:"sesion",t:"Una sesión lee las reglas y un hook actúa",steps:[
     ["e8","Carga reglas, agentes, skills y settings"],
@@ -726,6 +726,14 @@ const FLOWS = [
     ["e9","PreCompact"],
     ["e12","Borrador con commits, archivos sucios y comandos fallidos"]]},
   {id:"barra",t:"La barra de estado se repinta",steps:[["e10","Claude Code le pasa a la barra el JSON de la sesión por stdin"],["e11","Lee los umbrales; si faltan, muestra un aviso en vez de colorear"],["e13","Escribe un snapshot por sesión que el comando de estado reutiliza"],["e17","Devuelve las dos líneas de texto a la sesión"]]},
+  {id:"enjambre",t:"Módulo enjambre: la guardia de ssh",steps:[
+    ["sync","La persona ejecuta bash sync-to-home.sh --with enjambre"],
+    ["e4","Copia el hook y la regla del módulo y registra PreToolUse en settings.json; sin la bandera no instala nada"],
+    ["e8","Al arrancar, la sesión carga la regla: delegar por enjambre, nunca a mano"],
+    ["e9","PreToolUse de Bash: el comando llega por stdin"],
+    ["hk","enjambre-ssh-guard.sh compara el host con los nodos de nodes.toml (o ENJAMBRE_GUARD_HOSTS)"],
+    ["e9","ssh directo a un nodo: sale con 2 y el motivo; ENJAMBRE_RAW_SSH=1 lo deja pasar una vez, registrado",{rev:true}],
+    {note:"Los repos de enjambre quedan exentos: ahí el ssh es el propio transporte",over:["hk"]}]},
   {id:"publicar",t:"Publicar la versión pública filtrada",steps:[["e1","El filtro de publicación genera el árbol público y lo lleva a GitHub (su interior está fuera de este repo)"],["e2","Cada máquina recibe el cambio con su próximo kit-update"]]},
 ];
 const svg = $("#c4svg"), NS = "http://www.w3.org/2000/svg";

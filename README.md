@@ -2,7 +2,7 @@
 
 A personal operating kit for Claude Code: routing, subagents, a review gate, hooks and a status line that keeps `~/.claude` honest across machines.
 
-![licence](https://img.shields.io/badge/licence-Apache--2.0-blue) ![shell](https://img.shields.io/badge/shell-bash-4EAA25) ![tests](https://img.shields.io/badge/tests-79%20passing-brightgreen) ![Claude Code](https://img.shields.io/badge/Claude%20Code-kit-5A45FF)
+![licence](https://img.shields.io/badge/licence-Apache--2.0-blue) ![shell](https://img.shields.io/badge/shell-bash-4EAA25) ![tests](https://img.shields.io/badge/tests-128%20passing-brightgreen) ![Claude Code](https://img.shields.io/badge/Claude%20Code-kit-5A45FF)
 
 English · [Español](README.es.md)
 

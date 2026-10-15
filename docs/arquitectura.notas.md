@@ -15,12 +15,12 @@ Fecha: 2026-10-10. Fuente: el código de este repo (scripts de espejo, hooks, ba
    - registros y estado locales (`~/.claude/logs`, `~/.claude/state`, borradores en `docs/handoffs/`);
    - herramientas de archivo `harvest.py` y `visor.py` (Python): no se dibujan, ver "No dibujado".
 3. **Llamadas reales.** Tabla más abajo, con archivo y función de cada una.
-4. **Flujos.** Cuatro: instalar o actualizar el kit en una máquina; una sesión lee las reglas y un hook actúa; la barra de estado se repinta; publicar la versión pública filtrada.
+4. **Flujos.** Cinco: instalar o actualizar el kit en una máquina; una sesión lee las reglas y un hook actúa; la barra de estado se repinta; el módulo enjambre (2026-10-15: `sync-to-home.sh --with enjambre` instala `enjambre-ssh-guard.sh` como PreToolUse y la regla; reutiliza las aristas e4, e8 y e9 y la caja de hooks, sin caja nueva); publicar la versión pública filtrada.
 5. **Componentes internos del núcleo.** No aplica (sin API ni lógica de negocio con puertos y adaptadores).
 6. **Datos.** No hay base de datos. Almacenamiento en archivos: `events.jsonl` y `tool-failures.jsonl` (una línea JSON por evento), un snapshot JSON por sesión en el directorio de estado (la barra lo escribe y `/ahora` lo lee; `log-event.sh` barre los de más de 24 h al cerrar sesión), borradores `docs/handoffs/<fecha>-draft.md` (ignorados por git). Vista de datos omitida.
 7. **Despliegue.** Cada máquina: `git pull --ff-only`, `sync-to-home.sh`, `verify.sh`, reiniciar Claude Code (`kit-update.sh`). No hay servidor. Al escalar a más máquinas el mismo flujo se repite; no hay inventario central (por confirmar si se quiere uno).
 8. **Historias de usuario.** No aplica (herramienta personal).
-9. **Decisiones.** No existe `docs/DECISIONES.md`; las decisiones de la página están inferidas de los comentarios del código y marcadas como inferidas.
+9. **Decisiones.** Desde el 2026-10-15 existe `docs/DECISIONES.md` (decisiones de sesión fechadas). Las decisiones de la página siguen inferidas de los comentarios del código y marcadas como inferidas.
 
 ## Tabla de llamadas (evidencia)
 
@@ -32,7 +32,7 @@ Fecha: 2026-10-10. Fuente: el código de este repo (scripts de espejo, hooks, ba
 | e4 | scripts, directorio de usuario | copia con LF, respaldo, fusión de claves portables de `settings.json` | `sync-to-home.sh` (bucle principal, `jq -s`, `backup`, `copy_lf`) |
 | e5 | directorio de usuario, clon | copia inversa; informa archivos sobrantes sin borrar | `sync-from-home.sh` (`STALE`) |
 | e6 | verify, directorio de usuario | comparación de deriva | `verify.sh` (Fase E, `same_portable`, `same_lf`) |
-| e7 | verify, pruebas | ejecuta las dos suites | `verify.sh` (`bash tests/statusline_test.sh`, `bash tests/hooks_test.sh`) |
+| e7 | verify, pruebas | ejecuta las tres suites | `verify.sh` (`statusline_test.sh`, `hooks_test.sh`, `enjambre_module_test.sh`) |
 | e8 | sesión, directorio de usuario | carga CLAUDE.md, reglas, agentes, skills, settings al arrancar | `kit-update.sh` (aviso de reinicio), `docs/hooks.md` |
 | e9 | sesión, hooks | payload JSON por stdin en cada evento | `home/.claude/settings.json` (bloque `hooks`), `hooks/log-event.sh` |
 | e10 | sesión, barra | payload JSON por stdin | `settings.json` (`statusLine.command`), `statusline.sh` |
