@@ -1,25 +1,47 @@
 {
  "lighthouse": [
   {
-   "perf": 88,
+   "perf": 90,
    "a11y": 100,
    "bp": 100,
    "seo": 100,
-   "lcp": 1565,
-   "cls": 0,
-   "tbt": 434,
-   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "lcp": 1471,
+   "cls": 0.175,
+   "tbt": 31,
+   "lcpEl": "",
    "a11yFails": []
   },
   {
-   "perf": 95,
+   "perf": 99,
    "a11y": 100,
    "bp": 100,
    "seo": 100,
-   "lcp": 1552,
+   "lcp": 1190,
    "cls": 0,
-   "tbt": 172,
-   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "tbt": 41,
+   "lcpEl": "",
+   "a11yFails": []
+  },
+  {
+   "perf": 99,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1133,
+   "cls": 0,
+   "tbt": 42,
+   "lcpEl": "",
+   "a11yFails": []
+  },
+  {
+   "perf": 99,
+   "a11y": 100,
+   "bp": 100,
+   "seo": 100,
+   "lcp": 1178,
+   "cls": 0,
+   "tbt": 4,
+   "lcpEl": "",
    "a11yFails": []
   },
   {
@@ -27,32 +49,10 @@
    "a11y": 100,
    "bp": 100,
    "seo": 100,
-   "lcp": 1590,
-   "cls": 0,
-   "tbt": 434,
-   "lcpEl": "<p class=\"lead reveal is-in\">",
-   "a11yFails": []
-  },
-  {
-   "perf": 80,
-   "a11y": 100,
-   "bp": 100,
-   "seo": 100,
-   "lcp": 1683,
-   "cls": 0,
-   "tbt": 706,
-   "lcpEl": "<p class=\"lead reveal is-in\">",
-   "a11yFails": []
-  },
-  {
-   "perf": 88,
-   "a11y": 100,
-   "bp": 100,
-   "seo": 100,
-   "lcp": 1780,
-   "cls": 0,
-   "tbt": 402,
-   "lcpEl": "<p class=\"lead reveal is-in\">",
+   "lcp": 888,
+   "cls": 0.233,
+   "tbt": 2,
+   "lcpEl": "",
    "a11yFails": []
   }
  ],
@@ -67,90 +67,90 @@
   {
    "id": "load",
    "nav": true,
-   "frames": 44,
+   "frames": 15,
    "cuts": []
   },
   {
    "id": "first-visit",
    "nav": true,
-   "frames": 87,
+   "frames": 31,
    "cuts": []
   },
   {
    "id": "context",
    "nav": false,
-   "frames": 148,
+   "frames": 51,
    "cuts": []
   },
   {
    "id": "cache",
    "nav": false,
-   "frames": 223,
+   "frames": 81,
    "cuts": []
   },
   {
    "id": "git",
    "nav": false,
-   "frames": 159,
+   "frames": 63,
    "cuts": []
   },
   {
    "id": "session",
    "nav": false,
-   "frames": 178,
+   "frames": 63,
    "cuts": []
   },
   {
    "id": "theme",
    "nav": false,
-   "frames": 85,
+   "frames": 53,
    "cuts": []
   },
   {
    "id": "tour",
    "nav": false,
-   "frames": 252,
+   "frames": 82,
    "cuts": []
   },
   {
    "id": "scroll",
    "nav": false,
-   "frames": 119,
+   "frames": 117,
    "cuts": []
   },
   {
    "id": "mobile-git",
    "nav": false,
-   "frames": 89,
+   "frames": 31,
    "cuts": []
   },
   {
    "id": "reduced-cache",
    "nav": false,
-   "frames": 131,
+   "frames": 50,
    "cuts": []
   }
  ],
  "shots": [
-  "outfull\\light-hero.png",
-  "outfull\\light-significado.png",
-  "outfull\\light-llevas.png",
-  "outfull\\light-sesion.png",
-  "outfull\\dark-hero.png",
-  "outfull\\dark-significado.png",
-  "outfull\\dark-llevas.png",
-  "outfull\\dark-sesion.png",
-  "outfull\\390-hero.png",
-  "outfull\\390-significado.png",
-  "outfull\\390-llevas.png",
-  "outfull\\390-sesion.png",
-  "outfull\\tour-1.png",
-  "outfull\\tour-3.png",
-  "outfull\\tour-6.png"
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/light-hero.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/light-significado.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/light-llevas.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/light-sesion.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/dark-hero.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/dark-significado.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/dark-llevas.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/dark-sesion.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/390-hero.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/390-significado.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/390-llevas.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/390-sesion.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/tour-1.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/tour-3.png",
+  "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/tour-6.png"
  ],
- "clip": "outfull\\clip.webm",
+ "clip": "/Users/yoichipalacios/Documents/Portfolio/wt/claude-kit-kit-demo-gates-5/docs/tapes/out/demo-gates/clip.webm",
  "pass": {
-  "perf": false,
+  "perf": true,
   "a11y": true,
   "cls": true,
   "axe": true,
