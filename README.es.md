@@ -102,6 +102,22 @@ El kit trae un `CLAUDE.md` que es el del propio autor. Bifúrcalo — está pens
 — y se mantiene bajo 70 líneas a propósito: ese archivo se relee en cada sesión, así que su
 largo es un presupuesto de contexto, no una preferencia de estilo.
 
+### Tres guardas, y por qué
+
+Cada una está aquí porque su ausencia costó algo real el 2026-10-15.
+
+- **Un hook `pre-push` que corre `bash verify.sh`** (`bash tools/install-hooks.sh [repo]`,
+  sirve también para tus repos). Un HANDOFF que dice «hecho» con verify en rojo es peor que no
+  tener HANDOFF. Con el hook, un verify en rojo niega el push; ya no depende de acordarse.
+  `tests/prepush_test.sh` lo prueba en un repo desechable.
+- **`.gitattributes`: LF por defecto y cada binario con nombre.** `text=auto` adivina. Una
+  adivinanza mala, sumada a un `sed -i` que en Windows se come cada `\r`, dejó dos videos
+  publicados un byte más cortos. Nadie lo vio hasta que falló una comprobación de hash.
+- **`set -euo pipefail` en toda cadena que termina en push.** Sin `-e`, la cadena sigue después
+  de un paso fallido. Sin `pipefail`, una tubería solo informa el estado de su último comando: la
+  auditoría de fugas de la exportación decía «limpio» con un secreto plantado dentro del kit.
+  `verify.sh` falla si un script o un paso de workflow que hace push no lo lleva.
+
 ## Si tienes más de una máquina: enjambre
 
 [enjambre](https://github.com/IchiSieben/enjambre) es el proyecto hermano: convierte tus otras

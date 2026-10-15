@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# pre-push — refuse the push when the repo's own `verify.sh` fails.
+#
+# Installed by tools/install-hooks.sh (core.hooksPath = .githooks). A repo without a
+# verify.sh at its root pushes as before: the hook has nothing to check and says so.
+# `git push --no-verify` skips every pre-push hook; that is git's escape hatch, not ours.
+set -euo pipefail
+root=$(git rev-parse --show-toplevel)
+# git may export GIT_DIR / GIT_INDEX_FILE to hooks. verify.sh runs suites that build their
+# own throwaway repos, and an inherited GIT_DIR would point those at THIS repo instead.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+if [ ! -f "$root/verify.sh" ]; then
+  echo "pre-push: no verify.sh in $root; nothing to check" >&2
+  exit 0
+fi
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+echo "pre-push: bash verify.sh ..." >&2
+if (cd "$root" && bash verify.sh) < /dev/null > "$log" 2>&1; then
+  echo "pre-push: verify.sh passed" >&2
+  exit 0
+fi
+tail -n 25 "$log" >&2
+echo "pre-push: verify.sh FAILED; push refused. Fix it, or correct the HANDOFF that claims it." >&2
+exit 1

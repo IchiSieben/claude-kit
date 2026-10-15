@@ -101,6 +101,22 @@ The kit ships a `CLAUDE.md` that is the owner's own rules. Fork it — it is mea
 — and it is kept under 70 lines on purpose: that file is re-read every session, so its length
 is a context budget, not a style preference.
 
+### Three guards, and why
+
+Each one is here because its absence cost something real on 2026-10-15.
+
+- **A `pre-push` hook that runs `bash verify.sh`** (`bash tools/install-hooks.sh [repo]`, also
+  for your own repos). A HANDOFF that says "done" while verify is red is worse than no HANDOFF;
+  the hook makes a red verify refuse the push instead of relying on memory.
+  `tests/prepush_test.sh` proves it in a throwaway repo.
+- **`.gitattributes`: LF by default, every binary named.** `text=auto` guesses. One wrong guess,
+  plus a `sed -i` on Windows that drops each `\r`, left two published videos one byte short.
+  Nobody saw it until a hash check failed.
+- **`set -euo pipefail` on every chain that ends in a push.** Without `-e` the chain keeps going
+  past a failed step. Without `pipefail` a pipe reports only the status of its last command: the
+  export's leak audit said "clean" while a planted secret sat in the kit. `verify.sh` fails if a
+  script or workflow step that pushes lacks it.
+
 ## If you have more than one machine: enjambre
 
 [enjambre](https://github.com/IchiSieben/enjambre) is the sibling project: it turns your other

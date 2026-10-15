@@ -51,6 +51,35 @@ check "suite de /route en verde"           'bash tests/route_test.sh'
 if [ -f tests/build_kit_test.sh ]; then
   check "guardas de build-kit en verde"     'bash tests/build_kit_test.sh'
 fi
+
+echo "Guardas - pre-push, finales de linea, cadenas que terminan en push"
+check "suite del pre-push en verde (verify en rojo niega el push)" 'bash tests/prepush_test.sh'
+check "el pre-push del repo es la plantilla y lleva bit de ejecucion en el indice" \
+      'cmp -s templates/githooks/pre-push .githooks/pre-push && git ls-files -s .githooks/pre-push | grep -q "^100755"'
+check ".gitattributes: LF por defecto y binarios explicitos (webm mp4 webp png gif woff2 pdf)" \
+      'grep -qx "\* text=auto eol=lf" .gitattributes && ( for e in webm mp4 webp png gif woff2 pdf; do grep -qx "\*\.$e binary" .gitattributes || exit 1; done )'
+# Every chain that ends in a push stops at its first failure: a .sh with a push line carries
+# `set -euo pipefail`, and so does the first line of a workflow `run: |` block that pushes.
+# The pattern says git[ ]push so this file never matches itself.
+push_chains_strict() {
+  local f bad=0
+  while IFS= read -r f; do
+    grep -qE '^[[:space:]]*([^#]*&&[[:space:]]*)?git[ ]push' "$f" || continue
+    grep -q 'set -euo pipefail' "$f" || { echo "$f"; bad=1; }
+  done < <(git ls-files '*.sh')
+  while IFS= read -r f; do
+    awk '/^[[:space:]]*(-[[:space:]]+)?run:[[:space:]]*\|/ { inb=1; ind=-1; first=""; next }
+         /^[[:space:]]*(-[[:space:]]+)?run:.*git[ ]push/ { print FILENAME ":" NR; bad=1; next }
+         inb && !/^[[:space:]]*$/ {
+           match($0, /^[[:space:]]*/); i = RLENGTH
+           if (ind < 0) { ind = i; first = substr($0, i + 1) } else if (i < ind) { inb = 0 }
+           if (inb && $0 ~ /^[[:space:]]*git[ ]push/ && first != "set -euo pipefail") { print FILENAME ":" NR; bad=1 }
+         }
+         END { exit bad }' "$f" || bad=1
+  done < <(git ls-files '.github/workflows/*.yml')
+  return "$bad"
+}
+check "toda cadena que termina en push lleva set -euo pipefail" 'push_chains_strict'
 # The public kit's demo (docs/demo/grid.json) is the bar pre-rendered by tools/render-grid.sh;
 # it stores a hash of statusline.sh + thresholds.json. Changed bar, stale demo: re-render.
 check "la demo esta al dia con la barra (si no: bash tools/render-grid.sh)" \
