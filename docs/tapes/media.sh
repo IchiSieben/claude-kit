@@ -45,14 +45,27 @@ run() {
     for c in $(ls -d "$(brew --cellar)"/freeze/*/bin/freeze 2>/dev/null | sort -r) \
              "$(command -v freeze 2>/dev/null)" "$(brew --prefix)/bin/freeze" \
              "$(brew --prefix charmbracelet/tap/freeze 2>/dev/null)/bin/freeze"; do
-      [ -x "$c" ] && "$c" --help 2>&1 | grep -q -- '--window' && { echo "$c"; return 0; }
+      [ -x "$c" ] || continue
+      # Capture first, match after: with pipefail, `freeze --help | grep -q` fails whenever grep
+      # exits early and freeze dies of SIGPIPE (kit-media-5 rejected a good binary that way).
+      local h; h=$("$c" --help 2>&1 || true)
+      case "$h" in *--window*) echo "$c"; return 0 ;; esac
     done
     return 1
+  }
+  freeze_diag() {  # printed only when no candidate passes, so the next run starts with data
+    echo "-- freeze diagnosis"
+    brew list --verbose charmbracelet/tap/freeze 2>&1 | head -10
+    ls -la "$(brew --cellar)"/freeze/*/bin 2>&1 | head -10
+    local c
+    for c in $(ls -d "$(brew --cellar)"/freeze/*/bin/freeze 2>/dev/null) "$(command -v freeze 2>/dev/null)"; do
+      echo "candidate $c:"; "$c" --help 2>&1 | head -8
+    done
   }
   FREEZE=$(find_freeze) || {
     echo "brew install charmbracelet/tap/freeze"
     brew install charmbracelet/tap/freeze || return 20
-    FREEZE=$(find_freeze) || { echo "no Charm freeze in $(brew --cellar)/freeze nor on PATH"; return 20; }
+    FREEZE=$(find_freeze) || { freeze_diag; echo "no Charm freeze in $(brew --cellar)/freeze nor on PATH"; return 20; }
   }
   export FREEZE; echo "freeze: $FREEZE"
   if ! ls "$HOME/Library/Fonts" /Library/Fonts 2>/dev/null | grep -qi 'JetBrainsMonoNerd'; then
