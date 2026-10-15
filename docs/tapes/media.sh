@@ -32,14 +32,30 @@ run() {
   command -v brew >/dev/null || { echo "no Homebrew"; return 20; }
   # Tools: vhs (records the terminal; pulls ttyd), freeze (PNG frames for the GIF), ffmpeg,
   # a Nerd Font so the terminal has ⎇ and the powerline glyphs; ❄/⚡ fall back to Apple's.
-  for t in vhs freeze ffmpeg; do
+  for t in vhs ffmpeg; do
     command -v "$t" >/dev/null || { echo "brew install $t"; brew install "$t" || return 20; }
   done
+  # freeze: kit-media-3 saw `brew install freeze` report "already installed" while the job's PATH
+  # had no `freeze`. Use Charm's tap, resolve the binary from brew's own prefix, and prove it is
+  # Charm's freeze before render-states.sh relies on it.
+  FREEZE=""
+  for c in "$(command -v freeze 2>/dev/null)" "$(brew --prefix)/bin/freeze" \
+           "$(brew --prefix charmbracelet/tap/freeze 2>/dev/null)/bin/freeze"; do
+    [ -x "$c" ] && "$c" --help 2>&1 | grep -q -- '--window' && { FREEZE=$c; break; }
+  done
+  if [ -z "$FREEZE" ]; then
+    echo "brew install charmbracelet/tap/freeze"
+    brew install charmbracelet/tap/freeze || return 20
+    FREEZE="$(brew --prefix charmbracelet/tap/freeze)/bin/freeze"
+    [ -x "$FREEZE" ] && "$FREEZE" --help 2>&1 | grep -q -- '--window' \
+      || { echo "freeze from charmbracelet/tap not found at $FREEZE"; return 20; }
+  fi
+  export FREEZE; echo "freeze: $FREEZE"
   if ! ls "$HOME/Library/Fonts" /Library/Fonts 2>/dev/null | grep -qi 'JetBrainsMonoNerd'; then
     echo "brew install --cask font-jetbrains-mono-nerd-font"
     brew install --cask font-jetbrains-mono-nerd-font || return 20
   fi
-  vhs --version; freeze --version 2>/dev/null | head -1; ffmpeg -version | head -1
+  vhs --version; "$FREEZE" --version 2>/dev/null | head -1; ffmpeg -version | head -1
 
   echo "== states (statusline.sh over docs/fixtures)"
   rm -rf "$OUT/ans"; bash docs/tapes/render-states.sh --ans "$OUT/ans" || return 24
