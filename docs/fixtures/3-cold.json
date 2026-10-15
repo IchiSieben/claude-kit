@@ -61,17 +61,11 @@
     "last_miss_at": 1789698927,
     "last_miss_cause": {
       "causes": [
-        "model_changed",
-        "betas_changed",
-        "effort_changed",
-        "messages_rewritten"
+        "model_changed"
       ]
     },
     "miss_causes": {
-      "model_changed": 1,
-      "betas_changed": 1,
-      "effort_changed": 1,
-      "messages_rewritten": 1
+      "model_changed": 1
     },
     "recache_tokens_if_cold": 189400
   },

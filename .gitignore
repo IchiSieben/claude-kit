@@ -17,3 +17,6 @@ node_modules/
 docs/handoffs/*-draft.md
 # Raw screenshots go to inbox/ and are processed (cropped, checked) before they are committed.
 docs/img/inbox/
+# enjambre: the lane word a tests job writes, and the media lane scratch (docs/tapes/media.sh).
+.enjambre-lane
+docs/tapes/out/
