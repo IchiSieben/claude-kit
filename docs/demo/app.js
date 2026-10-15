@@ -598,7 +598,7 @@ addEventListener("resize", () => { svg.innerHTML = ""; });
 // ---------------------------------------------------------------- boot: inline cell first, grid.json after
 if (initial.lines) paint(initial.lines);
 applyLang();
-fetch("grid.json").then(r => r.json()).then(g => {
+fetch("grid.json", { cache: "no-cache" }).then(r => r.json()).then(g => {
   grid = g;
   if (!initial.lines || initial.key !== state.join(".")) paint(linesOf(idsNow()));
   collectStates(); applyLang();
