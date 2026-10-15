@@ -64,7 +64,6 @@ references to change as the evidence does.
 **The bar rendered from fixtures: warm cache → cooling → cold → near auto-compact → stale HANDOFF.** Regenerate with `docs/tapes/render-states.sh`; its bundled font has no `⎇`/`❄` glyph, so those two show as a box here and as themselves in the real captures above.
 ![Status line states](docs/img/statusline-states.gif)
 
-*This GIF predates the 2026-10-15 cache redesign: it still shows the old cache segment (hit ratio and TTL), not `⚡ enfriando · 4m`. It is re-recorded on the Mac by `TASK-kit-media.md`.*
 
 **Try it live: [kit.ichisieben.dev](https://kit.ichisieben.dev/)** — the bar reacting to controls (context, cache, quota, git, HANDOFF, model). Every state is the real `statusline.sh` output, pre-rendered by `tools/render-grid.sh`; `verify.sh` fails if the bar changes and the demo is not re-rendered.
 

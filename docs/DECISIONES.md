@@ -129,3 +129,14 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
 - **Ítem 2 · tipografías del visor de enjambre** (JetBrains Mono y Space Grotesk, subconjunto
   latino, OFL, licencias en `docs/demo/fonts/`). Los glifos `▓░┋⎇⚡❄` no están en el subconjunto
   y caen a la monoespaciada del sistema.
+- **Medios · GIF de `mac/kit-media-7`, sin la nota de "anterior al rediseño".** Tras tres arreglos
+  en la lane (`libwebp` → Pillow; freeze desde el Cellar con `--help` capturado, porque `pipefail`
+  + `grep -q` daba SIGPIPE 141; `"$PY" -` separado), la Mac entregó los 5 PNG (`kit-media-6`) y el
+  GIF con la caché nueva (`kit-media-7`). Los tomé con `git show <rama>:<ruta>`, sin checkout, y
+  comparé los sha. Los videos de `-6`/`-7` son una regrabación equivalente: me quedo con los de
+  `-3`, que ya estaban publicados.
+- **Medios · corrupción del árbol a las 09:44:37, causa no encontrada.** Los cuatro archivos de
+  `docs/media` se reescribieron 1 byte más cortos (CRLF → LF con `core.autocrlf=true` del
+  gitconfig del sistema). Descarté build-kit, verify.sh, `git stash` con rutas y el collect de
+  enjambre (solo hace `fetch`). Mitigación: `.gitattributes` binario para mp4/webm/webp y el check
+  "árbol limpio" de `verify.sh`, que lo detectó las dos veces. Se restauró desde HEAD.

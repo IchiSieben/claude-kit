@@ -68,7 +68,6 @@ está la especificación.
 **La barra renderizada desde fixtures: caché tibia → enfriándose → fría → cerca del auto-compact → HANDOFF desactualizado.** Se regenera con `docs/tapes/render-states.sh`; la fuente que incorpora no tiene los glifos `⎇`/`❄`, así que aquí salen como un cuadro y en las capturas reales de arriba, como son.
 ![Estados de la barra de estado](docs/img/statusline-states.gif)
 
-*Este GIF es anterior al rediseño de la caché del 2026-10-15: todavía muestra el segmento de caché viejo (acierto y TTL), no `⚡ enfriando · 4m`. Se vuelve a grabar en la Mac con `TASK-kit-media.md`.*
 
 **Pruébala en vivo: [kit.ichisieben.dev](https://kit.ichisieben.dev/)**: la barra reaccionando a controles (contexto, caché, cuota, git, HANDOFF, modelo). Cada estado es la salida real de `statusline.sh`, pre-renderizada por `tools/render-grid.sh`; `verify.sh` falla si la barra cambia y la demo no se regenera.
 
