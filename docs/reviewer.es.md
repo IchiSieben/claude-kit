@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 7
+  level: 2
+---
+
 # Reviewer: un modelo más fuerte, un contexto nuevo
 
 ## Revisor >= autor, nunca más débil

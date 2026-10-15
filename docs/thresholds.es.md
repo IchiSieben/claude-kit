@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 6
+  level: 2
+---
+
 # thresholds.json
 
 Fuentes: `home/.claude/rules/thresholds.json` (archivo completo),

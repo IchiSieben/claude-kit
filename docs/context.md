@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 3
+  level: 1
+---
+
 # Context hygiene
 
 Source: `home/.claude/rules/context-hygiene.md`, `home/.claude/rules/thresholds.json`,

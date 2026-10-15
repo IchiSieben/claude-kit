@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 5
+  level: 2
+---
+
 # Hooks
 
 Cinco scripts en `home/.claude/hooks/`, conectados en

@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 7
+  level: 2
+---
+
 # Reviewer: a stronger model, a fresh context
 
 ## Reviewer >= author, never weaker

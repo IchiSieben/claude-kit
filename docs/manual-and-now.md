@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 8
+  level: 1
+---
+
 # The manual, `/ahora`, and where the numbers live
 
 ## `home/.claude/MANUAL.md`: seven chapters, loaded on demand

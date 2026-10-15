@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 5
+  level: 2
+---
+
 # Hooks
 
 Five scripts under `home/.claude/hooks/`, wired in `home/.claude/settings.json`.

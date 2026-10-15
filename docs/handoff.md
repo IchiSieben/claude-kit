@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 4
+  level: 1
+---
+
 # HANDOFF.md and drift
 
 ## What it is

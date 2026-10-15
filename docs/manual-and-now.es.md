@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 8
+  level: 1
+---
+
 # El manual, `/ahora` y dónde viven los números
 
 ## `home/.claude/MANUAL.md`: siete capítulos, cargados bajo demanda

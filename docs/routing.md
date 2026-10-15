@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 2
+  level: 1
+---
+
 # Routing: layer, then lane
 
 ## The layer question, first

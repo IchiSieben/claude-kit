@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 3
+  level: 1
+---
+
 # Higiene de contexto
 
 Fuentes: `home/.claude/rules/context-hygiene.md`,

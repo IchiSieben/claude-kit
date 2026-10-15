@@ -60,3 +60,10 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   módulo ("pasa la bandera siempre"). Alternativa descartada: recordar los módulos instalados en
   un archivo de estado (contradice "sin la bandera no toca nada").
 - **Ítem 3 · el 900 s del bloque `enj` pasó a thresholds.json** (`enjambre-stale`, 15 min).
+- **Ítem 2 · orden de la ruta "Code Like Me".** 1 lección de la barra · 2 routing · 3 context ·
+  4 handoff · 5 hooks · 6 thresholds · 7 reviewer · 8 manual-and-now. Niveles 0–2 (la barra es
+  la entrada, nivel 0). Formato del frontmatter: el bloque YAML de las lecciones de enjambre.
+  Revertir: editar los números en el frontmatter de cada `docs/*.md`.
+- **Ítem 2 · el SVG se genera.** `docs/tapes/statusline-sectores.py` escribe la versión ES y EN
+  con texto real y colores por variables CSS (claro/oscuro por `prefers-color-scheme` y por
+  `data-theme`). El texto de la barra dentro del dibujo es el del estado "enfriando".

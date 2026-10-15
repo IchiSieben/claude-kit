@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="slmap" viewBox="0 0 1476 300" role="img" aria-labelledby="slmap-t" font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+<title id="slmap-t">La barra de estado de claude-kit: 18 sectores en 8 grupos</title>
+<style>
+.slmap{--bg:#ffffff;--term:#f6f8fa;--fg:#1f2328;--dim:#57606a;--amb:#9a6700;--grn:#1a7f37;--red:#cf222e;--mag:#bf3989;--g-ctx:#1f6feb;--g-cost:#0e7c7b;--g-quota:#8250df;--g-cache:#bc4c00;--g-git:#1a7f37;--g-hand:#9a6700;--g-sess:#57606a;--g-hint:#bf3989;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .slmap,.slmap{--bg:#0d1117;--term:#161b22;--fg:#e6edf3;--dim:#9da7b3;--amb:#e3b341;--grn:#56d364;--red:#ff7b72;--mag:#ff7ac6;--g-ctx:#58a6ff;--g-cost:#3fb9b7;--g-quota:#bc8cff;--g-cache:#ff9a52;--g-git:#56d364;--g-hand:#e3b341;--g-sess:#9da7b3;--g-hint:#ff7ac6;}}
+:root[data-theme="dark"] .slmap{--bg:#0d1117;--term:#161b22;--fg:#e6edf3;--dim:#9da7b3;--amb:#e3b341;--grn:#56d364;--red:#ff7b72;--mag:#ff7ac6;--g-ctx:#58a6ff;--g-cost:#3fb9b7;--g-quota:#bc8cff;--g-cache:#ff9a52;--g-git:#56d364;--g-hand:#e3b341;--g-sess:#9da7b3;--g-hint:#ff7ac6;}
+:root[data-theme="light"] .slmap{--bg:#ffffff;--term:#f6f8fa;--fg:#1f2328;--dim:#57606a;--amb:#9a6700;--grn:#1a7f37;--red:#cf222e;--mag:#bf3989;--g-ctx:#1f6feb;--g-cost:#0e7c7b;--g-quota:#8250df;--g-cache:#bc4c00;--g-git:#1a7f37;--g-hand:#9a6700;--g-sess:#57606a;--g-hint:#bf3989;}
+.slmap text{font-size:14px;fill:var(--fg)}
+.slmap .n{font-size:11px;font-weight:700;fill:var(--bg)}
+.slmap .lg{font-size:13px}.slmap .ti{font-size:15px;font-weight:700}
+.slmap .no{font-size:12px;fill:var(--dim)}
+</style>
+<rect width="100%" height="100%" rx="10" fill="var(--bg)"/>
+<text class="ti" x="24" y="30">La barra de estado de claude-kit: 18 sectores en 8 grupos</text>
+<rect x="14" y="68" width="1448" height="74" rx="6" fill="var(--term)"/>
+<rect x="24.0" y="97" width="67.2" height="3" fill="var(--g-ctx)"/>
+<text x="24.0" y="92" font-weight="700" xml:space="preserve">Opus 5.5</text>
+<circle cx="54.0" cy="62" r="9" fill="var(--g-ctx)"/>
+<text class="n" x="54.0" y="66" text-anchor="middle">1</text>
+<text x="91.2" y="92" xml:space="preserve"> </text>
+<rect x="99.6" y="97" width="42.0" height="3" fill="var(--g-ctx)"/>
+<text x="99.6" y="92" xml:space="preserve">·high</text>
+<circle cx="120.6" cy="62" r="9" fill="var(--g-ctx)"/>
+<text class="n" x="120.6" y="66" text-anchor="middle">2</text>
+<text x="141.6" y="92" xml:space="preserve"> </text>
+<rect x="150.0" y="97" width="33.6" height="3" fill="var(--g-ctx)"/>
+<text x="150.0" y="92" xml:space="preserve">@mac</text>
+<text x="183.6" y="92" xml:space="preserve"> </text>
+<rect x="192.0" y="97" width="168.0" height="3" fill="var(--g-ctx)"/>
+<text x="192.0" y="92" style="fill:var(--amb)" xml:space="preserve">▓▓▓▓▓▓▓▓▓░░░░░░┋░░░░</text>
+<circle cx="222.0" cy="62" r="9" fill="var(--g-ctx)"/>
+<text class="n" x="222.0" y="66" text-anchor="middle">3</text>
+<text x="360.0" y="92" xml:space="preserve"> </text>
+<rect x="368.4" y="97" width="75.6" height="3" fill="var(--g-ctx)"/>
+<text x="368.4" y="92" style="fill:var(--amb)" xml:space="preserve">180k/400k</text>
+<circle cx="398.4" cy="62" r="9" fill="var(--g-ctx)"/>
+<text class="n" x="398.4" y="66" text-anchor="middle">4</text>
+<text x="444.0" y="92" xml:space="preserve"> · </text>
+<rect x="469.2" y="97" width="75.6" height="3" fill="var(--g-ctx)"/>
+<text x="469.2" y="92" xml:space="preserve">18% of 1M</text>
+<circle cx="499.2" cy="62" r="9" fill="var(--g-ctx)"/>
+<text class="n" x="499.2" y="66" text-anchor="middle">5</text>
+<text x="544.8" y="92" xml:space="preserve"> · </text>
+<rect x="570.0" y="97" width="42.0" height="3" fill="var(--g-cost)"/>
+<text x="570.0" y="92" xml:space="preserve">$7.10</text>
+<circle cx="591.0" cy="62" r="9" fill="var(--g-cost)"/>
+<text class="n" x="591.0" y="66" text-anchor="middle">6</text>
+<text x="612.0" y="92" xml:space="preserve"> · </text>
+<rect x="637.2" y="97" width="25.2" height="3" fill="var(--g-cost)"/>
+<text x="637.2" y="92" xml:space="preserve">90m</text>
+<circle cx="649.8" cy="62" r="9" fill="var(--g-cost)"/>
+<text class="n" x="649.8" y="66" text-anchor="middle">7</text>
+<text x="662.4" y="92" xml:space="preserve"> · </text>
+<rect x="687.6" y="97" width="134.4" height="3" fill="var(--g-cache)"/>
+<text x="687.6" y="92" style="fill:var(--amb)" xml:space="preserve">⚡︎ enfriando · 4m</text>
+<circle cx="717.6" cy="62" r="9" fill="var(--g-cache)"/>
+<text class="n" x="717.6" y="66" text-anchor="middle">10</text>
+<rect x="24.0" y="131" width="50.4" height="3" fill="var(--g-quota)"/>
+<text x="24.0" y="126" xml:space="preserve">5h 41%</text>
+<circle cx="49.2" cy="152" r="9" fill="var(--g-quota)"/>
+<text class="n" x="49.2" y="156" text-anchor="middle">8</text>
+<text x="74.4" y="126" xml:space="preserve">  </text>
+<rect x="91.2" y="131" width="50.4" height="3" fill="var(--g-quota)"/>
+<text x="91.2" y="126" xml:space="preserve">7d 87%</text>
+<circle cx="116.4" cy="152" r="9" fill="var(--g-quota)"/>
+<text class="n" x="116.4" y="156" text-anchor="middle">9</text>
+<text x="141.6" y="126" xml:space="preserve">  </text>
+<rect x="158.4" y="131" width="58.8" height="3" fill="var(--g-cache)"/>
+<text x="158.4" y="126" style="fill:var(--amb)" xml:space="preserve">hit 79%</text>
+<circle cx="187.8" cy="152" r="9" fill="var(--g-cache)"/>
+<text class="n" x="187.8" y="156" text-anchor="middle">11</text>
+<text x="217.2" y="126" xml:space="preserve"> </text>
+<rect x="225.6" y="131" width="67.2" height="3" fill="var(--g-cache)"/>
+<text x="225.6" y="126" xml:space="preserve">(4 miss)</text>
+<circle cx="255.6" cy="152" r="9" fill="var(--g-cache)"/>
+<text class="n" x="255.6" y="156" text-anchor="middle">12</text>
+<text x="292.8" y="126" xml:space="preserve">  </text>
+<rect x="309.6" y="131" width="67.2" height="3" fill="var(--g-git)"/>
+<text x="309.6" y="126" style="fill:var(--grn)" xml:space="preserve">+213/-15</text>
+<circle cx="339.6" cy="152" r="9" fill="var(--g-git)"/>
+<text class="n" x="339.6" y="156" text-anchor="middle">13</text>
+<text x="376.8" y="126" xml:space="preserve">  </text>
+<rect x="393.6" y="131" width="151.2" height="3" fill="var(--g-git)"/>
+<text x="393.6" y="126" xml:space="preserve">⎇ main ↑1 ↓0 ●2 ?1</text>
+<circle cx="423.6" cy="152" r="9" fill="var(--g-git)"/>
+<text class="n" x="423.6" y="156" text-anchor="middle">14</text>
+<text x="544.8" y="126" xml:space="preserve">  </text>
+<rect x="561.6" y="131" width="218.4" height="3" fill="var(--g-hand)"/>
+<text x="561.6" y="126" style="fill:var(--amb)" xml:space="preserve">⚠HANDOFF 14:05 ·2f ·1c ·0s</text>
+<circle cx="591.6" cy="152" r="9" fill="var(--g-hand)"/>
+<text class="n" x="591.6" y="156" text-anchor="middle">15</text>
+<text x="780.0" y="126" xml:space="preserve">  </text>
+<rect x="796.8" y="131" width="92.4" height="3" fill="var(--g-sess)"/>
+<text x="796.8" y="126" xml:space="preserve">[mi-sesion]</text>
+<circle cx="826.8" cy="152" r="9" fill="var(--g-sess)"/>
+<text class="n" x="826.8" y="156" text-anchor="middle">17</text>
+<text x="889.2" y="126" xml:space="preserve">  </text>
+<rect x="906.0" y="131" width="546.0" height="3" fill="var(--g-hint)"/>
+<text x="906.0" y="126" style="fill:var(--mag)" xml:space="preserve">→ manda un turno corto para recalentar, o /handoff si vas a parar</text>
+<circle cx="936.0" cy="152" r="9" fill="var(--g-hint)"/>
+<text class="n" x="936.0" y="156" text-anchor="middle">18</text>
+<rect x="24" y="185" width="14" height="14" rx="3" fill="var(--g-ctx)"/>
+<text class="lg" x="46" y="197">Modelo y contexto · #1, #2, #3, #4, #5</text>
+<rect x="324" y="185" width="14" height="14" rx="3" fill="var(--g-cost)"/>
+<text class="lg" x="346" y="197">Costo y tiempo · #6, #7</text>
+<rect x="624" y="185" width="14" height="14" rx="3" fill="var(--g-quota)"/>
+<text class="lg" x="646" y="197">Cuota del plan · #8, #9</text>
+<rect x="924" y="185" width="14" height="14" rx="3" fill="var(--g-cache)"/>
+<text class="lg" x="946" y="197">Caché · #10, #11, #12</text>
+<rect x="24" y="211" width="14" height="14" rx="3" fill="var(--g-git)"/>
+<text class="lg" x="46" y="223">Git · #13, #14</text>
+<rect x="324" y="211" width="14" height="14" rx="3" fill="var(--g-hand)"/>
+<text class="lg" x="346" y="223">HANDOFF · #15</text>
+<rect x="624" y="211" width="14" height="14" rx="3" fill="var(--g-sess)"/>
+<text class="lg" x="646" y="223">Sesión y umbrales · #16, #17</text>
+<rect x="924" y="211" width="14" height="14" rx="3" fill="var(--g-hint)"/>
+<text class="lg" x="946" y="223">Pista (qué hacer) · #18</text>
+<text class="no" x="24" y="282">#16 (⚠ umbrales) solo aparece si rules/thresholds.json no se puede leer. @mac es la máquina.</text>
+</svg>

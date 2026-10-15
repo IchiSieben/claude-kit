@@ -68,6 +68,8 @@ está la especificación.
 **La barra renderizada desde fixtures: caché tibia → enfriándose → fría → cerca del auto-compact → HANDOFF desactualizado.** Se regenera con `docs/tapes/render-states.sh`; la fuente que incorpora no tiene los glifos `⎇`/`❄`, así que aquí salen como un cuadro y en las capturas reales de arriba, como son.
 ![Estados de la barra de estado](docs/img/statusline-states.gif)
 
+¿Primera vez con la barra? Empieza por la lección [`docs/leccion-01-lee-tu-barra.md`](docs/leccion-01-lee-tu-barra.md): los 18 sectores por grupos, con [un diagrama](docs/img/statusline-sectores.svg) y una autoevaluación.
+
 Glosario completo de símbolos en [`docs/statusline.es.md`](docs/statusline.es.md); el diseño,
 los cambios de payload, el costo medido y los tests en
 [`docs/statusline-internals.md`](docs/statusline-internals.md) (en inglés).

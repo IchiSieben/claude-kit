@@ -1,3 +1,10 @@
+---
+lesson:
+  route: code-like-me
+  order: 2
+  level: 1
+---
+
 # Ruteo: primero la capa, después el carril
 
 ## La pregunta de la capa, primero
