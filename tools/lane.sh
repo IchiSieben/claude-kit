@@ -8,7 +8,7 @@
 #                     (detached: exits 90 while it still runs; call again until it finishes)
 set -uo pipefail
 cd "$(dirname "$0")/.."
-lane=$(tr -dc 'a-z' < .enjambre-lane 2>/dev/null); lane=${lane:-verify}
+lane=""; [ -f .enjambre-lane ] && lane=$(tr -dc 'a-z' < .enjambre-lane); lane=${lane:-verify}
 echo "lane.sh: lane=$lane"
 case "$lane" in
   media) exec bash docs/tapes/media.sh ;;

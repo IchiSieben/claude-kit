@@ -17,4 +17,15 @@ Prompt: `../docs/PROMPT-ecosistema-claude-code.md` §3 (V1). Modo dormido: sin p
 
 ## Estado
 
-(se actualiza tras cada ítem)
+- **Sync (commit 0)** hecho: export del repo privado (locale C, HANDOFF con hora, segmento `enj`,
+  bandas visor-*, /handoff y /spec), `/route` retenido (ver DECISIONES).
+- **Ítem 1 hecho**: payload re-capturado (2.1.292–2.1.300, 24 renders, forma sin cambios); segmento
+  de caché `⚡ caliente · 42m` / `⚡ enfriando · 4m` / `❄ fría · próximo turno reescribe` en la
+  línea 1, `hit N%` en la línea 2 solo bajo `cache-hit-ok`; `cache-cooling` + `labels` en
+  thresholds.json; 3 fixtures nuevas; goldens re-bendecidos. GIF/PNGs → trabajo de la Mac.
+  Render budget: medido con la máquina cargada, sin cambio atribuible (DECISIONES).
+- **Ítem 4 preparado**: `AGENTS.md` (`tests-cmd: bash tools/lane.sh`), `docs/tapes/media.sh`
+  (VHS + ffmpeg + freeze), `TASK-kit-media.md`.
+- Pendiente: lanzar ítem 4, ítems 3, 2, 5, cierre.
+- `~/.claude` NO se re-sincronizó (4 barras vivas): cuando quieras la barra nueva,
+  en el repo privado de origen corre `bash sync-to-home.sh`.
