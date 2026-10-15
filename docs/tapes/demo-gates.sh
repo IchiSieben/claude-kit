@@ -30,14 +30,18 @@ run() {
   local W=docs/tapes/out/gates-node
   mkdir -p "$W"
   if [ ! -d "$W/node_modules/playwright" ]; then
-    (cd "$W" && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.48.2 @axe-core/playwright@4.10.1 \
+    # Playwright 1.60.0 = the Landing's version, so its browsers are the ones already in the
+    # node's shared cache. 1.48.2 had to fetch Chromium 1140 and hung extracting it, twice.
+    (cd "$W" && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.60.0 @axe-core/playwright@4.10.1 \
       lighthouse@12.2.1 chrome-launcher@1.1.2 jpeg-js@0.4.4) || return 21
   fi
-  # perl alarm = a timeout that exists on stock macOS; the 2026-10-15 run hung after this download
   # A browser already in the shared cache needs no install, and `install` refuses to run while another
-  # process holds the cache lock (2026-10-15: a hung earlier run held it).
-  if ls "$HOME"/Library/Caches/ms-playwright/chromium-1140/INSTALLATION_COMPLETE >/dev/null 2>&1; then
-    echo "== chromium-1140 already in the cache, skipping install"
+  # process holds the cache lock (2026-10-15: a hung earlier run held it). perl alarm = a timeout
+  # that exists on stock macOS.
+  local rev
+  rev=$(sed -n '/"name": "chromium"/,/revision/s/.*"revision": "\([0-9]*\)".*/\1/p' "$W/node_modules/playwright-core/browsers.json" | head -1)
+  if [ -n "$rev" ] && ls "$HOME"/Library/Caches/ms-playwright/chromium-"$rev"/INSTALLATION_COMPLETE >/dev/null 2>&1; then
+    echo "== chromium-$rev already in the cache, skipping install"
   else
     (cd "$W" && perl -e 'alarm shift; exec @ARGV' 900 npx playwright install chromium) || return 21
   fi
