@@ -80,3 +80,48 @@ FICHA-READY: be62c5c
   `.htaccess`). Si quieres borrarlo, hazlo tú en hPanel; no hace falta.
 - `origin/main` = el commit que trae esta sección. `~/.claude` sigue sin re-sincronizar: para la
   barra y el `/route` nuevos, en el repo privado de origen corre `bash sync-to-home.sh` y reinicia.
+
+## V1c · 2026-10-15 (prompt §14, demo v2)
+
+En vivo: **https://kit.ichisieben.dev/**. Los archivos publicados son iguales por md5 a `3bdb15c`
+(`index.html`, `app.js`, `content.js`, `grid.json`, `tutorial/tutorial.js`). Rama
+`demo-v2/2026-10-15`, que también está en `origin/main`.
+
+- **Ítem 1** `7464d6b`: subconjuntos de DejaVu para los símbolos de la barra (4,9 KB, verificados
+  glifo a glifo) + `KitMono-Regular.ttf` para freeze.
+- **Ítems 2-5** `6a1aa28` (+ `61a8a3e`):
+  - causa → efecto: línea con punto viajero, halo y rótulo que lee los umbrales de `grid.json`;
+  - recorrido de 8 pasos que mueve los controles de verdad;
+  - "Reproducir una sesión": 9 renders reales en 3 h;
+  - 18 sectores + @node × 3 niveles, con mini-barra de estados reales y glosario ES/EN;
+  - "Qué te llevas": árbol `~/.claude` y comandos.
+  - Rejilla: 1 296 celdas.
+- **Ítem 6** `244cace`, `9a12f53`, `bf0f94d`, `a8c5a94`, `3bdb15c`, `96e52d5`, `ea2f134`.
+  Gates medidos **en Windows contra producción** (`evidence/demo-v2/GATES.md`):
+  - a11y 100, CLS 0, axe 0 en 5 estados, parpadeo 0 cortes, 15 capturas;
+  - JS de unos 31 KB gzip;
+  - **perf: mediana 88, rango 80-95**, en una máquina ruidosa (el mismo código dio TBT 431 y 224 ms
+    en dos corridas seguidas).
+- **Ítem 7** `2449d5b` + `c0ee580`:
+  - clip de la ficha re-grabado desde la demo nueva, con el póster en el fotograma de 5,6 s;
+  - `docs/FICHA-LANDING.md` actualizado;
+  - `docs/DISENO-DEMO.md` escrito;
+  - aviso a V4 (`landing-d5`) con rutas y sha256.
+- **Mac**:
+  - `kit-demo-gates` se colgó después de descargar Chromium de Playwright.
+  - La lane se arregló (`96e52d5`): reinicia una corrida muerta o colgada, pone tope a
+    `playwright install` y a `curl`, y deja marcas de progreso.
+  - Se relanzó como `kit-demo-gates-2`. Si termina bien, sus resultados reemplazan a los de Windows
+    con `git show mac/kit-demo-gates-2:<ruta>`, nunca con checkout. Si vuelve a quedarse en
+    `playwright install`, la causa probable es el proceso colgado de la primera corrida, que
+    retiene el candado de `~/Library/Caches/ms-playwright`; hay que matarlo en la Mac (el owner).
+- **Pendiente, propuesto**:
+  - El TBT restante es sobre todo estilo/layout. Lo más pesado es una tarea de ~450 ms cuando llega
+    `grid.json`: el segundo `applyLang()` reconstruye controles, árbol, tarjetas y glosario de una
+    vez.
+  - Siguiente experimento: diferir la construcción de tarjetas y glosario como se hizo con
+    `collectStates`. Medirlo contra una línea base de la Mac, no de Windows.
+  - Subir a `../shared/tutorial` los tres cambios del recorrido: `onStep`/`onClose`/`read`, scroll
+    solo si hace falta y `focus({preventScroll})`.
+- Hostinger: `kit-app/default.php` sigue allí, negado por `.htaccess`. Borrarlo es decisión del
+  owner.
