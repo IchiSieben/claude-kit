@@ -28,6 +28,7 @@ owner confirmed every value below unchanged from statusline.sh`.
 | `unpushed` | commits ahead of upstream | `ahead >` | 0 | 50 | `git push` (`param: 7200`s grace before the counter turns amber) |
 | `context-amber` | context size | `context_k >=` | 150 (k tokens) | 60 | band only, no hint |
 | `cache-hit-ok` | prompt-cache hit rate | `cache_pct >=` | 85 | 65 | band only: at or above it the bar hides `hit N%` (it was a hardcoded 85 in the script) |
+| `enjambre-stale` | age of enjambre's visor summary | `enjambre_age_min >` | 15 | 66 | band only: the `enj` block turns into `enj ⌛Nm` instead of showing old numbers (was a hardcoded 900 s) |
 | `handoff-drift-files` | dirty files newer than HANDOFF.md | `handoff_dirty >` | 20 | 70 | band only, no hint |
 | `handoff-drift-sessions` | sessions since HANDOFF.md | `handoff_sessions >=` | 2 | 71 | band only, no hint |
 

@@ -92,6 +92,14 @@
       "source": "statusline.sh (GREEN_K, banda de trabajo) · MANUAL.md §2 · confirmado por el owner 2026-09-18"
     },
     {
+      "id": "enjambre-stale",
+      "priority": 66,
+      "hint": false,
+      "condition": { "metric": "enjambre_age_min", "op": ">", "value": 15 },
+      "actions": {},
+      "source": "statusline.sh (segmento enj: el 900 s que vivía en el código; build.py del visor reescribe el resumen cada 5 min, así que 15 min son tres ciclos perdidos) · movido aquí 2026-10-15"
+    },
+    {
       "id": "cache-hit-ok",
       "priority": 65,
       "hint": false,

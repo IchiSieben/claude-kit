@@ -29,6 +29,7 @@ statusline.sh`.
 | `unpushed` | commits sin pushear | `ahead >` | 0 | 50 | `git push` (`param: 7200`s de gracia antes de que el contador se ponga ámbar) |
 | `context-amber` | tamaño del contexto | `context_k >=` | 150 (k tokens) | 60 | solo banda, sin consejo |
 | `cache-hit-ok` | hit rate de la caché de prompt | `cache_pct >=` | 85 | 65 | solo banda: desde ese valor la barra oculta `hit N%` (era un 85 fijo en el script) |
+| `enjambre-stale` | edad del resumen del visor de enjambre | `enjambre_age_min >` | 15 | 66 | solo banda: el bloque `enj` pasa a `enj ⌛Nm` en vez de mostrar números viejos (era un 900 s fijo) |
 | `handoff-drift-files` | archivos sucios más nuevos que HANDOFF.md | `handoff_dirty >` | 20 | 70 | solo banda, sin consejo |
 | `handoff-drift-sessions` | sesiones desde HANDOFF.md | `handoff_sessions >=` | 2 | 71 | solo banda, sin consejo |
 

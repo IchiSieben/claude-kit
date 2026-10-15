@@ -45,6 +45,7 @@ está la especificación.
 | 6 agentes (`mecanico`, `operario`, `redactor`, `investigador`, `profundo`, `reviewer`) | Carriles de modelo/esfuerzo para trabajo delegado | `stable` — son prompts, sin suite de tests; se mantienen `stable` porque corren a diario |
 | Skills `kickoff`, `spec`, `route`, `handoff`, `xreview`, `manual`, `ahora`, `kit-update` | Ciclo de vida de la sesión | `beta` — se usan, `/ahora` probado en vivo, sin suite |
 | Skills `tercerizar`, `visor` | Traspaso a un agente externo · visor de sesiones | `beta` |
+| `home/.claude/modules/enjambre/` | Opcional: guarda de ssh + regla para un equipo de varias máquinas; solo se instala con `--with enjambre` | `beta` — 23 tests, nuevo el 2026-10-15 |
 | `sync-to-home.sh`, `sync-from-home.sh`, `mirror-lib.sh`, `kit-update.sh`, `verify.sh` | El espejo | `stable` — corre en cada sesión en dos máquinas |
 | `harvest.py` | Métricas durables desde los transcripts | `beta` |
 | Bitácora (`docs/bitacora-spec.es.md`) | Página índice de proyectos | `experimental` — solo especificación |
@@ -96,6 +97,31 @@ El kit trae un `CLAUDE.md` que es el del propio autor. Bifúrcalo — está pens
 — y se mantiene bajo 70 líneas a propósito: ese archivo se relee en cada sesión, así que su
 largo es un presupuesto de contexto, no una preferencia de estilo.
 
+## Si tienes más de una máquina: enjambre
+
+[enjambre](https://github.com/IchiSieben/enjambre) es el proyecto hermano: convierte tus otras
+máquinas en nodos de trabajo para todo lo que no necesita pantalla (tests, builds, renders,
+corridas largas de `claude -p`). Un trabajo es un `TASK-*.md`; enjambre lo enruta, lo corre en
+un worktree limpio en el nodo y te devuelve la rama. Lo que comparten vive en este kit como un
+módulo opcional:
+
+```bash
+bash sync-to-home.sh --with enjambre
+```
+
+- **Un hook que bloquea un `ssh <nodo>` a pelo** hacia uno de tus nodos fuera de los repos de
+  enjambre, para que toda delegación pase por su cola y su registro. Los nodos salen de tu
+  propio `nodes.toml` (o de `ENJAMBRE_GUARD_HOSTS`); `ENJAMBRE_RAW_SSH=1` lo salta una vez y
+  queda anotado.
+- **La regla** que el modelo lee en cada sesión: delegar por enjambre, nunca a mano.
+- **El bloque `enj` de la barra** (`enj ⬡2/2 ⚙1 ≈$17 hoy`: nodos vivos, trabajos corriendo,
+  consumo del día sumando todas las máquinas) ya está en `statusline.sh` y queda en blanco si
+  no hay enjambre.
+
+Sin la bandera no se instala nada. Detalle: [`home/.claude/modules/enjambre/README.md`](home/.claude/modules/enjambre/README.md).
+Este mismo repo se delega así: `AGENTS.md` nombra el único comando que un nodo puede correr, y el
+video de la barra de más abajo lo graba la Mac con `TASK-kit-media.md`.
+
 ## Cómo lo uso en un día
 
 **Kickoff.** Cada sesión arranca con [`/kickoff`](docs/routing.es.md): lee `HANDOFF.md`,
@@ -143,8 +169,9 @@ referencias cambien conforme cambie la evidencia — propone o cuestiona una con
 
 ## Hoja de ruta
 
-- Barra de estado: decidir el presupuesto de render (416 ms medidos contra 200 ms de meta).
-  El indicador de `permission_mode` vuelve si el payload lo trae de nuevo.
+- Barra de estado: decidir el presupuesto de render (416 ms medidos contra 200 ms de meta;
+  re-medido el 2026-10-15 con la máquina cargada, sin cambio atribuible al rediseño de la caché
+  — falta una medición con la máquina en reposo). El indicador de `permission_mode` vuelve si el payload lo trae de nuevo.
 - Alertas: por ahora ninguna más allá de la pista de la barra y el aviso rojo de deriva en
   `SessionStart`.
 - `/ahora` híbrido — git en vivo más deriva, en vez de solo un snapshot.
@@ -157,7 +184,8 @@ referencias cambien conforme cambie la evidencia — propone o cuestiona una con
 - El formato del manual, y la forma en que se produce y se lee, es una brecha conocida: es una
   primera versión. Falta mejorar la legibilidad y el proceso de producción.
 - Una demo interactiva o en video de la barra reaccionando en vivo — caché enfriándose,
-  compactación, handoff.
+  compactación, handoff. En curso: una grabación de terminal desde fixtures
+  (`docs/tapes/media.sh`, corre en la Mac).
 - Una línea `UNATTENDED:` de pre-aprobación, para que una sesión pueda aceptar un alcance sin
   supervisión ya aprobado por el autor, sin tener que detenerse a preguntar.
 

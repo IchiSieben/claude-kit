@@ -44,3 +44,19 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
 - **Ítem 1 · `5h ⚠` en sesiones inactivas.** La captura 2.1.292 trae `rate_limits.seven_day`
   sin `five_hour`. La barra lo pinta como campo faltante (`5h ⚠`). Se dejó así (regla del
   repo); si molesta, tratar `five_hour` ausente como "sin dato" en blanco.
+- **Ítem 3 · el módulo es una versión genérica, no el hook del owner.** Elegido:
+  `modules/enjambre/` con `enjambre-ssh-guard.sh` (hosts desde el `nodes.toml` del usuario o
+  `ENJAMBRE_GUARD_HOSTS`, sin `mac`/`mac6` ni rutas fijas) y `rules/kit-enjambre.md`. Por qué:
+  PUBLISH.md vetaba el hook y la regla personales porque nombran máquinas y rutas del owner; el
+  prompt pide que lo compartido viva en el kit. Los personales siguen sin publicarse; el escaneo
+  de `build-kit.sh` ahora busca esos marcadores personales en vez de `ENJAMBRE_RAW_SSH`.
+  Revertir: quitar la fila del módulo en PUBLISH.md y las líneas `modules/enjambre` del `AS_IS`.
+- **Ítem 3 · el "párrafo del CLAUDE.md global" es un archivo de reglas.** Elegido:
+  `~/.claude/rules/kit-enjambre.md` (se carga siempre, igual que CLAUDE.md). Por qué:
+  `sync-to-home.sh` reescribe `CLAUDE.md` en cada sincronización y borraría un párrafo añadido.
+  Revertir: mover el texto a `home/.claude/CLAUDE.md`.
+- **Ítem 3 · un sync sin `--with` des-registra el hook.** La clave portable `hooks` del espejo
+  reemplaza los arrays; el archivo del hook queda en disco, inerte. Documentado en el README del
+  módulo ("pasa la bandera siempre"). Alternativa descartada: recordar los módulos instalados en
+  un archivo de estado (contradice "sin la bandera no toca nada").
+- **Ítem 3 · el 900 s del bloque `enj` pasó a thresholds.json** (`enjambre-stale`, 15 min).

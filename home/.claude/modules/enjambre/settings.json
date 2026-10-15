@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/enjambre-ssh-guard.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

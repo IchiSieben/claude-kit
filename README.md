@@ -45,6 +45,7 @@ references to change as the evidence does.
 | `harvest.py` | Durable metrics from transcripts | `beta` |
 | Bitácora (`docs/bitacora-spec.es.md`) | Project index page | `experimental` — spec only |
 | `templates/` | SPEC, TASK, AGENTS, REVIEW contracts | `beta` — used by `/tercerizar` and `/spec` |
+| `home/.claude/modules/enjambre/` | Optional: ssh guard + rule for a multi-machine setup, installed only with `--with enjambre` | `beta` — 23 tests, new on 2026-10-15 |
 | `home/.claude/MANUAL.md` | The why behind every rule (Spanish) | `stable` — `verify.sh` audits its `Fuente:` lines |
 
 ## The status line, explained
@@ -83,6 +84,9 @@ Restart Claude Code — `CLAUDE.md`, `settings.json` and skills load at process 
 nothing here takes effect mid-session. Update later with `bash kit-update.sh` (pulls, mirrors,
 verifies, reminds you to restart).
 
+Nothing under `home/.claude/modules/` is installed by that command; modules go in only with
+`--with <name>` (see the next section).
+
 What it does **not** touch: plugins, marketplaces, theme, notifications, `model`, and
 `modelSettings` — those are machine-local by design, so a sync never clobbers a per-machine
 model or effort override.
@@ -90,6 +94,28 @@ model or effort override.
 The kit ships a `CLAUDE.md` that is the owner's own rules. Fork it — it is meant to be edited
 — and it is kept under 70 lines on purpose: that file is re-read every session, so its length
 is a context budget, not a style preference.
+
+## If you have more than one machine: enjambre
+
+[enjambre](https://github.com/IchiSieben/enjambre) is the sibling project: it turns your other
+machines into worker nodes for anything headless (tests, builds, renders, long `claude -p`
+runs). A job is a `TASK-*.md`; enjambre routes it, runs it in a clean worktree on the node and
+brings the branch back. What the two share lives in this kit as an optional module:
+
+```bash
+bash sync-to-home.sh --with enjambre
+```
+
+- **A hook that blocks a raw `ssh <node>`** to one of your nodes outside the enjambre repos, so
+  every delegation goes through enjambre's queue and ledger. Nodes come from your own
+  `nodes.toml` (or `ENJAMBRE_GUARD_HOSTS`); `ENJAMBRE_RAW_SSH=1` skips it once, logged.
+- **The rule** the model reads every session: delegate through enjambre, never by hand.
+- **The `enj` block of the status line** (`enj ⬡2/2 ⚙1 ≈$17 hoy`: nodes alive, jobs running,
+  today's usage across machines) is already in `statusline.sh` and stays blank without the swarm.
+
+Without the flag nothing is installed. Details: [`home/.claude/modules/enjambre/README.md`](home/.claude/modules/enjambre/README.md).
+This repo is itself delegated that way: `AGENTS.md` names the one command a node may run, and the
+status-line video below is recorded on the Mac by `TASK-kit-media.md`.
 
 ## How I use it in a day
 
@@ -136,8 +162,9 @@ change as the evidence does — propose or challenge one with
 
 ## Roadmap
 
-- Status line: decide the render budget (416 ms measured vs 200 ms target). `permission_mode`
-  indicator restored if the payload brings it back.
+- Status line: decide the render budget (416 ms measured vs 200 ms target; re-measured on
+  2026-10-15 under load, no change attributable to the cache redesign — a quiet-machine run is
+  pending). `permission_mode` indicator restored if the payload brings it back.
 - Alerts: none yet beyond the bar's hint line and the red-drift `SessionStart` warning.
 - `/ahora` hybrid — live git + drift instead of a snapshot only.
 - Bitácora v2, a weekly report — spec only for now.
@@ -149,6 +176,7 @@ change as the evidence does — propose or challenge one with
 - The manual's format, and the way it is produced and read, is a known gap: it is a first
   version. Readability and the production pipeline are to be improved.
 - An interactive or video demo of the bar reacting live — cache cooling, compaction, handoff.
+  In progress: a terminal recording from fixtures (`docs/tapes/media.sh`, run on the Mac).
 - An `UNATTENDED:` pre-approval line, so a session can accept an owner-approved unattended
   scope without stopping to ask.
 

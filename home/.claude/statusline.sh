@@ -78,7 +78,7 @@ esac
 GREEN_K=-1 RED_K=-1 TH_OK=0
 # The metrics the thresholds are measured against. -1 means NOT MEASURED, which never
 # matches a condition: the whole point of this bar is that unknown and zero differ.
-five_i=-1 used_k=-1 hit_i=-1 cl_m=-1 rt_m=-1 ahead=-1 MD_F=-1 MD_S=-1 fresh=0 CAUSES_TXT=""
+five_i=-1 used_k=-1 hit_i=-1 cl_m=-1 enj_m=-1 rt_m=-1 ahead=-1 MD_F=-1 MD_S=-1 fresh=0 CAUSES_TXT=""
 HINT_ID="" HINT="" MV=-1
 
 # Real ESC bytes, not "\033" strings: the final printf uses %s, so a backslash inside a
@@ -245,6 +245,7 @@ th_metric() {
     context_k)        MV=$used_k ;;
     cache_pct)        MV=$hit_i ;;
     cache_left_min)   MV=$cl_m ;;
+    enjambre_age_min) MV=$enj_m ;;
     session_min)      MV=$rt_m ;;
     ahead)            MV=$ahead ;;
     handoff_dirty)    MV=$MD_F ;;
@@ -709,7 +710,9 @@ render() {                       # render <json>
   # = the builder stopped: say so with its age instead of showing old numbers as current.
   local enj_f=${CC_ENJ_SUMMARY:-$HOME/.enjambre/visor/summary.txt} enj_ts="" enj_txt=""
   if [ -r "$enj_f" ] && IFS=$'\t' read -r enj_ts enj_txt < "$enj_f" && [[ $enj_ts =~ ^[0-9]+$ ]]; then
-    if (( now - enj_ts > 900 )); then line2+="  ${AMB}enj ⌛$(( (now - enj_ts) / 60 ))m${R}"
+    enj_m=$(( (now - enj_ts) / 60 ))
+    # How old is too old is `enjambre-stale` in thresholds.json; without it, no judgement.
+    if (( TH_OK )) && th_fires enjambre-stale; then line2+="  ${AMB}enj ⌛${enj_m}m${R}"
     else line2+="  enj ${enj_txt}"; fi
   fi
 

@@ -44,6 +44,7 @@ check "statusline.sh --drift responde (es la UNICA definicion de deriva)" \
       'bash home/.claude/statusline.sh --drift . | grep -qE "^(ok|stale|none) "'
 check "suite de la statusline en verde" 'bash tests/statusline_test.sh'
 check "suite de los hooks en verde"     'bash tests/hooks_test.sh'
+check "suite del modulo enjambre en verde" 'bash tests/enjambre_module_test.sh'
 
 echo "Fase A - umbrales (rules/thresholds.json es la unica fuente)"
 check "thresholds.json es JSON valido, no vacio y sin ids repetidos" \
