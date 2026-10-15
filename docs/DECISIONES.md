@@ -114,3 +114,18 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   agregaron `*.mp4 *.webm *.webp binary` a `.gitattributes`, el check de LF ahora ignora los blobs
   binarios (`i/-text`) y los archivos se restauraron desde HEAD. `2b31a0e` se pusheó con ese check
   en rojo (mi cadena de comandos no cortaba ante el fallo); este commit lo deja en verde.
+- **Ítem 2 · la demo es una rejilla, no un port.** `tools/render-grid.sh` corre el `statusline.sh`
+  real sobre 972 combinaciones (modelo 3 × contexto 4 × caché 3 × cuota 3 × git 3 × HANDOFF 3),
+  con nueve repos desechables para los estados de git y HANDOFF, y guarda 156 líneas distintas
+  más el índice de cada celda en `docs/demo/grid.json` (69 KB). La página solo traduce ANSI a HTML
+  y asigna cada tramo a su fila de `docs/statusline{,.es}.md` con reglas de texto; la leyenda va
+  dentro de `grid.json`, extraída de esas tablas. Frescura: `inputsHash` = sha256 de
+  `statusline.sh` + `thresholds.json`; `verify.sh` lo compara (y se salta si no hay demo, como en
+  el repo privado). Descartado: deslizadores continuos (no se pueden pre-renderizar sin portar
+  el script). Revertir: borrar `docs/demo/`, `tools/render-grid.sh` y el check de `verify.sh`.
+- **Ítem 2 · el control de HANDOFF es "cuándo se escribió", no "atrasado sí/no".** Con git al
+  día, un HANDOFF de hace 7 h sigue siendo `✓`: nada se movió después. La demo muestra lo que la
+  barra decide, no lo que el control sugiere.
+- **Ítem 2 · tipografías del visor de enjambre** (JetBrains Mono y Space Grotesk, subconjunto
+  latino, OFL, licencias en `docs/demo/fonts/`). Los glifos `▓░┋⎇⚡❄` no están en el subconjunto
+  y caen a la monoespaciada del sistema.

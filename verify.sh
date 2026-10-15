@@ -46,6 +46,10 @@ check "suite de la statusline en verde" 'bash tests/statusline_test.sh'
 check "suite de los hooks en verde"     'bash tests/hooks_test.sh'
 check "suite del modulo enjambre en verde" 'bash tests/enjambre_module_test.sh'
 check "suite de /route en verde"           'bash tests/route_test.sh'
+# The public kit's demo (docs/demo/grid.json) is the bar pre-rendered by tools/render-grid.sh;
+# it stores a hash of statusline.sh + thresholds.json. Changed bar, stale demo: re-render.
+check "la demo esta al dia con la barra (si no: bash tools/render-grid.sh)" \
+      '[ ! -f docs/demo/grid.json ] || [ "$(jq -r .inputsHash docs/demo/grid.json | tr -d "\r")" = "$(cat home/.claude/statusline.sh home/.claude/rules/thresholds.json | tr -d "\r" | sha256sum | cut -c1-64)" ]'
 
 echo "Fase A - umbrales (rules/thresholds.json es la unica fuente)"
 check "thresholds.json es JSON valido, no vacio y sin ids repetidos" \

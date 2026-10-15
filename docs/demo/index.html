@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de la barra</title>
+<meta name="description" content="La barra de estado de claude-kit reaccionando a controles. Cada estado es la salida real de statusline.sh, pre-renderizada.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316181d'/%3E%3Crect x='6' y='12' width='14' height='3' fill='%2356d364'/%3E%3Crect x='6' y='18' width='20' height='3' fill='%23e3b341'/%3E%3C/svg%3E">
+<style>
+@font-face{font-family:"JetBrains Mono";src:url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");font-weight:100 800;font-display:swap}
+@font-face{font-family:"Space Grotesk";src:url("fonts/space-grotesk-latin-wght-normal.woff2") format("woff2");font-weight:300 700;font-display:swap}
+:root{
+  --bg:#f6f7f9;--panel:#ffffff;--line:#d9dde3;--fg:#1f2328;--dim:#5b636d;--accent:#4f46e5;--focus:#4f46e5;
+  --term:#1e1f26;--term-fg:#e6e8ee;--t-red:#ff6b6b;--t-grn:#56d364;--t-amb:#e3b341;--t-mag:#ff7ac6;--t-cyn:#7ad7f0;
+  --sel:#eef0ff;--code:#eef0f3;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1115;--panel:#16181d;--line:#2a2e36;--fg:#e6e8ee;--dim:#9aa3ad;--accent:#8b85ff;--focus:#8b85ff;
+  --term:#0b0c10;--sel:#23243a;--code:#22252c;color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f1115;--panel:#16181d;--line:#2a2e36;--fg:#e6e8ee;--dim:#9aa3ad;--accent:#8b85ff;--focus:#8b85ff;
+  --term:#0b0c10;--sel:#23243a;--code:#22252c;color-scheme:dark;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Space Grotesk",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:28px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
+h1{font-size:clamp(24px,4vw,34px);line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
+.lede{margin:0;color:var(--dim);max-width:62ch}
+.tools{display:flex;gap:8px}
+.tools button{font:inherit;font-size:14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+.term{margin:22px 0 8px;background:var(--term);color:var(--term-fg);border-radius:12px;padding:18px 18px 16px;
+  font:13.5px/1.75 "JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-wrap:anywhere}
+.term .ln{white-space:pre-wrap;min-height:1.75em}
+.term button.sec{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;border-radius:3px;
+  text-decoration:underline dotted rgba(255,255,255,.28);text-underline-offset:4px;white-space:pre-wrap;text-align:left}
+.term button.sec:hover{background:rgba(255,255,255,.08)}
+.term button.sec[aria-pressed="true"]{background:rgba(139,133,255,.28);text-decoration:none}
+.b{font-weight:700}.c31{color:var(--t-red)}.c32{color:var(--t-grn)}.c33{color:var(--t-amb)}.c35{color:var(--t-mag)}.c36{color:var(--t-cyn)}
+.hint{font-size:13px;color:var(--dim);margin:0 0 18px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h2{font-size:15px;margin:0 0 12px;letter-spacing:.02em;text-transform:uppercase;color:var(--dim)}
+fieldset{border:0;margin:0 0 14px;padding:0;min-width:0}
+legend{font-weight:600;font-size:14px;margin-bottom:6px;padding:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0}
+.seg span{display:inline-block;font-size:13.5px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--panel)}
+.seg input:checked+span{background:var(--sel);border-color:var(--accent);color:var(--fg);font-weight:600}
+.seg input:focus-visible+span,.tools button:focus-visible,.term button.sec:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.ticks{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim);font-family:"JetBrains Mono",ui-monospace,monospace}
+#legend .n{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;margin-right:8px}
+#legend h3{margin:0 0 10px;font-size:18px;display:flex;align-items:center}
+#legend dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 12px;font-size:14.5px}
+#legend dt{color:var(--dim)}#legend dd{margin:0;overflow-wrap:anywhere}
+code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.88em;background:var(--code);padding:1px 5px;border-radius:5px}
+.empty{color:var(--dim)}
+footer{margin-top:22px;font-size:13.5px;color:var(--dim)}
+footer a,.lede a{color:var(--accent)}
+.err{color:#d1242f}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 data-i18n="title">La barra de claude-kit, en vivo</h1>
+      <p class="lede" data-i18n-html="lede">Mueve los controles y mira cómo reacciona la barra de estado. Cada estado es la salida real de <code>statusline.sh</code>, pre-renderizada, no una imitación en JavaScript. Toca un sector para ver qué dice.</p>
+    </div>
+    <div class="tools">
+      <button id="lang" type="button" aria-label="English">EN</button>
+      <button id="theme" type="button" aria-label="Cambiar tema">◐</button>
+    </div>
+  </header>
+
+  <div class="term" id="term" aria-live="polite"><div class="ln"></div><div class="ln"></div></div>
+  <p class="hint" data-i18n="hint">Los sectores subrayados se pueden tocar (Tab y Enter con el teclado).</p>
+
+  <div class="grid">
+    <form class="card" id="controls" onsubmit="return false">
+      <h2 data-i18n="controls">Controles</h2>
+      <fieldset><legend data-i18n="model">Modelo y esfuerzo</legend><div class="seg" data-c="0"></div></fieldset>
+      <fieldset><legend><span data-i18n="context">Contexto usado</span> · <span id="ctxv"></span></legend>
+        <input type="range" id="ctx" min="0" max="3" step="1" value="1" aria-describedby="ctxt">
+        <div class="ticks" id="ctxt"><span>60k</span><span>180k</span><span>320k</span><span>385k</span></div></fieldset>
+      <fieldset><legend data-i18n="cache">Caché de prompt</legend><div class="seg" data-c="2"></div></fieldset>
+      <fieldset><legend data-i18n="quota">Cuota del plan</legend><div class="seg" data-c="3"></div></fieldset>
+      <fieldset><legend data-i18n="git">Git</legend><div class="seg" data-c="4"></div></fieldset>
+      <fieldset><legend data-i18n="handoff">HANDOFF.md</legend><div class="seg" data-c="5"></div></fieldset>
+    </form>
+    <section class="card" id="legend" aria-live="polite"><h2 data-i18n="legendTitle">Qué significa</h2><p class="empty" data-i18n="legendEmpty">Toca un sector de la barra.</p></section>
+  </div>
+
+  <footer>
+    <p data-i18n-html="foot">Generado por <code>tools/render-grid.sh</code>: 972 combinaciones pasadas por el <code>statusline.sh</code> real. Si la barra cambia, <code>verify.sh</code> exige regenerar. Leyenda completa en <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/statusline.es.md">statusline.es.md</a> · lección <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.md">01 · Lee tu barra</a> · <a href="https://github.com/IchiSieben/claude-kit">código</a>.</p>
+    <p id="meta"></p>
+  </footer>
+</main>
+<script>
+"use strict";
+const T = {
+  es: {title:"La barra de claude-kit, en vivo", controls:"Controles", model:"Modelo y esfuerzo", context:"Contexto usado",
+    cache:"Caché de prompt", quota:"Cuota del plan", git:"Git", handoff:"HANDOFF.md", legendTitle:"Qué significa",
+    legendEmpty:"Toca un sector de la barra.", hint:"Los sectores subrayados se pueden tocar (Tab y Enter con el teclado).",
+    lede:'Mueve los controles y mira cómo reacciona la barra de estado. Cada estado es la salida real de <code>statusline.sh</code>, pre-renderizada, no una imitación en JavaScript. Toca un sector para ver qué dice.',
+    foot:'Generado por <code>tools/render-grid.sh</code>: 972 combinaciones pasadas por el <code>statusline.sh</code> real. Si la barra cambia, <code>verify.sh</code> exige regenerar. Leyenda completa en <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/statusline.es.md">statusline.es.md</a> · lección <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.md">01 · Lee tu barra</a> · <a href="https://github.com/IchiSieben/claude-kit">código</a>.',
+    what:"Se ve", means:"Significa", source:"Lee de", threshold:"Umbral", node:"La máquina donde corre la sesión (CC_NODE o el hostname). No tiene fila en la leyenda.",
+    meta:(d,h)=>`Renderizado el ${d} · entradas ${h}`, theme:"Cambiar tema", load:"No se pudo cargar grid.json. Abre la página desde un servidor (no file://).",
+    opts:[["Opus 5.5 · high","Sonnet 5.5 · medium","Haiku 5.5 · low"],null,["caliente · 42 min","enfriando · 4 min","fría"],
+      ["5h 20% · 7d 30%","5h 41% · 7d 87%","5h 93% · 7d 97%"],["al día con origin","1 commit sin push (3 h)","+ 2 archivos modificados"],
+      ["escrito hace 10 min","escrito hace 7 h","no existe"]]},
+  en: {title:"The claude-kit status line, live", controls:"Controls", model:"Model and effort", context:"Context used",
+    cache:"Prompt cache", quota:"Plan quota", git:"Git", handoff:"HANDOFF.md", legendTitle:"What it means",
+    legendEmpty:"Tap a sector of the bar.", hint:"Underlined sectors can be tapped (Tab and Enter on a keyboard).",
+    lede:'Move the controls and watch the status line react. Every state is the real output of <code>statusline.sh</code>, pre-rendered, not a JavaScript imitation. Tap a sector to see what it says. The bar\'s own words are Spanish; they come from <code>thresholds.json</code>.',
+    foot:'Generated by <code>tools/render-grid.sh</code>: 972 combinations piped through the real <code>statusline.sh</code>. If the bar changes, <code>verify.sh</code> demands a re-render. Full legend in <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/statusline.md">statusline.md</a> · lesson <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.en.md">01 · Read your bar</a> · <a href="https://github.com/IchiSieben/claude-kit">code</a>.',
+    what:"Looks like", means:"Means", source:"Reads", threshold:"Threshold", node:"The machine the session runs on (CC_NODE or the hostname). It has no legend row.",
+    meta:(d,h)=>`Rendered ${d} · inputs ${h}`, theme:"Toggle theme", load:"Could not load grid.json. Open the page from a server (not file://).",
+    opts:[["Opus 5.5 · high","Sonnet 5.5 · medium","Haiku 5.5 · low"],null,["warm · 42 min","cooling · 4 min","cold"],
+      ["5h 20% · 7d 30%","5h 41% · 7d 87%","5h 93% · 7d 97%"],["in sync with origin","1 unpushed commit (3 h)","+ 2 modified files"],
+      ["written 10 min ago","written 7 h ago","missing"]]},
+};
+const CTX = ["60k","180k","320k","385k"];
+const state = [0,1,0,1,1,1];
+let lang = "es", grid = null, picked = null;
+try { const s = localStorage.getItem("kitdemo-lang"); if (s && T[s]) lang = s; else if (!/^es/i.test(navigator.language||"")) lang = "en"; } catch (e) {}
+try { const th = localStorage.getItem("kitdemo-theme"); if (th) document.documentElement.dataset.theme = th; } catch (e) {}
+
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const md = s => esc(s).replace(/\\\|/g,"|").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+
+/* ANSI -> [{ch, cls}] (only the SGR codes statusline.sh emits: 0 1 31 32 33 35 36). */
+function parseAnsi(line) {
+  const out = []; let bold = false, fg = 0;
+  for (let i = 0; i < line.length; ) {
+    if (line[i] === "\x1b" && line[i+1] === "[") {
+      const j = line.indexOf("m", i); const codes = line.slice(i+2, j).split(";").map(Number);
+      for (const c of codes) { if (c === 0) { bold = false; fg = 0; } else if (c === 1) bold = true; else if (c >= 30 && c <= 37) fg = c; }
+      i = j + 1; continue;
+    }
+    const cp = line.codePointAt(i); const ch = String.fromCodePoint(cp);
+    out.push({ch, cls: (bold ? "b " : "") + (fg ? "c" + fg : "")}); i += ch.length;
+  }
+  return out;
+}
+
+/* Sector rules, tried at each position of the plain text (numbers = rows of docs/statusline.md). */
+const RULES = [
+  [/^⚠ umbrales/, "16"],
+  [/^·(?:low|medium|high|xhigh|max)\b/, "2"],
+  [/^@\S+/, "node"],
+  [/^[▓░┋]+/, "3"],
+  [/^\d+k\/\d+k(?: ⚠)?/, "4"],
+  [/^\d+% of \d+[kM]/, "5"],
+  [/^\$[\d.⚠]+/, "6"],
+  [/^[⚡❄]︎?.*$/, "10"],
+  [/^⚠ caché/, "10"],
+  [/^\d+m\b|^⚠m/, "7"],
+  [/^5h \S+/, "8"], [/^7d \S+/, "9"],
+  [/^hit \S+/, "11"], [/^\(\S+ miss\)/, "12"],
+  [/^\+\d+\/-\d+|^⚠ diff/, "13"],
+  [/^⎇.*?(?=  |$)/, "14"],
+  [/^(?:✓|⚠ ?)(?:sin )?HANDOFF.*?(?=  |$)/, "15"],
+  [/^\[[^\]]*\]/, "17"],
+];
+function sectorize(cells, first) {
+  const text = cells.map(c => c.ch).join("");
+  const sec = new Array(cells.length).fill(null);
+  // character offsets in `text` vs cell indices differ for astral chars: map them
+  const off = []; let k = 0; for (let i = 0; i < cells.length; i++) { off.push(k); k += cells[i].ch.length; }
+  const cellAt = o => { let lo = 0, hi = off.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (off[m] <= o) lo = m; else hi = m - 1; } return lo; };
+  let o = 0;
+  if (first) { const m = text.match(/^.*?(?= ·| @|$)/); if (m && m[0]) { for (let i = cellAt(0); i <= cellAt(m[0].length - 1); i++) sec[i] = "1"; o = m[0].length; } }
+  while (o < text.length) {
+    // the hint (#18) is the magenta tail of line 2: once it starts, no other rule applies
+    // (it may quote "5h 93%" or "hit bajo", which would otherwise match #8 or #11)
+    if (/c35/.test(cells[cellAt(o)].cls) && text[o].trim()) { for (let i = cellAt(o); i < cells.length; i++) sec[i] = "18"; break; }
+    const rest = text.slice(o); let hit = null;
+    for (const [re, id] of RULES) { const m = rest.match(re); if (m && m[0]) { hit = [m[0].length, id]; break; } }
+    if (hit) { const a = cellAt(o), b = cellAt(o + hit[0] - 1); for (let i = a; i <= b; i++) sec[i] = hit[1]; o += hit[0]; }
+    else o += 1;
+  }
+  cells.forEach((c, i) => { if (!sec[i] && /c35/.test(c.cls) && c.ch.trim()) sec[i] = "18"; });
+  // the hint is one run: fill the gaps between its first and last magenta cell
+  const h = sec.map((s, i) => s === "18" ? i : -1).filter(i => i >= 0);
+  if (h.length) for (let i = h[0]; i <= h[h.length-1]; i++) if (!sec[i]) sec[i] = "18";
+  return sec;
+}
+
+function renderLine(el, raw, first) {
+  const cells = parseAnsi(raw), sec = sectorize(cells, first);
+  let html = "", i = 0;
+  while (i < cells.length) {
+    const s = sec[i]; let j = i; let inner = "";
+    while (j < cells.length && sec[j] === s) {
+      let k = j; let txt = "";
+      while (k < cells.length && sec[k] === s && cells[k].cls === cells[j].cls) { txt += cells[k].ch; k++; }
+      inner += cells[j].cls ? `<span class="${cells[j].cls.trim()}">${esc(txt)}</span>` : esc(txt);
+      j = k;
+    }
+    html += s ? `<button type="button" class="sec" data-sec="${s}" aria-pressed="${picked === s}">${inner}</button>` : inner;
+    i = j;
+  }
+  el.innerHTML = html;
+}
+
+function key() { return state.join("."); }
+function draw() {
+  $("#ctxv").textContent = CTX[state[1]];
+  if (!grid) return;
+  const ids = grid.cells[key()] || [];
+  const lns = document.querySelectorAll("#term .ln");
+  lns.forEach((el, n) => renderLine(el, ids[n] !== undefined ? grid.lines[ids[n]] : "", n === 0));
+  if (picked && !document.querySelector(`#term [data-sec="${picked}"]`)) showLegend(picked, true);
+}
+function showLegend(id, gone) {
+  picked = id;
+  document.querySelectorAll("#term button.sec").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sec === id)));
+  const L = T[lang], box = $("#legend");
+  let body;
+  if (id === "node") body = `<h3>@</h3><p>${esc(L.node)}</p>`;
+  else {
+    const r = grid && grid.legend[lang][id];
+    body = r ? `<h3><span class="n">${id}</span>${md(r.what)}</h3><dl><dt>${L.means}</dt><dd>${md(r.means)}</dd><dt>${L.source}</dt><dd>${md(r.source)}</dd><dt>${L.threshold}</dt><dd>${md(r.threshold)}</dd></dl>` : "";
+  }
+  box.innerHTML = `<h2>${esc(L.legendTitle)}</h2>` + body;
+}
+
+function buildControls() {
+  const L = T[lang];
+  document.querySelectorAll(".seg").forEach(seg => {
+    const c = +seg.dataset.c;
+    seg.innerHTML = L.opts[c].map((t, i) => `<label><input type="radio" name="c${c}" value="${i}"${state[c] === i ? " checked" : ""}><span>${esc(t)}</span></label>`).join("");
+  });
+}
+function applyLang() {
+  const L = T[lang]; document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(e => { e.textContent = L[e.dataset.i18n]; });
+  document.querySelectorAll("[data-i18n-html]").forEach(e => { e.innerHTML = L[e.dataset.i18nHtml]; });
+  $("#lang").textContent = lang === "es" ? "EN" : "ES";
+  $("#lang").setAttribute("aria-label", lang === "es" ? "English" : "Español");
+  $("#theme").setAttribute("aria-label", L.theme);
+  document.title = lang === "es" ? "Simulador de la barra" : "Status line simulator";
+  buildControls();
+  if (grid) $("#meta").textContent = L.meta(new Date(grid.renderedAt * 1000).toISOString().slice(0, 10), grid.inputsHash.slice(0, 12));
+  if (picked) showLegend(picked); else $("#legend").innerHTML = `<h2>${esc(L.legendTitle)}</h2><p class="empty">${esc(L.legendEmpty)}</p>`;
+}
+
+$("#controls").addEventListener("change", e => {
+  const t = e.target;
+  if (t.id === "ctx") state[1] = +t.value; else if (t.name) state[+t.name.slice(1)] = +t.value;
+  draw();
+});
+$("#ctx").addEventListener("input", e => { state[1] = +e.target.value; draw(); });
+$("#term").addEventListener("click", e => { const b = e.target.closest("button.sec"); if (b) showLegend(b.dataset.sec); });
+$("#lang").addEventListener("click", () => { lang = lang === "es" ? "en" : "es"; try { localStorage.setItem("kitdemo-lang", lang); } catch (e) {} applyLang(); draw(); });
+$("#theme").addEventListener("click", () => {
+  const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark"; try { localStorage.setItem("kitdemo-theme", r.dataset.theme); } catch (e) {}
+});
+
+applyLang(); draw();
+fetch("grid.json").then(r => r.json()).then(g => { grid = g; applyLang(); draw(); })
+  .catch(() => { $("#term .ln").innerHTML = `<span class="c31">${esc(T[lang].load)}</span>`; });
+</script>
+</body>
+</html>

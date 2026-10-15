@@ -13,6 +13,10 @@ Mirar las dos líneas de la barra de estado y saber, en un vistazo, cuatro cosas
 contexto te queda antes de que la sesión se degrade, si la caché sigue caliente, si tu trabajo
 está a salvo (commit, push, HANDOFF) y qué deberías hacer ahora. Al final de la lección puedes
 leer cualquier estado de la barra sin abrir la leyenda.
+
+**Pruébala en vivo:** el [simulador de la barra](https://kit.ichisieben.dev/) mueve contexto, caché,
+cuota, git, HANDOFF y modelo, y muestra la salida real de `statusline.sh` para cada combinación.
+Toca un sector y abre su fila de la leyenda: es esta lección hecha interactiva.
 **Quién lo hace:** tú. La barra la dibuja `home/.claude/statusline.sh` en cada turno; tú solo
 la lees.
 

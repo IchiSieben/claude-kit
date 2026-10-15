@@ -13,6 +13,10 @@ Look at the two lines of the status bar and know, at a glance, four things: how 
 have left before the session degrades, whether the cache is still warm, whether your work is
 safe (commit, push, HANDOFF) and what you should do now. By the end you can read any state of
 the bar without opening the legend.
+
+**Try it live:** the [status line simulator](https://kit.ichisieben.dev/) moves context, cache, quota,
+git, HANDOFF and model, and shows the real output of `statusline.sh` for each combination. Tap a
+sector to open its legend row: this lesson, made interactive.
 **Who does it:** you. `home/.claude/statusline.sh` draws the bar on every turn; you only read it.
 
 ## Why: a bar that does not lie

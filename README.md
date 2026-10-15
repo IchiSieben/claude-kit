@@ -66,6 +66,8 @@ references to change as the evidence does.
 
 *This GIF predates the 2026-10-15 cache redesign: it still shows the old cache segment (hit ratio and TTL), not `⚡ enfriando · 4m`. It is re-recorded on the Mac by `TASK-kit-media.md`.*
 
+**Try it live: [kit.ichisieben.dev](https://kit.ichisieben.dev/)** — the bar reacting to controls (context, cache, quota, git, HANDOFF, model). Every state is the real `statusline.sh` output, pre-rendered by `tools/render-grid.sh`; `verify.sh` fails if the bar changes and the demo is not re-rendered.
+
 New to the bar? Start with the lesson [`docs/leccion-01-lee-tu-barra.en.md`](docs/leccion-01-lee-tu-barra.en.md): the 18 sectors by group, with [a diagram](docs/img/statusline-sectores.en.svg) and a self-check.
 
 
