@@ -150,3 +150,34 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
 - **Ítem 3 · la ficha pasa a 140 tests y lleva `demoUrl`.** Misma regla que el owner aprobó para el
   128 (la cifra del día): se sumaron las 12 de `route_test.sh`. El bloque `media` ya tiene sus
   archivos y su mapeo a `public/media/claude-kit/`; la copia la hace el Landing (V4).
+
+## V1c · 2026-10-15 (prompt §14, demo v2) — decidido sin el owner
+
+- **Commits agrupados 1 · 2-5 · 6 (+ arreglos).** Los ítems 2 a 5 comparten motor (`app.js`) y
+  rejilla: separarlos dejaba commits intermedios que no pasaban `verify.sh`. Revertir: `git revert
+  6a1aa28`.
+- **Rejilla a 1 296 celdas: 4.º estado de git (`?1`).** Para explicar `?` hacía falta un estado
+  real con un archivo sin seguimiento. Regla de §14: lo que falta se añade a la rejilla.
+  `docs/DECISIONES.md` antiguo dice 972: es histórico y no se reescribe.
+- **El recorrido es una copia de `../shared/tutorial/` en `docs/demo/tutorial/`** con ganchos
+  aditivos (`onStep`, `onClose`, `read`), scroll solo si el objetivo no se ve entero y
+  `focus({preventScroll})`. El compartido no se tocó (lo usan otros demos). Pendiente propuesto:
+  subir esos tres cambios al compartido.
+- **DejaVu, no Noto, para los símbolos de la barra.** Cubre todos los glifos en un archivo de 4,9 KB
+  (dos subconjuntos); Noto necesitaba tres familias.
+- **Héroe revelado con CSS desde opacidad .02**, no desde 0: con 0 el navegador no cuenta el párrafo
+  como LCP y la métrica cae en un elemento tardío. Visualmente es invisible.
+- **Primer pantallazo bilingüe en el HTML** (`data-l`), idioma decidido en `<head>` antes de pintar:
+  cambiar el texto después del primer render movía la página.
+- **Móvil: tres filas reservadas por línea de la barra.** El recorrido vuelve a la celda 0 a los
+  0,9 s y una línea más corta subía todo (CLS 0,23). Revertir: la regla `.ln{min-height:6.45em}`.
+- **Space Grotesk y JetBrains Mono con `font-display: optional`** (precargadas). Con `swap`, la
+  fuente llegaba tarde en red real y re-envolvía el héroe (CLS hasta 0,2). Coste: en una primera
+  visita muy lenta se ve la fuente de respaldo; desde la segunda, la propia. Revertir: volver a
+  `swap` en las dos `@font-face` de `index.html`.
+- **Tutorial en tema claro: acento `--accent-text` y texto blanco sobre teal**, para 4,5:1.
+- **Los gates miden el sitio publicado** cuando sus archivos son los del commit (sha comparado);
+  si no, el servidor local, que no comprime y da perf más baja. `GATES.md` dice qué URL midió.
+- **`default.php` sigue en `kit-app/`** (negado por `.htaccess`): borrar en Hostinger es del owner.
+- **Errores de `jq` en un log de render** salieron de procesos huérfanos de una corrida detenida, no
+  del script: la corrida limpia no los tiene.
