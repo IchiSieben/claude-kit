@@ -47,8 +47,9 @@ está la especificación.
 | Skills `tercerizar`, `visor` | Traspaso a un agente externo · visor de sesiones | `beta` |
 | `home/.claude/modules/enjambre/` | Opcional: guarda de ssh + regla para un equipo de varias máquinas; solo se instala con `--with enjambre` | `beta` — 23 tests, nuevo el 2026-10-15 |
 | `sync-to-home.sh`, `sync-from-home.sh`, `mirror-lib.sh`, `kit-update.sh`, `verify.sh` | El espejo | `stable` — corre en cada sesión en dos máquinas |
-| `harvest.py` | Métricas durables desde los transcripts | `beta` |
-| Bitácora (`docs/bitacora-spec.es.md`) | Página índice de proyectos | `experimental` — solo especificación |
+| `harvest.py`, `partidas.py` | Métricas durables desde los transcripts; las sesiones como partidas (vista semanal, jugadas) — [`docs/harvest.es.md`](docs/harvest.es.md) | `beta` — 64 tests con transcripts sintéticos |
+| `bitacora.py` | En qué quedó cada proyecto: git, HANDOFF, último prompt, enlaces ([spec](docs/bitacora-spec.es.md)) | `beta` — v1, solo local, 29 tests |
+| `.githooks/pre-push`, `tools/install-hooks.sh` | Un `verify.sh` en rojo niega el push | `beta` — 5 tests, nuevo el 2026-10-15 |
 | `templates/` | Contratos de SPEC, TASK, AGENTS, REVIEW | `beta` — los usan `/tercerizar` y `/spec` |
 | `home/.claude/MANUAL.md` | El porqué detrás de cada regla (español) | `stable` — `verify.sh` audita sus líneas `Fuente:` |
 
@@ -198,13 +199,15 @@ referencias cambien conforme cambie la evidencia — propone o cuestiona una con
 
 ## Hoja de ruta
 
-- Barra de estado: decidir el presupuesto de render (416 ms medidos contra 200 ms de meta;
-  re-medido el 2026-10-15 con la máquina cargada, sin cambio atribuible al rediseño de la caché
-  — falta una medición con la máquina en reposo). El indicador de `permission_mode` vuelve si el payload lo trae de nuevo.
+- Barra de estado: la meta de 200 ms queda por debajo del piso de Windows (~225 ms: bash más un
+  jq), así que se corrigió en vez de cumplirse. 2026-10-15: de 8 a 6 procesos por render completo.
+  Falta la columna de la Mac en `docs/statusline-internals.md` (lane `bench`, 2026-10-15). El
+  indicador de `permission_mode` vuelve si el payload lo trae de nuevo.
 - Alertas: por ahora ninguna más allá de la pista de la barra y el aviso rojo de deriva en
   `SessionStart`.
 - `/ahora` híbrido — git en vivo más deriva, en vez de solo un snapshot.
-- Bitácora v2, un reporte semanal — por ahora solo especificación.
+- Bitácora v2: publicar un snapshot en vez de una página local (la v1 y el reporte semanal,
+  `partidas.py`, salieron el 2026-10-15).
 - `/tercerizar` v2; el esquema de un registro de proyectos podría publicarse aunque el
   registro en sí se mantenga privado.
 - Ports: Codex CLI, Gemini CLI — sin empezar.

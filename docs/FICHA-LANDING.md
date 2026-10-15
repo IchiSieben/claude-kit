@@ -9,7 +9,7 @@ en `HANDOFF.md`:
 
 | Cifra | Valor | Cómo se obtiene |
 |---|---|---|
-| Pruebas en verde | 140 | `statusline_test.sh` 67 + `hooks_test.sh` 38 + `enjambre_module_test.sh` 23 + `route_test.sh` 12 |
+| Pruebas en verde | 242 | `statusline_test.sh` 71 + `hooks_test.sh` 38 + `enjambre_module_test.sh` 23 + `route_test.sh` 12 + `prepush_test.sh` 5 + `partidas_test.sh` 64 + `bitacora_test.sh` 29 |
 | Render completo de la barra | ~476 ms | `docs/statusline-internals.md` § Cost (medido en reposo, 2026-09-22) |
 | Hooks | 5 (+1 opcional) | `home/.claude/hooks/` · el módulo enjambre añade `enjambre-ssh-guard.sh` |
 | Skills | 10 | `home/.claude/skills/` |
@@ -17,6 +17,7 @@ en `HANDOFF.md`:
 
 El prompt pedía `"Open source · 79 tests"` (la cifra del 2026-09-22); el owner aprobó usar la
 cifra del día. El 2026-10-15 por la tarde son 140: se sumó `route_test.sh` (ver `docs/DECISIONES.md`).
+Esa noche (V1d) son 242: pre-push, partidas y bitácora, y 4 más en la barra.
 
 `demoUrl` es el simulador de la barra, publicado en https://kit.ichisieben.dev/ (docroot `kit-app`).
 
@@ -56,7 +57,7 @@ order: 13
 featured: false
 status: "live"
 maturity: "usable"
-statusNote: "Open source · 140 tests"
+statusNote: "Open source · 242 tests"
 published: true
 since: 2026
 date: "2026-10-15"
@@ -75,20 +76,20 @@ skills:
   - "llm-agentes"
   - "macos-arm"
 applied:
-  bash: "La barra de estado, los cinco hooks y los scripts de espejo son bash + jq, con 140 pruebas, entre ellas las que comparan la barra contra salidas guardadas con reloj y ancho fijos."
+  bash: "La barra de estado, los cinco hooks y los scripts de espejo son bash + jq; el kit tiene 242 pruebas, entre ellas las que comparan la barra contra salidas guardadas con reloj y ancho fijos."
   windows: "Se usa a diario en Windows con Git Bash; ahí cada proceso lanzado cuesta 50–65 ms, y por eso la barra hace una sola llamada a jq para todos los campos."
   git: "La barra cuenta commits sin push, archivos sucios y si el HANDOFF quedó atrás del árbol; kit-update.sh solo avanza con git pull --ff-only."
   llm-agentes: "Seis subagentes por carril (de haiku a opus) y una regla de revisión: el revisor nunca es más débil que el autor."
   macos-arm: "El mismo ~/.claude corre en una Mac mini con Apple Silicon; el video de la barra se graba ahí, delegado por enjambre."
 problem: "Usaba Claude Code todo el día en tres frentes y los mismos problemas aparecían en todos: el modelo más caro haciendo trabajo de uno chico, sesiones que perdían el hilo y descubrir demasiado tarde que el contexto estaba enorme, la caché fría o el traspaso desactualizado."
 results:
-  - { label: "pruebas automáticas en verde", value: 140, source: "statusline 67 + hooks 38 + módulo enjambre 23 + /route 12, Windows, 2026-10-15" }
+  - { label: "pruebas automáticas en verde", value: 242, source: "statusline 71 + hooks 38 + módulo enjambre 23 + /route 12 + pre-push 5 + partidas 64 + bitácora 29, Windows, 2026-10-15" }
   - { label: "render completo de la barra en Windows + Git Bash", value: 476, unit: "ms", source: "docs/statusline-internals.md, 2026-09-22" }
   - { label: "hooks del ciclo de sesión", value: 5, source: "home/.claude/hooks, 2026-10-15" }
   - { label: "skills", value: 10, source: "home/.claude/skills, 2026-10-15" }
   - { label: "subagentes por carril", value: 6, source: "home/.claude/agents, 2026-10-15" }
 next:
-  - "Bajar el render de la barra o aceptar el presupuesto: 476 ms medidos contra 200 ms de meta; falta medir en la Mac."
+  - "Medir la barra en la Mac. En Windows la meta de 200 ms se corrigió: el piso es ~225 ms, y el render completo bajó de 8 a 6 procesos (2026-10-15)."
   - "Portar las ideas a Codex CLI y Gemini CLI."
   - "Una línea UNATTENDED: para que una sesión acepte un alcance aprobado sin detenerse a preguntar."
 ---
@@ -107,7 +108,8 @@ muestra reaccionando a controles: cada estado es la salida real del script, pre-
 Para quien tiene más de una máquina, el módulo opcional `enjambre` (`--with enjambre`) añade un
 hook que bloquea el `ssh` directo a los nodos y obliga a delegar por la cola de enjambre.
 
-Límites: la barra tarda unos 476 ms en Windows, por encima de la meta de 200 ms; el `CLAUDE.md`
+Límites: la barra tarda unos 476 ms en Windows (medido antes de quitarle dos procesos el 2026-10-15)
+y no baja de ~225 ms, así que la meta de 200 ms no se cumple allí; el `CLAUDE.md`
 del kit son las reglas de su autor y está pensado para editarse. Código bajo Apache-2.0.
 ```
 
@@ -123,7 +125,7 @@ order: 13
 featured: false
 status: "live"
 maturity: "usable"
-statusNote: "Open source · 140 tests"
+statusNote: "Open source · 242 tests"
 published: true
 since: 2026
 date: "2026-10-15"
@@ -142,20 +144,20 @@ skills:
   - "llm-agentes"
   - "macos-arm"
 applied:
-  bash: "The status line, the five hooks and the mirror scripts are bash + jq, with 140 tests, including suites that compare the bar against saved output at a fixed clock and width."
+  bash: "The status line, the five hooks and the mirror scripts are bash + jq; the kit has 242 tests, including suites that compare the bar against saved output at a fixed clock and width."
   windows: "Used daily on Windows with Git Bash, where every spawned process costs 50–65 ms, which is why the bar makes a single jq call for every field."
   git: "The bar counts unpushed commits, dirty files and whether the HANDOFF fell behind the tree; kit-update.sh only moves with git pull --ff-only."
   llm-agentes: "Six subagents by lane (haiku to opus) and one review rule: the reviewer is never weaker than the author."
   macos-arm: "The same ~/.claude runs on an Apple Silicon Mac mini; the status-line video is recorded there, delegated through enjambre."
 problem: "I used Claude Code all day on three fronts and the same problems showed up in all of them: the most expensive model doing a small model's job, sessions losing the thread, and finding out too late that context was huge, the cache was cold or the handoff was stale."
 results:
-  - { label: "automated tests passing", value: 140, source: "statusline 67 + hooks 38 + enjambre module 23 + /route 12, Windows, 2026-10-15" }
+  - { label: "automated tests passing", value: 242, source: "statusline 71 + hooks 38 + enjambre module 23 + /route 12 + pre-push 5 + partidas 64 + bitácora 29, Windows, 2026-10-15" }
   - { label: "full status-line render on Windows + Git Bash", value: 476, unit: "ms", source: "docs/statusline-internals.md, 2026-09-22" }
   - { label: "session lifecycle hooks", value: 5, source: "home/.claude/hooks, 2026-10-15" }
   - { label: "skills", value: 10, source: "home/.claude/skills, 2026-10-15" }
   - { label: "subagents by lane", value: 6, source: "home/.claude/agents, 2026-10-15" }
 next:
-  - "Cut the bar's render time or accept the budget: 476 ms measured against a 200 ms target; the Mac is not measured yet."
+  - "Measure the bar on the Mac. On Windows the 200 ms target was corrected: the floor is ~225 ms, and the full render went from 8 to 6 processes (2026-10-15)."
   - "Port the ideas to Codex CLI and Gemini CLI."
   - "An UNATTENDED: line so a session can accept an approved scope without stopping to ask."
 ---
@@ -174,6 +176,7 @@ it reacting to controls: every state is the script's real output, pre-rendered.
 For anyone with more than one machine, the optional `enjambre` module (`--with enjambre`) adds a
 hook that blocks a raw `ssh` to the nodes and makes every delegation go through enjambre's queue.
 
-Limits: the bar takes about 476 ms on Windows, over the 200 ms target; the kit's `CLAUDE.md` is
+Limits: the bar takes about 476 ms on Windows (measured before two processes were removed on
+2026-10-15) and cannot go below ~225 ms there, so the 200 ms target is not met; the kit's `CLAUDE.md` is
 its author's own rules and is meant to be edited. Code under Apache-2.0.
 ```

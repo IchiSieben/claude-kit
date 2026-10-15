@@ -42,8 +42,9 @@ references to change as the evidence does.
 | Skills `kickoff`, `spec`, `route`, `handoff`, `xreview`, `manual`, `ahora`, `kit-update` | Session lifecycle | `beta` — used, `/ahora` tested live, no suite |
 | Skills `tercerizar`, `visor` | Hand-off to an external agent · session viewer | `beta` |
 | `sync-to-home.sh`, `sync-from-home.sh`, `mirror-lib.sh`, `kit-update.sh`, `verify.sh` | The mirror | `stable` — run every session on two machines |
-| `harvest.py` | Durable metrics from transcripts | `beta` |
-| Bitácora (`docs/bitacora-spec.es.md`) | Project index page | `experimental` — spec only |
+| `harvest.py`, `partidas.py` | Durable metrics from transcripts; sessions as matches (weekly view, plays) — [`docs/harvest.md`](docs/harvest.md) | `beta` — 64 tests on synthetic transcripts |
+| `bitacora.py` | Where each project stopped: git, HANDOFF, last prompt, links ([spec](docs/bitacora-spec.es.md)) | `beta` — v1, local only, 29 tests |
+| `.githooks/pre-push`, `tools/install-hooks.sh` | A red `verify.sh` refuses the push | `beta` — 5 tests, new on 2026-10-15 |
 | `templates/` | SPEC, TASK, AGENTS, REVIEW contracts | `beta` — used by `/tercerizar` and `/spec` |
 | `home/.claude/modules/enjambre/` | Optional: ssh guard + rule for a multi-machine setup, installed only with `--with enjambre` | `beta` — 23 tests, new on 2026-10-15 |
 | `home/.claude/MANUAL.md` | The why behind every rule (Spanish) | `stable` — `verify.sh` audits its `Fuente:` lines |
@@ -191,12 +192,14 @@ change as the evidence does — propose or challenge one with
 
 ## Roadmap
 
-- Status line: decide the render budget (416 ms measured vs 200 ms target; re-measured on
-  2026-10-15 under load, no change attributable to the cache redesign — a quiet-machine run is
-  pending). `permission_mode` indicator restored if the payload brings it back.
+- Status line: the 200 ms target is below the Windows floor (~225 ms: bash plus one jq), so it
+  was corrected, not met. 2026-10-15: 8 to 6 processes per full render. The Mac column of
+  `docs/statusline-internals.md` is pending (`bench` lane, 2026-10-15). `permission_mode`
+  indicator restored if the payload brings it back.
 - Alerts: none yet beyond the bar's hint line and the red-drift `SessionStart` warning.
 - `/ahora` hybrid — live git + drift instead of a snapshot only.
-- Bitácora v2, a weekly report — spec only for now.
+- Bitácora v2: publish a snapshot instead of a local page (v1 and the weekly report,
+  `partidas.py`, shipped on 2026-10-15).
 - `/tercerizar` v2; the schema for a project registry could ship even though the registry
   itself stays private.
 - Ports: Codex CLI, Gemini CLI — not started.

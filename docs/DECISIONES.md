@@ -191,3 +191,68 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   el mismo `demo-gates.mjs` corrió en Windows contra https://kit.ichisieben.dev (archivos iguales al
   commit por md5) y sus capturas y clip quedan en el repo. Lighthouse en Windows es ruidoso: el mismo
   código dio TBT 431 y 224 ms en dos corridas seguidas.
+
+## V1d · 2026-10-15 (prompt §19: lo que el kit dice de sí mismo) — decidido sin el owner
+
+- **Gates de la Mac (`kit-demo-gates-5`): perf mediana 99, axe 0, 0 cortes de parpadeo.** No se
+  aplicó el experimento de fuentes/JS de carga (solo tocaba si perf < 95). Dos de cinco corridas
+  dieron CLS 0,175 y 0,233; la mediana es 0. Queda anotado, no se persigue.
+  Arreglo previo de la lane: Playwright 1.60.0 (el del Landing). Su Chromium ya estaba completo
+  en la caché del nodo; el 1.48.2 se colgaba al extraer el suyo.
+- **De esa corrida se toma la evidencia, no los medios.** La lane re-grabó `docs/media/demo-*`,
+  pero el Landing importó los publicados por sha256 y muestran la misma demo. Revertir: copiar
+  `docs/media/demo-*` desde `mac/kit-demo-gates-5` y re-importar la ficha.
+- **La rejilla regenerada no se re-subió a `kit-app`.** Cambian el hash de la barra y la hora del
+  HANDOFF dibujada; el texto de la barra es idéntico. Sobrescribir en Hostinger por eso no compensa.
+  Se sube con la próxima publicación real de la demo.
+- **Render de la barra: 200 ms no es alcanzable en Windows; la meta se corrige.** El piso medido
+  es ~225 ms (bash + jq + git son procesos y cada spawn en Git Bash cuesta ~45–60 ms). Bajamos de
+  8 a 6 procesos por render completo. Ahorro estimado: ~130–160 ms con unidades medidas; no hubo un
+  A/B limpio porque la CPU estuvo al 86–99 % toda la sesión. Detalle: `docs/statusline-internals.md`.
+- **Hipótesis «cachear `git status`»: rechazada.** En el repo más grande cuesta ~100 ms contra
+  ~45 ms de `git --version`: casi todo es el spawn, que leer una caché solo ahorra en parte. Y
+  `.git/index` no cambia al editar un archivo ni al crear uno nuevo: un `●N ?N` cacheado mentiría
+  durante el TTL.
+- **`GIT_OPTIONAL_LOCKS=0` en la barra.** Dos `.git/index.lock` huérfanos aparecieron hoy. Causa
+  probable: un `git status` de la barra muerto por timeout mientras refrescaba el índice. Los
+  candados se movieron fuera del repo (no se borraron).
+- **jq.exe nativo convierte `/tmp/...` en `C:/Users/.../Temp/...`** (conversión de rutas de
+  MSYS). Aviso para quien escriba pruebas en Windows: no pasarle a jq una ruta `/tmp/...` como
+  argumento y esperar que la vea igual que bash.
+- **build-kit: la auditoría de cadenas prohibidas estaba ciega** (con `pipefail`, el estado era el
+  del último `grep`, no el de los hallazgos). Además, `sed -i` sobre binarios borraba un byte de
+  los videos. Ahora decide por la salida, elige el texto con `grep -I` y la prueba
+  `tests/build_kit_test.sh` lo cubre (solo en el repo privado).
+- **Guardas (ítem 2):** hook `pre-push` en los dos repos (`core.hooksPath=.githooks`). Quita
+  `GIT_DIR` y similares antes de correr verify, porque las suites crean repos desechables y un
+  `GIT_DIR` heredado los apuntaría al repo que hace push. Lint en verify: todo `.sh` o paso de
+  workflow que hace push lleva `set -euo pipefail`; el único que faltaba era el workflow
+  `model-intel.yml`. Revertir el hook: `git config --unset core.hooksPath`.
+- **harvest v2: cada `message.id` se cuenta una vez.** El transcrito repite el mismo `usage` en
+  cada bloque de contenido (5 674 grupos duplicados, 0 distintos); la v1 inflaba los tokens hasta
+  ~2×. Los 43 registros v1 cuyo transcrito ya borró el barrido conservan sus números, marcados, y
+  no se juzgan. Respaldo: `~/claude-archive/sessions.v1-backup.json`.
+- **Costo = el del harness (último `cost-state`) y, si falta, estimación con `models.json` marcada
+  como cota inferior.** La estimación da 0,6–1,0× del costo del harness aun sumando los
+  transcritos de subagentes; la diferencia no está explicada y el doc lo dice así.
+- **Jugadas con umbrales de `thresholds.json` (`context-red`, `cache-cold`) y tiers de
+  `models.json`.** Sin número de respaldo en el código: si no se pueden leer, sale 2. Los cortes de
+  la heurística `strong-on-mechanical` (≥ 5 llamadas, ≥ 80 % lectura) y el «> 3» de `cold-cache`
+  sí están en el código, y el doc lo dice.
+- **partidas no compara con la ventana anterior cuando el barrido la dejó como muestra** (13
+  sesiones con transcrito frente a 31 solo v1). Un «$235 → $2 581» habría sido ruido.
+- **Bitácora v1, preguntas abiertas del SPEC cerradas:** raíz = la carpeta que contiene el repo
+  (no una ruta personal); proyectos = `projects.toml` más cada hijo con `.git` o `HANDOFF.md`, y los
+  worktrees se pliegan en su repo principal; `activo` ≤ 14 días, `parado` ≤ 90, `archivado` más
+  allá. La suite es `.sh` y no `pytest` (build-kit solo copia `tests/*.sh`).
+- **Solapamiento con el visor de enjambre, recortado del lado de la bitácora:** sin gráficos de
+  tokens en el tiempo, sin sesiones vivas, sin cuota. Un número de 30 días por proyecto y enlaces
+  al visor y a partidas.
+- **Fixtures que la exportación vetaba:** la raíz de usuario de Windows se arma en tiempo de
+  ejecución y el remoto de Drive es genérico. La prueba de guardas de build-kit lo detectó en verify.
+- **Lane `bench` para la Mac** (`TASK-kit-bench-1.md`): A/B intercalado contra `57f0b1e`. En
+  Windows, con n=3 y la máquina cargada: render completo 911 → 782 ms, piso 437 → 321 ms.
+- **`docs/harvest*.md` sin frontmatter `lesson:`**: no entran a la ruta de lecciones del Landing
+  hasta que alguien lo decida.
+- **FICHA-LANDING actualizada (242 tests, meta de render corregida).** El Landing la tiene que
+  re-importar; no se tocó el Landing desde aquí.

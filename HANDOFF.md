@@ -131,3 +131,35 @@ En vivo: **https://kit.ichisieben.dev/**. Los archivos publicados son iguales po
     solo si hace falta y `focus({preventScroll})`.
 - Hostinger: `kit-app/default.php` sigue allí, negado por `.htaccess`. Borrarlo es decisión del
   owner.
+
+## V1d · 2026-10-15 (prompt §19: lo que el kit dice de sí mismo)
+
+- **Mac primero**: `kit-demo-gates-5` ok tras pasar la lane a Playwright 1.60.0. Perf mediana 99,
+  a11y 100, axe 0, 0 cortes de parpadeo; el experimento de fuentes/JS no hacía falta. La evidencia
+  se trajo con `git show`; los medios re-grabados no (el Landing tiene los publicados por sha256).
+- **Ítem 1 (barra)**: de 8 a 6 procesos por render completo (de 10 a 7 con commits sin push; el piso,
+  de 4 a 2). A/B intercalado en Windows, n=3 y máquina cargada: 911 → 782 ms el completo y
+  437 → 321 ms el piso. La meta de 200 ms se corrigió: el piso de Windows es ~225 ms. Detalle y
+  la hipótesis de caché rechazada: `docs/statusline-internals.md`. `GIT_OPTIONAL_LOCKS=0`.
+  `tools/bench-statusline.sh`. Columna de la Mac: `TASK-kit-bench-1.md` (lane `bench`), lanzar con
+  `python ../enjambre/enjambre.py run --repo claude-kit --task TASK-kit-bench-1.md --node mac
+  --detach --budget 1 --model sonnet` y copiar las cifras a la tabla.
+- **Ítem 2 (guardas)**: `.githooks/pre-push` en los dos repos (`bash tools/install-hooks.sh [repo]`
+  para otros repos), `.gitattributes` con binarios explícitos y un lint de `set -euo pipefail`
+  en verify. En uso real: el hook dejó pasar el push del orquestador con verify en verde, y la
+  cadena `verify && push` frenó un push del kit con el árbol sucio. La negación por el hook en sí
+  la prueba `tests/prepush_test.sh`.
+- **Ítem 3 (partidas)**: `harvest.py` v2, `partidas.py`, `docs/harvest{,.es}.md`. Salidas en
+  `~/claude-archive/partidas.{json,html,txt}`.
+- **Ítem 4 (bitácora)**: `bitacora.py` → `~/claude-archive/bitacora.{html,json}`, 38 proyectos.
+- **Arreglos de build-kit por el camino**: la auditoría estaba ciega bajo `pipefail` y `sed -i`
+  recortaba un byte a los videos. Los dos tienen prueba (`tests/build_kit_test.sh`, solo en el
+  privado).
+- **Pendiente del owner**:
+  - correr `bash sync-to-home.sh` en el repo privado al cerrar el día (hay sesiones vivas) y
+    reiniciar Claude Code; `~/.claude/rules/thresholds.json` está viejo (le falta
+    `cache-hit-ok`), y hasta entonces partidas usa la copia del repo;
+  - en cada clon nuevo de los dos repos, `bash tools/install-hooks.sh` (`core.hooksPath` es
+    configuración local);
+  - re-importar `docs/FICHA-LANDING.md` en el Landing (242 tests, meta de render corregida).
+- La rejilla de la demo regenerada no se subió a `kit-app`: solo cambian el hash y una hora.
