@@ -33,19 +33,22 @@ run() {
     (cd "$W" && npm init -y >/dev/null && npm i --no-audit --no-fund playwright@1.48.2 @axe-core/playwright@4.10.1 \
       lighthouse@12.2.1 chrome-launcher@1.1.2 jpeg-js@0.4.4) || return 21
   fi
-  (cd "$W" && npx playwright install chromium) || return 21
+  # perl alarm = a timeout that exists on stock macOS; the 2026-10-15 run hung after this download
+  (cd "$W" && perl -e 'alarm shift; exec @ARGV' 900 npx playwright install chromium) || return 21
+  echo "== playwright ready"
   cp docs/tapes/demo-gates.mjs "$W/demo-gates.mjs"
 
   local port=$((18000 + RANDOM % 1000))
   python3 -m http.server "$port" --bind 127.0.0.1 --directory docs/demo >/dev/null 2>&1 &
   local srv=$!
   sleep 1
+  echo "== serving docs/demo on :$port"
   rm -rf "$OUT"; mkdir -p "$OUT"
   # Measure what visitors get (gzip, real TLS) when the published files are this commit's files;
   # otherwise the local server (python http.server: no compression, so perf reads lower).
   local base="http://127.0.0.1:$port" live="${DEMO_LIVE_URL:-https://kit.ichisieben.dev}" same=1 f
   for f in index.html app.js content.js grid.json; do
-    [ "$(curl -fsS "$live/${f/index.html/}?gates=$RANDOM" | shasum | cut -c1-40)" = "$(shasum < "docs/demo/$f" | cut -c1-40)" ] || { same=0; echo "live differs: $f"; }
+    [ "$(curl -fsS --max-time 20 "$live/${f/index.html/}?gates=$RANDOM" | shasum | cut -c1-40)" = "$(shasum < "docs/demo/$f" | cut -c1-40)" ] || { same=0; echo "live differs: $f"; }
   done
   [ $same = 1 ] && base="$live"
   echo "== measuring $base"
@@ -98,8 +101,16 @@ alive() { [ -f "$ST/pid" ] && kill -0 "$(cat "$ST/pid")" 2>/dev/null; }
 
 if [ "${1:-}" = --foreground ]; then run; exit $?; fi
 
-if [ ! -f "$ST/started" ] && ! alive; then
-  date '+%F %T' > "$ST/started"; rm -f "$ST/exit"; : > "$LOG"
+head=$(git rev-parse --short HEAD)
+# A run older than DEMO_MAX_S (45 min) is hung: kill its session (setsid: pid = pgid) and start over.
+if alive && [ -n "$(find "$ST/started" -mmin +"$(( ${DEMO_MAX_S:-2700} / 60 ))" 2>/dev/null)" ]; then
+  echo "demo-gates.sh: run from $(cat "$ST/started") is hung, killing it"; kill -TERM -- "-$(cat "$ST/pid")" 2>/dev/null; sleep 3
+  rm -f "$ST/started" "$ST/exit"
+fi
+# Start when nothing runs and there is no finished result for this commit (a stale `started` from a
+# dead run used to poll forever at exit 90).
+if ! alive && { [ ! -f "$ST/exit" ] || [ "$(cat "$ST/commit" 2>/dev/null)" != "$head" ]; }; then
+  date '+%F %T' > "$ST/started"; echo "$head" > "$ST/commit"; rm -f "$ST/exit"; : > "$LOG"
   self="$PWD/docs/tapes/demo-gates.sh"
   KEEP=(); command -v caffeinate >/dev/null && KEEP=(caffeinate -dims)
   nohup perl -MPOSIX=setsid -e 'setsid(); exec @ARGV' \

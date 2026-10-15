@@ -181,3 +181,13 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
 - **`default.php` sigue en `kit-app/`** (negado por `.htaccess`): borrar en Hostinger es del owner.
 - **Errores de `jq` en un log de render** salieron de procesos huérfanos de una corrida detenida, no
   del script: la corrida limpia no los tiene.
+- **Gates y clip de Windows como respaldo; la lane de la Mac, arreglada y relanzada.** El job
+  `kit-demo-gates` se colgó entre la descarga de Chromium de Playwright y `== measuring` (33 min sin
+  una línea más; el log no llegó a imprimir la confirmación de la descarga). La lane tenía además un
+  defecto propio: con un `started` viejo y el proceso muerto, cada llamada esperaba para siempre
+  (exit 90). Arreglo en `demo-gates.sh`: arranca si no hay proceso vivo y no hay resultado para este
+  commit; mata la sesión de una corrida de más de 45 min; `playwright install` con tope de 900 s
+  (alarm de perl); `curl --max-time 20`; marcas `== playwright ready` y `== serving`. Mientras tanto,
+  el mismo `demo-gates.mjs` corrió en Windows contra https://kit.ichisieben.dev (archivos iguales al
+  commit por md5) y sus capturas y clip quedan en el repo. Lighthouse en Windows es ruidoso: el mismo
+  código dio TBT 431 y 224 ms en dos corridas seguidas.
