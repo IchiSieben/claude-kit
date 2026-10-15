@@ -471,14 +471,17 @@ $("#tour").addEventListener("click", () => { makeTour(); tour.open(); });
 
 // ---------------------------------------------------------------- cards: 18 sectors x 3 levels, each with its real states
 const states = {};  // sector -> [html of each distinct real rendering]
-function collectStates() {
+// ~1 300 lines to parse: done in slices that yield to the main thread (one long task = TBT)
+async function collectStates() {
   const firstIds = new Set();
   const all = [...Object.values(grid.cells), ...grid.session.map(s => s.ids), ...Object.values(grid.extras || {})];
   for (const ids of all) firstIds.add(ids[0]);
   const order = [...Object.values(grid.extras || {}).flat(), ...grid.session.flatMap(s => s.ids), ...Object.values(grid.cells).flat()];
   const done = new Set();
+  let n = 0;
   for (const id of order) {
     if (done.has(id)) continue; done.add(id);
+    if (++n % 80 === 0) await new Promise(r => setTimeout(r));
     for (const r of runs(grid.lines[id], firstIds.has(id))) if (r.sec) {
       const a = (states[r.sec] ||= []);
       if (a.length < 6 && !a.includes(r.html)) a.push(r.html);
@@ -602,8 +605,8 @@ applyLang();
 fetch("grid.json", { cache: "no-cache" }).then(r => r.json()).then(g => {
   grid = g;
   if (!initial.lines || initial.key !== state.join(".")) paint(linesOf(idsNow()));
-  collectStates(); applyLang();
-  makeTour();
+  applyLang(); makeTour();
+  collectStates().then(() => $$(".card").forEach(c => { $(".mini .st", c).innerHTML = (states[c.dataset.sec] || [""])[0]; }));
   // the tutorial scrolls smoothly to its target and repositions on every scroll frame: on a first
   // visit nobody has touched the page yet, so each frame would count as a layout shift. Put the
   // target in place first (instant), then open.
