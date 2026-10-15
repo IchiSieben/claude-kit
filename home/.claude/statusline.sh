@@ -59,6 +59,13 @@ unset _cc_major _cc_minor _cc_b CC_BASH_REEXEC
 
 set -u
 
+# WHY: printf '%.2f' / '%.0f' parse AND print with LC_NUMERIC, so under es_ES "12.3456"
+# reads as 12 and prints "$12,00". LC_ALL beats every LC_*, so LC_NUMERIC=C alone loses to
+# it, and LC_ALL=C would break the UTF-8 glyphs. Hand LC_ALL's value to LC_CTYPE, drop
+# LC_ALL, then pin only the numbers to C. Builtins, no forks.
+if [ -n "${LC_ALL:-}" ]; then export LC_CTYPE="$LC_ALL"; unset LC_ALL; fi
+export LC_NUMERIC=C
+
 W=${CC_BAR_WIDTH:-20}
 
 # Resolved at parse time, not with `dirname` (a fork): the repo copy reads the repo's
@@ -292,7 +299,7 @@ th_pick() {
 drift_scan() {
   local dir=$1 dirfs=$2 have_git=$3 now=$4; shift 4
   local -a dirty=("$@")
-  D_STATE=none D_HAGE="?" D_F="?" D_C="?" D_S="?" D_FILE=""
+  D_STATE=none D_HAGE="?" D_HTIME="?" D_F="?" D_C="?" D_S="?" D_FILE=""
 
   local toplevel=""
   if [ -n "$dirfs" ] && [ -f "$dirfs/HANDOFF.md" ]; then
@@ -303,7 +310,7 @@ drift_scan() {
   fi
   [ -n "$D_FILE" ] || return 0
 
-  local f="?" c="?" s="?" hage="?" hm="" statout ln
+  local f="?" c="?" s="?" hage="?" htime="?" hm="" statout ln
   local -a mt=() statargs=("$D_FILE")
   local p
   for p in "${dirty[@]}"; do statargs+=("$dirfs/$p"); done
@@ -314,6 +321,13 @@ drift_scan() {
   fi
   if [[ $hm =~ ^[0-9]+$ ]]; then
     hage="$(( (now - hm) / 3600 ))h"
+    # The bar shows WHEN, not how long ago: it only redraws on session events, so an age
+    # freezes ("hace 50 min" for hours). A clock time stays true. Another day: day/month.
+    # The visor (it polls) shows the live age. Builtins, no fork.
+    local hday nday
+    printf -v hday '%(%Y%m%d)T' "$hm"; printf -v nday '%(%Y%m%d)T' "$now"
+    if [ "$hday" = "$nday" ]; then printf -v htime '%(%H:%M)T' "$hm"
+    else printf -v htime '%(%d/%m %H:%M)T' "$hm"; fi
     if (( have_git )); then
       local k
       f=0
@@ -360,7 +374,7 @@ drift_scan() {
       [[ $out =~ ^[0-9]+$ ]] && s=$out
     fi
   fi
-  D_HAGE=$hage D_F=$f D_C=$c D_S=$s
+  D_HAGE=$hage D_HTIME=$htime D_F=$f D_C=$c D_S=$s
   if [ "$f" = 0 ] && [ "$c" = 0 ] && [ "$s" = 0 ]; then D_STATE=ok; else D_STATE=stale; fi
 }
 
@@ -587,7 +601,7 @@ render() {                       # render <json>
           if (( TH_OK )) && { th_fires handoff-drift-files || th_fires handoff-drift-sessions; }; then
             hcol=$RED
           fi
-          flag="${hcol}⚠HANDOFF ${D_HAGE} ·${D_F}f ·${D_C}c ·${D_S}s${R}" ;;
+          flag="${hcol}⚠HANDOFF ${D_HTIME} ·${D_F}f ·${D_C}c ·${D_S}s${R}" ;;
   esac
 
   # ONE contextual hint, highest priority only. A status line is for state, not
@@ -649,6 +663,17 @@ render() {                       # render <json>
         cost_usd:($cost|tonumber? // -1), hint_id:$hint_id}' \
       > "$snapf.tmp" 2>/dev/null \
       && mv -f "$snapf.tmp" "$snapf" 2>/dev/null || rm -f "$snapf.tmp" 2>/dev/null
+  fi
+
+  # ---- enjambre: nodes alive, jobs running, today's usage summed over every machine.
+  # enjambre/tools/visor/build.py writes `<epoch>\t<text>` here every 5 min and pushes the
+  # same file to each node. Builtins only (no fork, no ssh): the bar renders every turn.
+  # No file = no segment, so a machine without the swarm shows nothing. Older than 15 min
+  # = the builder stopped: say so with its age instead of showing old numbers as current.
+  local enj_f=${CC_ENJ_SUMMARY:-$HOME/.enjambre/visor/summary.txt} enj_ts="" enj_txt=""
+  if [ -r "$enj_f" ] && IFS=$'\t' read -r enj_ts enj_txt < "$enj_f" && [[ $enj_ts =~ ^[0-9]+$ ]]; then
+    if (( now - enj_ts > 900 )); then line2+="  ${AMB}enj ⌛$(( (now - enj_ts) / 60 ))m${R}"
+    else line2+="  enj ${enj_txt}"; fi
   fi
 
   line2=${line2#"${line2%%[! ]*}"}   # drop leading padding when the first group is absent

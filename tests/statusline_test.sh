@@ -26,6 +26,10 @@ export CC_CTX_GREEN_K=150 CC_CTX_RED_K=300 CC_BAR_WIDTH=20
 # golden blessed on Windows fails on the Mac. "test" is a value no OS produces, so a golden
 # that shows it was pinned on purpose. One case below runs unpinned and checks the real OS.
 export CC_NODE=test
+# The enjambre segment reads ~/.enjambre/visor/summary.txt; on a machine of the swarm that
+# file exists and would leak live numbers into every golden. Point it nowhere by default;
+# the enjambre cases below set it explicitly.
+export CC_ENJ_SUMMARY=/nonexistent/enjambre-summary.txt
 # Every render writes a snapshot for /ahora. Point it at a throwaway directory, or running
 # the tests would drop fixture sessions into this machine's real ~/.claude/state.
 SNAPDIR=$(mktemp -d) || SNAPDIR=""
@@ -92,6 +96,13 @@ esac
 case "$out" in
   *'$0.00'*) assert "fields-missing: un cero real sigue siendo 0.00" "" 0 ;;
   *)         assert "fields-missing: un cero real sigue siendo 0.00" "se comió el cero" 1 ;;
+esac
+# A comma-decimal locale must not change the numbers: es_ES once turned 12.3456 into $12,00.
+out=$(LC_ALL=es_ES.UTF-8 "$BASH" "$SL" < "$FX/session-long.json")
+case "$out" in
+  *'$12,'*)  assert "es_ES: el costo sale \$12.35" "salió con coma decimal" 1 ;;
+  *'$12.35'*) assert "es_ES: el costo sale \$12.35" "" 0 ;;
+  *)         assert "es_ES: el costo sale \$12.35" "no salió \$12.35" 1 ;;
 esac
 # A payload of pure nonsense must still render two lines and exit 0.
 out=$("$BASH" "$SL" < "$FX/unknown-shape.json"); rc=$?
@@ -201,7 +212,7 @@ barra=$("$BASH" "$SL" < "$FX/session-long.json" | tail -1)
 accion=$("$BASH" "$SL" --ahora "$SID" | sed -n '2s/^hacé: //p')
 case "$barra" in
   *"$accion"*) assert "da el MISMO consejo que la barra" "" 0 ;;
-  *)           assert "da el MISMO consejo que la barra" "barra≠ahora: «$accion»" 1 ;;
+  *)           assert "da el MISMO consejo que la barra" "barra≠ahora: «${accion}»" 1 ;;
 esac
 # Sin argumento: una skill NO recibe $CLAUDE_SESSION_ID (medido), asi que --ahora elige el
 # snapshot mas nuevo de ESTE directorio. Si esto se rompe, /ahora responde "no hay snapshot"
@@ -271,6 +282,14 @@ else
     *)               assert "sucio: cuenta ·1f" "salió: ${out#*$'\n'}" 1 ;;
   esac
 
+  # 2b. the bar says WHEN (clock time of HANDOFF.md), not an age that freezes between redraws.
+  printf -v hhmm '%(%H:%M)T' "$hm"
+  case "$out" in
+    *"HANDOFF $hhmm ·"*) assert "hora, no edad: HANDOFF $hhmm" "" 0 ;;
+    *)                   assert "hora, no edad: HANDOFF $hhmm" "salió: ${out#*$'
+'}" 1 ;;
+  esac
+
   # 3. a real commit after it -> ·1c.
   ( cd "$repo" && git add -A && git commit -qm "trabajo posterior" ) >/dev/null 2>&1
   out=$(drift)
@@ -324,13 +343,13 @@ else
       "${JQ:-jq}" -e . "$qsnap" >/dev/null 2>&1
       assert "rama con comillas: el snapshot es JSON válido" "jq no lo parsea" "$?"
       seen=$("${JQ:-jq}" -r '.branch' "$qsnap" 2>/dev/null); seen=${seen%$'\r'}
-      assert "rama con comillas: .branch vuelve tal cual" "guardó «$seen»" \
+      assert "rama con comillas: .branch vuelve tal cual" "guardó «${seen}»" \
              "$( [ "$seen" = "$QBRANCH" ] && echo 0 || echo 1 )"
       # .dir is the payload's own path, which the bar prints in its native (Windows) form,
       # so compare the tail: what is under test is that jq carried it through unmangled.
       seend=$("${JQ:-jq}" -r '.dir' "$qsnap" 2>/dev/null); seend=${seend%$'\r'}
       seend=${seend//\\//}
-      assert "rama con comillas: .dir sigue siendo una ruta entera" "guardó «$seend»" \
+      assert "rama con comillas: .dir sigue siendo una ruta entera" "guardó «${seend}»" \
              "$( [ "${seend##*/}" = "repo" ] && echo 0 || echo 1 )"
       out=$(CC_STATE_DIR="$qsnapdir" "$BASH" "$SL" --ahora "$QSID")
       case "$out" in
@@ -386,13 +405,13 @@ else
   printf '  SKIP  re-exec: este runner corre en bash %s y no hay bash >= 4.2 al que saltar\n' "$BASH_VERSION"
 fi
 out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" < "$FX/session-long.json"); rc=$?
-assert "bash viejo sin bash nuevo: ⚠ bash4 y exit 0" "rc=$rc, salió «$out»" \
+assert "bash viejo sin bash nuevo: ⚠ bash4 y exit 0" "rc=$rc, salió «${out}»" \
        "$( [ "$rc" = 0 ] && [ "$out" = $'\033[33m⚠ bash4\033[0m' ] && echo 0 || echo 1 )"
 n=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" --ahora x | wc -l)
 assert "bash viejo sin bash nuevo: --ahora sigue dando 3 líneas" "dio $(( n ))" \
        "$( (( n == 3 )) && echo 0 || echo 1 )"
 out=$(CC_TEST_BASH_MAJOR=3 CC_BASH4_CANDIDATES=/no/existe/bash "$BASH" "$SL" --drift .)
-assert "bash viejo sin bash nuevo: --drift no imprime nada (los hooks callan)" "salió «$out»" \
+assert "bash viejo sin bash nuevo: --drift no imprime nada (los hooks callan)" "salió «${out}»" \
        "$( [ -z "$out" ] && echo 0 || echo 1 )"
 # The sentinel: a candidate that is itself "old" must not loop. CC_BASH_REEXEC set up front
 # makes the guard read the real version, so on this (new) bash it simply renders.
@@ -403,8 +422,41 @@ if [ -n "$GOOD_BASH" ]; then
   # And the sentinel must not leak: --selftest re-runs this very suite, which fakes an old
   # bash on purpose; an inherited CC_BASH_REEXEC would silently switch that fake off.
   out=$(CC_BASH_REEXEC=1 "$GOOD_BASH" -c '. "$1" </dev/null >/dev/null 2>&1; printf %s "${CC_BASH_REEXEC-unset}"' _ "$SL")
-  assert "el centinela no se hereda a lo que la barra lanza" "quedó CC_BASH_REEXEC=«$out»" \
+  assert "el centinela no se hereda a lo que la barra lanza" "quedó CC_BASH_REEXEC=«${out}»" \
          "$( [ "$out" = unset ] && echo 0 || echo 1 )"
+fi
+
+echo
+echo "enjambre: segmento del visor (~/.enjambre/visor/summary.txt)"
+enjtmp=$(mktemp -d) || enjtmp=""
+if [ -z "$enjtmp" ]; then
+  printf '  SKIP  no se pudo crear un directorio temporal\n'
+else
+  # Fresh (60 s old against the frozen CC_NOW): the text goes in verbatim.
+  printf '%s\t%s\n' "$(( CC_NOW - 60 ))" "⬡2/2 ⚙1 ≈\$17 hoy 58.6M" > "$enjtmp/fresh.txt"
+  out=$(CC_ENJ_SUMMARY="$enjtmp/fresh.txt" "$BASH" "$SL" < "$FX/session-long.json")
+  case "${out#*$'\n'}" in
+    *"enj ⬡2/2 ⚙1 ≈\$17 hoy 58.6M"*) assert "fresco: muestra nodos, trabajos y consumo" "" 0 ;;
+    *) assert "fresco: muestra nodos, trabajos y consumo" "salió: ${out#*$'\n'}" 1 ;;
+  esac
+  # 20 min old: the builder stopped. Old numbers must not pass for current ones.
+  printf '%s\t%s\n' "$(( CC_NOW - 1200 ))" "⬡2/2 ⚙1 ≈\$17 hoy" > "$enjtmp/stale.txt"
+  out=$(CC_ENJ_SUMMARY="$enjtmp/stale.txt" "$BASH" "$SL" < "$FX/session-long.json")
+  case "$out" in
+    *"⬡2/2"*)     assert "viejo: no muestra los números" "los mostró: ${out#*$'\n'}" 1 ;;
+    *"enj ⌛20m"*) assert "viejo: marca ⌛ con la edad" "" 0 ;;
+    *)            assert "viejo: marca ⌛ con la edad" "salió: ${out#*$'\n'}" 1 ;;
+  esac
+  # Garbage in the file (half-written, wrong format): no segment, still two lines, exit 0.
+  printf 'basura sin tab\n' > "$enjtmp/bad.txt"
+  out=$(CC_ENJ_SUMMARY="$enjtmp/bad.txt" "$BASH" "$SL" < "$FX/session-long.json"); rc=$?
+  assert "basura: exit 0 y sin segmento" "rc=$rc salió: ${out#*$'\n'}" \
+         "$( [ $rc = 0 ] && [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+  # No file at all = byte-identical to the golden: machines outside the swarm see no change.
+  out=$("$BASH" "$SL" < "$FX/session-long.json")
+  assert "sin archivo: idéntico al golden" "difiere" \
+         "$( [ "$out" = "$(cat "$EXP/session-long.txt")" ] && echo 0 || echo 1 )"
+  rm -rf "$enjtmp"
 fi
 
 echo

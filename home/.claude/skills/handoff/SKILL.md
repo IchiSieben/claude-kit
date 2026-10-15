@@ -32,4 +32,10 @@ Structure (keep these exact headings):
 Rules:
 - Facts only. No narrative. Anything derivable from code or git log stays out.
 - "IN PROGRESS" must let someone continue without reading the conversation.
-- After writing, print `git status --short` and remind me to commit HANDOFF.md if the project tracks it.
+- HANDOFF.md is updated BEFORE the push and records the commit hash of the session's work and,
+  if something was published, its URL.
+- Then close the session: commit + push the current branch to its remote. Not pushing is the
+  exception, never the default; never force-push, never change a repo's visibility, and never
+  push a secret (`.env`, tokens, keys). If `~/.claude/rules/cierre.md` exists, its per-repo
+  exceptions and backup steps win.
+- Finish by printing `git status --short` and `git log -1 --oneline`.

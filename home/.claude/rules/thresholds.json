@@ -95,6 +95,78 @@
       "condition": { "metric": "handoff_sessions", "op": ">=", "value": 2 },
       "actions": {},
       "source": "statusline.sh (banda roja de deriva) y hooks/session-drift-warn.sh — era EL número duplicado entre la barra y un hook; confirmado por el owner 2026-09-18"
+    },
+    {
+      "id": "visor-quota-5h-amber",
+      "priority": 200,
+      "hint": false,
+      "condition": { "metric": "five_pct", "op": ">=", "value": 70 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-quota-7d-amber",
+      "priority": 201,
+      "hint": false,
+      "condition": { "metric": "week_pct", "op": ">=", "value": 70 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-quota-7d-red",
+      "priority": 202,
+      "hint": false,
+      "condition": { "metric": "week_pct", "op": ">=", "value": 90 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-disk-amber",
+      "priority": 203,
+      "hint": false,
+      "condition": { "metric": "disk_used_pct", "op": ">=", "value": 80 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-disk-red",
+      "priority": 204,
+      "hint": false,
+      "condition": { "metric": "disk_used_pct", "op": ">=", "value": 90 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-mem-amber",
+      "priority": 205,
+      "hint": false,
+      "condition": { "metric": "mem_used_pct", "op": ">=", "value": 80 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-mem-red",
+      "priority": 206,
+      "hint": false,
+      "condition": { "metric": "mem_used_pct", "op": ">=", "value": 92 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-jobs-incomplete",
+      "priority": 207,
+      "hint": false,
+      "condition": { "metric": "jobs_incomplete_7d", "op": ">", "value": 0 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
+    },
+    {
+      "id": "visor-jobs-failed",
+      "priority": 208,
+      "hint": false,
+      "condition": { "metric": "jobs_failed_7d", "op": ">", "value": 0 },
+      "actions": {},
+      "source": "visor de enjambre (tools/visor/visor.html, semáforo) · propuesto en la sesión F2 2026-10-07 · confirmado por el owner 2026-10-07"
     }
   ]
 }
