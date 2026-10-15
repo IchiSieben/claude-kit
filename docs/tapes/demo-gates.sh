@@ -85,10 +85,12 @@ from PIL import Image
 im = Image.open(sys.argv[1]).convert("RGB")
 for q in (88, 80, 72, 64):
     im.save(sys.argv[2], "WEBP", quality=q, method=6)
-    if os.path.getsize(sys.argv[2]) <= 122880: print("poster webp q", q); sys.exit(0)
-sys.exit(1)
+    if os.path.getsize(sys.argv[2]) <= 122880: break
+else: sys.exit(1)
+print("poster webp q", q)
+im.resize((640, 360), Image.LANCZOS).save(sys.argv[2].replace(".webp", "-mobile.webp"), "WEBP", quality=80, method=6)
 PY
-    for f in docs/media/demo-preview.webm docs/media/demo-preview.mp4 docs/media/demo-poster.webp; do
+    for f in docs/media/demo-preview.webm docs/media/demo-preview.mp4 docs/media/demo-poster.webp docs/media/demo-poster-mobile.webp; do
       printf '%9s B  %s  ' "$(wc -c < "$f")" "$f"
       ffprobe -v error -select_streams v -show_entries stream=codec_name,width,height,r_frame_rate:format=duration -of csv=p=0 "$f" | tr '\n' ' '; echo
     done

@@ -22,15 +22,18 @@ cifra del día. El 2026-10-15 por la tarde son 140: se sumó `route_test.sh` (ve
 
 ## `media` — listo; pegar cuando el Landing copie los archivos
 
-El esquema rompe el build si `public/media/claude-kit/` no tiene los archivos. Están en este repo
-desde el 2026-10-15 (video de `mac/kit-media-3`, pósters del fotograma 0):
+El esquema rompe el build si `public/media/claude-kit/` no tiene los archivos. **Medios nuevos
+desde el 2026-10-15 (V1c):** el clip se grabó de la demo v2 (https://kit.ichisieben.dev/), con el
+recorrido de causa → efecto; el póster es el fotograma de 5,6 s (barra en rojo, líneas vivas y
+rótulo). Grabado en Windows contra el sitio publicado, porque la lane de la Mac se colgó (ver
+`docs/DECISIONES.md`). Los `statusline-*` anteriores quedan en el repo como histórico.
 
-| En este repo | En el Landing |
-|---|---|
-| `docs/media/statusline-poster.webp` (1280x720, 15 KB) | `public/media/claude-kit/poster.webp` |
-| `docs/media/statusline-poster-mobile.webp` (640x360, 5 KB) | `public/media/claude-kit/poster-mobile.webp` |
-| `docs/media/statusline-preview.mp4` (H.264, 85 KB) | `public/media/claude-kit/preview.mp4` |
-| `docs/media/statusline-preview.webm` (AV1/VP9, 110 KB) | `public/media/claude-kit/preview.webm` |
+| En este repo | En el Landing | sha256 (12) |
+|---|---|---|
+| `docs/media/demo-poster.webp` (1280x720, 33 KB) | `public/media/claude-kit/poster.webp` | `85a540975ad2` |
+| `docs/media/demo-poster-mobile.webp` (640x360, 9 KB) | `public/media/claude-kit/poster-mobile.webp` | `d0ca6e1d3902` |
+| `docs/media/demo-preview.mp4` (H.264, 24 s, 531 KB) | `public/media/claude-kit/preview.mp4` | `6c1df21f849a` |
+| `docs/media/demo-preview.webm` (VP9, 24 s, 534 KB) | `public/media/claude-kit/preview.webm` | `e4834da207c3` |
 
 ```yaml
 media:
