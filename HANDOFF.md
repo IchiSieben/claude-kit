@@ -52,13 +52,29 @@ FICHA-READY: be62c5c
 - `~/.claude` NO se re-sincronizó (4 barras vivas): cuando quieras la barra nueva, en el repo
   privado de origen corre `bash sync-to-home.sh`, y reinicia Claude Code.
 
-## Preguntas para el owner (máximo 3)
+## Preguntas de V1 — respondidas por el owner (prompt §12)
 
-1. **/route**: el `/route` del repo privado lee `rules/models.json` y `routing.json`, que no se
-   publican, así que el público conserva su versión vieja. ¿Se agregan esos dos archivos a la
-   allowlist de build-kit (y se publica la tabla de modelos) o se mantiene el /route público?
-2. **Trabajo de la Mac**: el supervisor arranca para `enjambre-sandbox` pero no para
-   `claude-kit` (ni para `cert-media`), y el clon del sandbox en la Mac está atrasado respecto de
-   `origin/main`. ¿Actualizas ese clon (`git pull` en la Mac) y confirmas si existe
-   `~/Documents/Portfolio/claude-kit`, para relanzar `kit-media`?
-3. **Ficha**: dice "128 tests" en vez de los "79" del prompt (la cifra de hoy). ¿Vale así?
+1. `/route`: sí, publicar `models.json` y `routing.json` → hecho (ítem 1 de V1b).
+2. Clon y medios en la Mac: los hizo V2b → hecho (kit-media-3/6/7).
+3. 128 tests: vale la cifra del día → hoy 140.
+
+## V1b · 2026-10-15 (prompt §12)
+
+- **Ítem 1 hecho** (`4677b24`): `rules/models.json`, `rules/routing.json` (con `decisions: []`) y
+  `tools/model-intel.py` publicados; el `/route` público es byte a byte el del repo privado.
+  `tests/route_test.sh` (12) resuelve 5 casos desde los datos contra un `expected` compartido por
+  los dos repos. README y `docs/routing{,.es}.md` explican qué decide cada archivo y cómo editarlo.
+- **Ítem 2 hecho** (`51b3812`, publicado en `2929d46`): **https://kit.ichisieben.dev/**. Es
+  `docs/demo/index.html` sobre `docs/demo/grid.json`: 972 combinaciones renderizadas por el
+  `statusline.sh` real (`tools/render-grid.sh`, ~5 min en Windows). Cada sector se puede tocar y
+  abre su fila de la leyenda. Claro/oscuro, ES/EN, 390 px y teclado. `verify.sh` falla si cambia la
+  barra y no se regenera la rejilla. La lección 01 y los README enlazan a la demo.
+- **Ítem 3 hecho**: video de `mac/kit-media-3`, PNG de `-6`, GIF de `-7`; `FICHA-LANDING.md` con
+  `demoUrl`, 140 tests y el bloque `media` con su mapeo. Aviso a V4 (`landing-d5`) enviado.
+- Arreglos de la lane `media` en el camino: póster con Pillow (sin `libwebp`), freeze desde el
+  Cellar con `--help` capturado (SIGPIPE 141 con `pipefail`), `"$PY" -` separado. Videos marcados
+  binarios en `.gitattributes`. Hubo una corrupción del árbol sin causa encontrada (DECISIONES).
+- Hostinger: el docroot `kit-app` conserva el `default.php` sembrado por Hostinger (negado por
+  `.htaccess`). Si quieres borrarlo, hazlo tú en hPanel; no hace falta.
+- `origin/main` = el commit que trae esta sección. `~/.claude` sigue sin re-sincronizar: para la
+  barra y el `/route` nuevos, en el repo privado de origen corre `bash sync-to-home.sh` y reinicia.
