@@ -7,7 +7,9 @@
 <meta name="description" content="La barra de estado de claude-kit, en vivo: mueve un control y mira qué cambia y por qué. Cada estado es la salida real de statusline.sh.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230D1117'/%3E%3Crect x='6' y='12' width='14' height='3' rx='1.5' fill='%232DD4BF'/%3E%3Crect x='6' y='18' width='20' height='3' rx='1.5' fill='%238B949E'/%3E%3C/svg%3E">
 <link rel="preload" href="fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="tutorial/tutorial.css">
+<link rel="preload" href="fonts/space-grotesk-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/kit-symbols-mono.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="tutorial/tutorial.css" media="print" onload="this.media='all'">
 <style>
 @font-face{font-family:"JetBrains Mono";src:url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");font-weight:100 800;font-display:swap}
 @font-face{font-family:"Space Grotesk";src:url("fonts/space-grotesk-latin-wght-normal.woff2") format("woff2");font-weight:300 700;font-display:swap}
@@ -21,7 +23,7 @@
 /* ---- tokens: the Landing's (global.css), one accent with one job: "this is what changed" ---- */
 :root{
   --bg:#0D1117;--surface:#161B22;--surface-2:#1E242E;--line:#30363D;--fg:#E6EDF3;--muted:#8B949E;
-  --accent:#2DD4BF;--accent-text:#2DD4BF;--accent-soft:rgb(45 212 191 / .16);
+  --accent:#2DD4BF;--accent-text:#2DD4BF;--on-accent:#06231F;--accent-soft:rgb(45 212 191 / .16);
   --term:#090C10;--term-bar:#141920;--term-line:#232A33;--term-fg:#E6EDF3;--term-dim:#59636E;
   --t-red:#FF7B72;--t-grn:#56D364;--t-amb:#E3B341;--t-mag:#FF7AC6;--t-cyn:#7AD7F0;
   --r-card:28px;--r-pill:980px;
@@ -33,13 +35,14 @@
 }
 @media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
   --bg:#FFFFFF;--surface:#F6F8FA;--surface-2:#ECF0F4;--line:#D0D7DE;--fg:#1F2328;--muted:#59636E;
-  --accent:#0D9488;--accent-text:#0F766E;--accent-soft:rgb(13 148 136 / .12);--term-line:#2A323C;color-scheme:light}}
+  --accent:#0D9488;--accent-text:#0F766E;--on-accent:#FFFFFF;--accent-soft:rgb(13 148 136 / .12);--term-line:#2A323C;color-scheme:light}}
 :root[data-theme="light"]{
   --bg:#FFFFFF;--surface:#F6F8FA;--surface-2:#ECF0F4;--line:#D0D7DE;--fg:#1F2328;--muted:#59636E;
-  --accent:#0D9488;--accent-text:#0F766E;--accent-soft:rgb(13 148 136 / .12);--term-line:#2A323C;color-scheme:light}
+  --accent:#0D9488;--accent-text:#0F766E;--on-accent:#FFFFFF;--accent-soft:rgb(13 148 136 / .12);--term-line:#2A323C;color-scheme:light}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+html[lang="en"] [data-l="es"],html:not([lang="en"]) [data-l="en"]{display:none}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
 body{margin:0;background:var(--bg);color:var(--fg);font:400 clamp(1.0625rem,1rem + .25vw,1.125rem)/1.6 var(--sans);letter-spacing:-.016em;overflow-x:hidden}
@@ -156,6 +159,7 @@ input[type=range]{width:100%;margin:6px 0 2px;accent-color:var(--accent);height:
 .wires path{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linecap:round}
 .wires circle{fill:var(--accent)}
 @media (max-width:767px){.wires{display:none}
+  .bar{line-height:2.15}.ln{min-height:6.45em}  /* 3 wrapped rows reserved: the tour resets the cell at 0.9 s and a shorter line must not move the page */
   /* on a phone the controls are below the fold: the bar and its caption stay pinned while you move them */
   .screen{position:sticky;top:56px;z-index:10;background:var(--bg);padding:8px 0 10px;margin:0 -16px;padding-left:16px;padding-right:16px}
   .ghost-lines,.prompt,.term-bar span{display:none}.term-body{padding:16px 18px 14px}.term-bar{height:34px}
@@ -223,11 +227,17 @@ footer{margin:120px 0 0;padding:28px 0 40px;border-top:1px solid var(--line);col
 footer p{margin:0 0 6px}
 
 /* ---- reveal (v13): nothing appears at once ---- */
-html.js .reveal{opacity:0}
-html.js .reveal.is-in{animation:rise var(--d-reveal) var(--ease-out) both}
+/* hero text starts at .02, not 0: Chrome skips opacity-0 paints for LCP, and the h1 must be it */
+.hero .reveal{animation:heroin var(--d-reveal) var(--ease-out) both}
+@keyframes heroin{from{opacity:.02;transform:translateY(12px)}to{opacity:1;transform:none}}
+.hero .reveal:nth-child(2){animation-delay:60ms}.hero .reveal:nth-child(3){animation-delay:120ms}
+.stage{animation:fadein var(--d-reveal) var(--ease-out) 120ms both}
+html.js section.block .reveal{opacity:0}
+html.js section.block .reveal.is-in{animation:rise var(--d-reveal) var(--ease-out) both}
 html.js .reveal-stagger>*{opacity:0}
 html.js .reveal-stagger.is-in>*{animation:rise var(--d-reveal) var(--ease-out) both;animation-delay:calc(min(var(--i,0),7) * var(--stagger))}
 @media (prefers-reduced-motion: reduce){
+  .hero .reveal{animation-name:fadein!important}
   html.js .reveal.is-in,html.js .reveal-stagger.is-in>*,html.js .tree.is-in li,.sec.in{animation-name:fadein!important}
   html.js .tree li{animation-timeline:auto!important}
   .ghost{animation-name:fadeout!important}
@@ -238,21 +248,28 @@ html.vt-swap::view-transition-old(root){animation:none;opacity:1}
 html.vt-swap::view-transition-new(root){animation:fadein 560ms cubic-bezier(.25,.1,.75,.9) 90ms both}
 
 /* tutorial skin */
-.ic7-tutorial-root{--tut-bg:var(--surface);--tut-fg:var(--fg);--tut-dim:var(--muted);--tut-line:var(--line);--tut-accent:var(--accent);--tut-font:var(--sans);--tut-mono:var(--mono);--tut-z:50}
+.ic7-tutorial-root{--tut-bg:var(--surface);--tut-fg:var(--fg);--tut-dim:var(--muted);--tut-line:var(--line);--tut-accent:var(--accent-text);--tut-font:var(--sans);--tut-mono:var(--mono);--tut-z:50}
+.ic7-tutorial-root .ic7-tutorial-next{color:var(--on-accent)!important}  /* light teal needs white text for 4.5:1 */
 .ic7-tutorial-card{border-radius:var(--r-card)!important;padding:20px 22px 16px!important;width:min(380px,calc(100vw - 28px))!important}
-.ic7-tutorial-spot{border-radius:var(--r-card)!important}
+.ic7-tutorial-spot{border-radius:var(--r-card)!important;transition:none!important;animation:fadein 280ms var(--ease-out) both}
+/* the shared component animates left/top/width/height: layout shifts (CLS). Here it fades instead. */
+.ic7-tutorial-card{transition:none!important;animation:fadein 280ms var(--ease-out) both}
+/* with the tour open the page cannot scroll, so a view() timeline would freeze the tree at opacity 0 */
+html:has(.ic7-tutorial-on) .tree li{animation:none!important;opacity:1!important}
 .ic7-tutorial-actions button{border-radius:var(--r-pill)!important}
 </style>
-<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("kitdemo-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("kitdemo-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
+/* the language is decided before the first paint, so no text is swapped after it */
+(function(){var l="es";try{var s=localStorage.getItem("kitdemo-lang");if(s==="es"||s==="en")l=s;else if(!/^es/i.test(navigator.language||""))l="en"}catch(e){if(!/^es/i.test(navigator.language||""))l="en"}document.documentElement.lang=l})();</script>
 </head>
 <body>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="https://github.com/IchiSieben/claude-kit"><i></i>claude-kit</a>
     <nav aria-label="Secciones">
-      <a href="#barra" data-i18n="navBar">La barra</a>
-      <a href="#significado" data-i18n="navMeaning">Qué significa</a>
-      <a href="#llevas" data-i18n="navTake">Qué te llevas</a>
+      <a href="#barra"><span data-l="es">La barra</span><span data-l="en">The bar</span></a>
+      <a href="#significado"><span data-l="es">Qué significa</span><span data-l="en">What it means</span></a>
+      <a href="#llevas"><span data-l="es">Qué te llevas</span><span data-l="en">What you get</span></a>
     </nav>
     <div class="tools">
       <button class="pill" id="lang" type="button" aria-label="English">EN</button>
@@ -264,9 +281,9 @@ html.vt-swap::view-transition-new(root){animation:fadein 560ms cubic-bezier(.25,
 <main id="barra">
   <section class="hero">
     <div class="wrap">
-      <p class="label eyebrow reveal" data-i18n="eyebrow">claude-kit · barra de estado</p>
-      <h1 class="reveal" data-i18n="title">Tu sesión de Claude Code, en dos líneas.</h1>
-      <p class="lead reveal" data-i18n-html="lead">Mueve un control y mira qué cambia en la barra, y por qué. Cada estado es la salida real de <code>statusline.sh</code>: <b>1 296 renders, ninguno inventado</b>.</p>
+      <p class="label eyebrow reveal"><span data-l="es">claude-kit · barra de estado</span><span data-l="en">claude-kit · status line</span></p>
+      <h1 class="reveal"><span data-l="es">Tu sesión de Claude Code, en dos líneas.</span><span data-l="en">Your Claude Code session, in two lines.</span></h1>
+      <p class="lead reveal"><span data-l="es">Mueve un control y mira qué cambia en la barra, y por qué. Cada estado es la salida real de <code>statusline.sh</code>: <b><span class="nrend">1 306</span> renders, ninguno inventado</b>.</span><span data-l="en">Move a control and watch what changes in the bar, and why. Every state is the real output of <code>statusline.sh</code>: <b><span class="nrend">1,306</span> renders, none made up</b>. The bar's own words are Spanish; they come from <code>thresholds.json</code>.</span></p>
 
       <div class="stage" id="stage">
         <div class="screen" id="screen">
@@ -278,29 +295,29 @@ html.vt-swap::view-transition-new(root){animation:fadein 560ms cubic-bezier(.25,
               <div class="bar" id="bar" role="group" aria-label="Barra de estado"><div class="ln"></div><div class="ln"></div></div>
             </div>
           </div>
-          <p class="caption" id="caption" aria-live="polite"><span class="msg" data-i18n="captionIdle">Toca cualquier parte de la barra, o mueve un control.</span></p>
+          <p class="caption" id="caption" aria-live="polite"><span class="msg"><span data-l="es">Toca cualquier parte de la barra, o mueve un control.</span><span data-l="en">Tap any part of the bar, or move a control.</span></span></p>
         </div>
 
         <div class="modes" role="tablist" aria-label="Modo">
-          <button type="button" role="tab" id="tab-explore" aria-selected="true" aria-controls="controls" data-i18n="modeExplore">Explorar</button>
-          <button type="button" role="tab" id="tab-session" aria-selected="false" aria-controls="session" data-i18n="modeSession">Reproducir una sesión</button>
+          <button type="button" role="tab" id="tab-explore" aria-selected="true" aria-controls="controls"><span data-l="es">Explorar</span><span data-l="en">Explore</span></button>
+          <button type="button" role="tab" id="tab-session" aria-selected="false" aria-controls="session"><span data-l="es">Reproducir una sesión</span><span data-l="en">Replay a session</span></button>
         </div>
 
-        <form class="controls" id="controls" role="tabpanel" aria-labelledby="tab-explore" onsubmit="return false">
+        <div class="controls" id="controls" role="tabpanel" aria-labelledby="tab-explore">
           <fieldset class="ctl" data-c="0"><legend><span data-i18n="model">Modelo y esfuerzo</span></legend><div class="seg"></div></fieldset>
-          <fieldset class="ctl" data-c="1"><legend><span data-i18n="context">Contexto usado</span><span class="label" id="ctxv"></span></legend>
-            <input type="range" id="ctx" min="0" max="3" step="1" value="1" aria-describedby="ctxt">
+          <fieldset class="ctl" data-c="1"><legend><span id="ctxl" data-i18n="context">Contexto usado</span><span class="label" id="ctxv"></span></legend>
+            <input type="range" id="ctx" min="0" max="3" step="1" value="1" aria-labelledby="ctxl" aria-describedby="ctxt">
             <div class="ticks" id="ctxt"><span>60k</span><span>180k</span><span>320k</span><span>385k</span></div></fieldset>
           <fieldset class="ctl" data-c="2"><legend><span data-i18n="cache">Caché de prompt</span></legend><div class="seg"></div></fieldset>
           <fieldset class="ctl" data-c="3"><legend><span data-i18n="quota">Cuota del plan</span></legend><div class="seg"></div></fieldset>
           <fieldset class="ctl" data-c="4"><legend><span data-i18n="git">Git</span></legend><div class="seg"></div></fieldset>
           <fieldset class="ctl" data-c="5"><legend><span data-i18n="handoff">HANDOFF.md</span></legend><div class="seg"></div></fieldset>
-        </form>
+        </div>
 
         <div class="session" id="session" role="tabpanel" aria-labelledby="tab-session" hidden>
           <div class="session-row">
             <button class="pill icon" id="play" type="button" aria-label="Reproducir">▶</button>
-            <input type="range" id="tline" min="0" max="8" step="1" value="0" aria-describedby="tticks">
+            <input type="range" id="tline" min="0" max="8" step="1" value="0" aria-label="Momento de la sesión" aria-describedby="tticks">
             <span class="clock" id="clock">0:00</span>
           </div>
           <div class="ticks" id="tticks"></div>

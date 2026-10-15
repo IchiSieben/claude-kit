@@ -14,6 +14,10 @@ What a node may run for this repo (`enjambre run --kind tests`):
 states in a real terminal with VHS, encodes `docs/media/statusline-*`, regenerates
 `docs/img/statusline-*.png` and the GIF; detached, exits 90 while running — call again).
 The media lane installs `vhs`, `freeze` and a Nerd Font with Homebrew when they are missing.
+`demo` (`docs/tapes/demo-gates.sh`): serves `docs/demo`, runs Lighthouse mobile (median of 5), axe,
+the flicker meter, 15 screenshots and records the card clip; writes `evidence/demo-v2/` and
+`docs/media/demo-*`. Same detached pattern (exit 90 = still running). Installs Node packages into
+the gitignored `docs/tapes/out/gates-node/`.
 
 ## Rules for any agent working in this repo
 
