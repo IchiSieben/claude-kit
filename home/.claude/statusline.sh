@@ -66,6 +66,19 @@ set -u
 if [ -n "${LC_ALL:-}" ]; then export LC_CTYPE="$LC_ALL"; unset LC_ALL; fi
 export LC_NUMERIC=C
 
+# `git status` refreshes the index when it can, and that takes .git/index.lock. Claude Code
+# kills a status line that runs long, and a git killed mid-refresh can leave the lock
+# behind: the next `git commit` fails with "index.lock: File exists". That happened twice
+# on 2026-10-15 (empty locks, in a repo whose bar was rendering on a loaded machine); the
+# bar is the likeliest source, not a proven one. Either way a read-only display must never
+# take that lock: this is git's own switch for background prompts. Builtin, no fork.
+export GIT_OPTIONAL_LOCKS=0
+
+# CC_PROF=1: one `prof <phase> <epoch.us>` line per phase on stderr, to measure where a
+# render goes (docs/statusline-internals.md, Cost). Builtins only; off, it is one test.
+_prof() { [ -n "${CC_PROF:-}" ] && printf 'prof %-10s %s\n' "$1" "${EPOCHREALTIME:-}" >&2; return 0; }
+_prof start
+
 W=${CC_BAR_WIDTH:-20}
 
 # Resolved at parse time, not with `dirname` (a fork): the repo copy reads the repo's
@@ -366,25 +379,66 @@ drift_scan() {
       fi
     fi
     # Sessions started for this project since the HANDOFF, from the hook log.
-    # grep first, then jq on what survives. Measured over a 78KB / 393-line log:
-    # pure bash over every line 220ms, jq --rawfile over every line 199ms, this 78ms
-    # — because the cost is parsing 393 JSON objects, not reading the file, and only
-    # ~30 of them are SessionStart. ISO-8601 UTC compares lexically, so no date math.
-    local evlog="${HOME:-}/.claude/logs/events.jsonl" hiso out
+    # ONE grep keeps only this project's lines (the JSON-escaped cwd, both path forms), then
+    # bash checks event and timestamp on what survives. It used to be `grep | jq -s`: two
+    # processes and a pipe on every render (~110 ms here), and the log only grows (4 578
+    # lines on 2026-10-15). ISO-8601 UTC compares lexically (LC_COLLATE is C, see above),
+    # so no date math. The hook writes one compact jq object per line.
+    local evlog="${HOME:-}/.claude/logs/events.jsonl" hiso out ea eb ts_re='"ts":"([^"]*)"'
     if [ -n "${HOME:-}" ] && [ -r "$evlog" ]; then
       TZ=UTC printf -v hiso '%(%Y-%m-%dT%H:%M:%SZ)T' "$hm"
       # `dir` is the Windows path as the payload gave it; the hook log records the
       # same form, and forward slashes are accepted too in case a machine differs.
-      out=$(grep -F '"event":"SessionStart"' "$evlog" 2>/dev/null             | "$JQ_BIN" -rs --arg a "$dir" --arg b "$dirfs" --arg t "$hiso" '
-                [ .[] | select(type=="object")
-                      | select(.cwd==$a or .cwd==$b)
-                      | select((.ts // "") > $t) ] | length' 2>/dev/null)
-      out=${out%$'\r'}
-      [[ $out =~ ^[0-9]+$ ]] && s=$out
+      # Quoted replacements: bash 5.2 (patsub_replacement) re-reads backslashes in an
+      # unquoted one, older bash does not; quoted means literal in both.
+      local bs='\\' bq='\"'
+      ea=${dir//\\/"$bs"};   ea=${ea//\"/"$bq"}
+      eb=${dirfs//\\/"$bs"}; eb=${eb//\"/"$bq"}
+      s=0
+      if out=$(grep -F -e "\"cwd\":\"$ea\"" -e "\"cwd\":\"$eb\"" "$evlog" 2>/dev/null) || [ $? = 1 ]; then
+        while IFS= read -r ln; do
+          [[ $ln == *'"event":"SessionStart"'* ]] || continue
+          [[ $ln =~ $ts_re ]] && [[ ${BASH_REMATCH[1]} > $hiso ]] && s=$(( s + 1 ))
+        done <<<"$out"
+      else
+        s="?"
+      fi
     fi
   fi
   D_HAGE=$hage D_HTIME=$htime D_F=$f D_C=$c D_S=$s
   if [ "$f" = 0 ] && [ "$c" = 0 ] && [ "$s" = 0 ]; then D_STATE=ok; else D_STATE=stale; fi
+}
+
+# jstr <var> <string>: <var> = <string> as a JSON string literal, quotes included.
+# Builtins only. Backslashes first, or the ones added for `"` would be doubled. Replacements
+# are quoted: bash 5.2 (patsub_replacement) re-reads backslashes in an unquoted one.
+jstr() {
+  local s=$2 bs='\\' bq='\"' i oct ch hex
+  s=${s//\\/"$bs"}; s=${s//\"/"$bq"}
+  if [[ $s == *[[:cntrl:]]* ]]; then
+    s=${s//$'\n'/'\n'}; s=${s//$'\r'/'\r'}; s=${s//$'\t'/'\t'}
+    for ((i=1; i<32; i++)); do
+      printf -v oct '%03o' "$i"; printf -v ch "\\$oct"
+      [[ $s == *"$ch"* ]] || continue
+      printf -v hex '\\u%04x' "$i"; s=${s//"$ch"/"$hex"}
+    done
+  fi
+  printf -v "$1" '"%s"' "$s"
+}
+
+# jnum <var> <value> [default]: <var> = <value> as a JSON number, or the default (-1) when
+# it is not one. jq's `tonumber? // -1` without the jq; leading zeros are dropped, because
+# `007` is not JSON.
+jnum() {
+  local v=${2%$'\r'} sign=""
+  if [[ $v =~ ^-?[0-9]+$ ]]; then
+    [ "${v:0:1}" = - ] && { sign=-; v=${v#-}; }
+    printf -v "$1" '%s' "$sign$(( 10#$v ))"
+  elif [[ $v =~ ^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][-+]?[0-9]+)?$ ]]; then   # jq prints 1e-05
+    printf -v "$1" '%s' "$v"
+  else
+    printf -v "$1" '%s' "${3:--1}"
+  fi
 }
 
 render() {                       # render <json>
@@ -419,6 +473,7 @@ render() {                       # render <json>
     return 0
   fi
 
+  _prof jq
   local -a F
   IFS=$'\037' read -r -a F <<<"$raw"
   local i
@@ -587,7 +642,8 @@ render() {                       # render <json>
   local -a dirty=()
   if [ "$dir" != "$S" ]; then
     dirfs=${dir//\\//}
-    if gs=$(git -C "$dirfs" status --porcelain=v2 --branch 2>/dev/null); then have_git=1; fi
+    # No directory, no git: the builtin test spares a process that could only fail.
+    if [ -d "$dirfs" ] && gs=$(git -C "$dirfs" status --porcelain=v2 --branch 2>/dev/null); then have_git=1; fi
   fi
   if (( have_git )) && [ -n "$gs" ]; then
     local ln ab
@@ -613,7 +669,10 @@ render() {                       # render <json>
       local up_txt="↑${ahead}" oldest_ts
       if (( ahead > 0 )); then
         # Amber only once unpushed work has sat for >2h — a fresh commit is not at risk.
-        oldest_ts=$(git -C "$dirfs" log '@{u}..HEAD' --format=%at 2>/dev/null | tail -1)
+        # Newest first, so the oldest is the last line: bash takes it (no `| tail`, two
+        # processes fewer).
+        oldest_ts=$(git -C "$dirfs" log '@{u}..HEAD' --format=%at 2>/dev/null)
+        oldest_ts=${oldest_ts##*$'\n'}; oldest_ts=${oldest_ts%$'\r'}
         if [ -n "$oldest_ts" ] && (( now - oldest_ts >= 7200 )); then
           up_txt="${AMB}↑${ahead}${R}"
         fi
@@ -623,8 +682,10 @@ render() {                       # render <json>
     gitflag+=" ●${modified} ?${untracked}"
   fi
 
+  _prof git
   # ---- HANDOFF drift (computed by drift_scan; see above). ----
   drift_scan "$dir" "$dirfs" "$have_git" "$now" "${dirty[@]}"
+  _prof drift
   # The drift counters become metrics here. "?" (could not be computed) is -1, never 0.
   MD_F=-1; [ "$D_F" = "?" ] || MD_F=$D_F
   MD_S=-1; [ "$D_S" = "?" ] || MD_S=$D_S
@@ -645,6 +706,7 @@ render() {                       # render <json>
   # Which one, in what order and with what words: rules/thresholds.json, not this file.
   local hint=""
   if (( TH_OK )); then th_pick && hint=$HINT; fi
+  _prof thresholds
 
   [ -n "$gitflag" ] && line2+="  ${gitflag}"
   line2+="  ${flag}"
@@ -669,40 +731,35 @@ render() {                       # render <json>
     [ "$week" = "$S" ] || [ "$week" = "$E" ] || week_i=${week%.*}
     [ "$cost" = "$S" ] || cost_s=$cost
     [ -d "$sdir" ] || mkdir -p "$sdir" 2>/dev/null
-    # jq builds it, printf does not. Every string here comes from the outside world —
-    # a branch name, a path, the causes text — and git allows a `"` in a refname, so a
-    # printf template was one `git switch -c 'feat/"x"'` away from writing a file that
-    # /ahora could never parse again. Everything goes in as --arg (jq quotes it) and the
-    # numbers are converted inside jq, so a missing value lands as -1 instead of
-    # poisoning the whole document. Written to .tmp and moved: a half-written snapshot
-    # is not a zero.
-    local snapf="$sdir/$sid_safe.json"
-    "$JQ_BIN" -nc \
-      --arg ts "$now" --arg session "$sid_safe" --arg five "$five_i" --arg week "$week_i" \
-      --arg ck "$used_k" --arg cp "$pct" --arg lk "$ac_k" --arg cache "$hit_i" \
-      --arg cleft "$cl_m" --arg cstate "$cstate" \
-      --arg smin "$rt_m" --arg ahead "$ahead" --arg behind "$behind" \
-      --arg modified "$modified" --arg untracked "$untracked" \
-      --arg handoff "$D_STATE" --arg handoff_age "$D_HAGE" \
-      --arg hdirty "$MD_F" --arg hsess "$MD_S" --arg fresh "$fresh" \
-      --arg causes "$CAUSES_TXT" --arg branch "$branch" --arg dir "$dirj" \
-      --arg cost "$cost_s" --arg hint_id "$HINT_ID" \
-      '{ts:($ts|tonumber? // 0), session:$session,
-        five_pct:($five|tonumber? // -1), week_pct:($week|tonumber? // -1),
-        context_k:($ck|tonumber? // -1), context_pct:($cp|tonumber? // -1),
-        limit_k:($lk|tonumber? // -1), cache_pct:($cache|tonumber? // -1),
-        cache_left_min:($cleft|tonumber? // -1), cache_state:$cstate,
-        session_min:($smin|tonumber? // -1), ahead:($ahead|tonumber? // -1),
-        behind:($behind|tonumber? // -1), modified:($modified|tonumber? // -1),
-        untracked:($untracked|tonumber? // -1), handoff:$handoff,
-        handoff_age:$handoff_age, handoff_dirty:($hdirty|tonumber? // -1),
-        handoff_sessions:($hsess|tonumber? // -1), fresh:($fresh|tonumber? // 0),
-        causes:$causes, branch:$branch, dir:$dir,
-        cost_usd:($cost|tonumber? // -1), hint_id:$hint_id}' \
-      > "$snapf.tmp" 2>/dev/null \
+    # Never a printf template: every string here comes from the outside world — a branch
+    # name, a path, the causes text — and git allows a `"` in a refname, so a template was
+    # one `git switch -c 'feat/"x"'` away from writing a file that /ahora could never parse
+    # again. Strings go through jstr (JSON-escaped, quotes included) and numbers through
+    # jnum, so a missing value lands as -1 instead of poisoning the whole document. This
+    # used to be a second jq call (~60 ms here, every render); same keys, same order.
+    # Written to .tmp and moved: a half-written snapshot is not a zero.
+    local snapf="$sdir/$sid_safe.json" J
+    local s_sess s_cst s_ho s_hage s_cau s_br s_dir s_hint
+    local n_ts n_five n_week n_ck n_cp n_lk n_cache n_cleft n_smin n_ah n_be n_mod n_unt n_hd n_hs n_fr n_cost
+    jstr s_sess "$sid_safe"; jstr s_cst "$cstate"; jstr s_ho "$D_STATE"; jstr s_hage "$D_HAGE"
+    jstr s_cau "$CAUSES_TXT"; jstr s_br "$branch"; jstr s_dir "$dirj"; jstr s_hint "$HINT_ID"
+    jnum n_ts "$now" 0;      jnum n_five "$five_i";  jnum n_week "$week_i"; jnum n_ck "$used_k"
+    jnum n_cp "$pct";        jnum n_lk "$ac_k";      jnum n_cache "$hit_i"; jnum n_cleft "$cl_m"
+    jnum n_smin "$rt_m";     jnum n_ah "$ahead";     jnum n_be "$behind";   jnum n_mod "$modified"
+    jnum n_unt "$untracked"; jnum n_hd "$MD_F";      jnum n_hs "$MD_S";     jnum n_fr "$fresh" 0
+    jnum n_cost "$cost_s"
+    J="{\"ts\":$n_ts,\"session\":$s_sess,\"five_pct\":$n_five,\"week_pct\":$n_week"
+    J+=",\"context_k\":$n_ck,\"context_pct\":$n_cp,\"limit_k\":$n_lk,\"cache_pct\":$n_cache"
+    J+=",\"cache_left_min\":$n_cleft,\"cache_state\":$s_cst,\"session_min\":$n_smin"
+    J+=",\"ahead\":$n_ah,\"behind\":$n_be,\"modified\":$n_mod,\"untracked\":$n_unt"
+    J+=",\"handoff\":$s_ho,\"handoff_age\":$s_hage,\"handoff_dirty\":$n_hd"
+    J+=",\"handoff_sessions\":$n_hs,\"fresh\":$n_fr,\"causes\":$s_cau,\"branch\":$s_br"
+    J+=",\"dir\":$s_dir,\"cost_usd\":$n_cost,\"hint_id\":$s_hint}"
+    { printf '%s\n' "$J" > "$snapf.tmp"; } 2>/dev/null \
       && mv -f "$snapf.tmp" "$snapf" 2>/dev/null || rm -f "$snapf.tmp" 2>/dev/null
   fi
 
+  _prof snapshot
   # ---- enjambre: nodes alive, jobs running, today's usage summed over every machine.
   # enjambre/tools/visor/build.py writes `<epoch>\t<text>` here every 5 min and pushes the
   # same file to each node. Builtins only (no fork, no ssh): the bar renders every turn.
@@ -716,6 +773,7 @@ render() {                       # render <json>
     else line2+="  enj ${enj_txt}"; fi
   fi
 
+  _prof enjambre
   line2=${line2#"${line2%%[! ]*}"}   # drop leading padding when the first group is absent
   printf '%s\n%s\n' "$line1" "$line2"
 }
@@ -848,4 +906,6 @@ fi
 # Slurp stdin with the `read` builtin, not `$(cat)`: one fork+exec fewer (~80ms here).
 # `read -d ''` returns non-zero at EOF with no NUL, which is the expected path.
 IFS= read -r -d '' payload || true
+_prof stdin
 render "$payload"
+_prof print

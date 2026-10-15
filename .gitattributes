@@ -1,10 +1,17 @@
+# Text is stored LF everywhere; Windows-only scripts keep CRLF.
 * text=auto eol=lf
 *.ps1 text eol=crlf
 *.cmd text eol=crlf
 *.bat text eol=crlf
+# Binaries, named explicitly: `text=auto` guesses, and a wrong guess plus core.autocrlf
+# rewrites a video one byte shorter (it happened to two of them on 2026-10-15).
 *.mp4 binary
 *.webm binary
 *.webp binary
+*.png binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
 *.woff2 binary
 *.ttf binary
-*.png binary
+*.pdf binary

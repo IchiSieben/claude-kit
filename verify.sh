@@ -46,6 +46,11 @@ check "suite de la statusline en verde" 'bash tests/statusline_test.sh'
 check "suite de los hooks en verde"     'bash tests/hooks_test.sh'
 check "suite del modulo enjambre en verde" 'bash tests/enjambre_module_test.sh'
 check "suite de /route en verde"           'bash tests/route_test.sh'
+# The export's guards (planted leak fails the build, binaries survive it). Private repo only:
+# build-kit.sh does not ship, so the kit has no such test and skips this line.
+if [ -f tests/build_kit_test.sh ]; then
+  check "guardas de build-kit en verde"     'bash tests/build_kit_test.sh'
+fi
 # The public kit's demo (docs/demo/grid.json) is the bar pre-rendered by tools/render-grid.sh;
 # it stores a hash of statusline.sh + thresholds.json. Changed bar, stale demo: re-render.
 check "la demo esta al dia con la barra (si no: bash tools/render-grid.sh)" \

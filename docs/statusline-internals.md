@@ -207,6 +207,44 @@ The original 200 ms target is **not reachable on this machine**: the
 floor alone exceeds it before any git work happens. Dropping the `·Nc` and `·Ns` counters
 would get to ~310 ms, still over, and would gut the drift feature. See the roadmap in `README.md`.
 
+**2026-10-15: fewer processes, and a load-proof way to measure.** Milliseconds on this
+machine depend on what else runs (that afternoon the same render took 0.5–3.4 s with the CPU
+at 86–99 %), so the change was measured in what does not move with load: the external
+programs one render starts. `tools/bench-statusline.sh` counts them with PATH shims, prints
+the `CC_PROF=1` phase marks, and times old and new interleaved.
+
+| One render | Before | After | How |
+|---|---|---|---|
+| Full path (git + HANDOFF) | 8 + bash | **6 + bash** | sessions counter: one `grep` + bash instead of `grep \| jq -s`; snapshot for /ahora built by bash (`jstr`/`jnum`) instead of a second `jq` |
+| Full path, unpushed commits | 10 + bash | **7 + bash** | the oldest unpushed commit is the last line of `git log`, taken by bash: no `\| tail -1` |
+| Floor (directory missing) | 4 + bash | **2 + bash** | no `git` when the directory does not exist (`[ -d ]` is a builtin); snapshot without `jq` |
+
+At the measured ~50–65 ms per spawn and ~28 ms per fork, the full path saves two spawns and a
+pipe, roughly 130–160 ms per render on a quiet Windows machine (an estimate from those unit
+costs: a clean wall-clock A/B was not possible that day). The
+bar prints the same bytes (golden tests, plus an old-vs-new comparison on four real repos
+with the real event log) and the snapshot parses to the same JSON.
+
+Hypotheses checked, not assumed:
+- *"`git status` is the expensive part, cache it N seconds keyed on `.git/index`."* Rejected.
+  `git status` on the largest repo here costs ~100 ms against ~45 ms for `git --version`:
+  most of it is the spawn, which a cache read would only partly save. And `.git/index` does
+  not change when a tracked file is edited or a new file appears, so a cached `●N ?N` would
+  be wrong for up to N seconds, which is the kind of number this bar exists to refuse.
+- *"One jq call for every field."* Already true for the payload; the second and third jq
+  calls were the ones removed above.
+- *"Avoid subshells in loops."* Already true: every loop is builtins; the forks are the
+  top-level `$(git ...)`, `$(stat ...)`, `$(grep ...)`.
+
+The 200 ms target stays out of reach on Windows: the floor is bash plus one jq, ~225 ms on a
+quiet machine, before any git. What remains on the full path is bash, jq, `git status`,
+`stat`, `git log`, `grep` and `mv` (atomic snapshot), each one a number on the bar. The honest
+target on Windows is therefore "the floor plus one spawn per thing the bar shows"; the Mac
+column of the table above is filled in by `tools/bench-statusline.sh` on that machine.
+
+Also since 2026-10-15: `GIT_OPTIONAL_LOCKS=0`. A `git status` killed mid-refresh by the
+status-line timeout can leave `.git/index.lock` behind, and the next commit fails.
+
 What was already done for speed: one jq call for every payload field (not thirteen);
 `printf -v` instead of `x=$(printf ...)`; the `read` builtin instead of `$(cat)` to slurp
 stdin; a here-string instead of `printf | jq`; `grep` before `jq` on the event log (220 ms

@@ -352,11 +352,72 @@ else
     *)       assert "commit posterior: cuenta ·1c" "salió: ${out#*$'\n'}" 1 ;;
   esac
 
+  # 4. sessions since it, from the hook log: only SessionStart, only this directory, only
+  #    after the HANDOFF. A line that is not JSON is skipped, not fatal. (grep + bash since
+  #    2026-10-15; it was grep | jq -s, where one broken line made the count "?".)
+  TZ=UTC printf -v t_after  '%(%Y-%m-%dT%H:%M:%SZ)T' "$(( hm + 60 ))"
+  TZ=UTC printf -v t_before '%(%Y-%m-%dT%H:%M:%SZ)T' "$(( hm - 60 ))"
+  # The cwd the payload really carries: in Git Bash a native jq.exe gets /tmp/... rewritten
+  # to C:/Users/.../Temp/... on the way in, so "$repo" is not what the bar sees.
+  pdir=$("${JQ:-jq}" -r '.workspace.current_dir' <<<"$payload"); pdir=${pdir%$'\r'}
+  {
+    printf '{"ts":"%s","event":"SessionStart","session":"a","cwd":"%s","source":"startup"}\n' "$t_after" "$pdir"
+    printf '{"ts":"%s","event":"SessionStart","session":"b","cwd":"%s","source":"resume"}\n' "$t_after" "$pdir"
+    printf '{"ts":"%s","event":"SessionStart","session":"c","cwd":"%s","source":"startup"}\n' "$t_before" "$pdir"
+    printf '{"ts":"%s","event":"SessionStart","session":"d","cwd":"%s/otro","source":"startup"}\n' "$t_after" "$pdir"
+    printf '{"ts":"%s","event":"Stop","session":"a","cwd":"%s"}\n' "$t_after" "$pdir"
+    printf 'esto no es json\n'
+  } > "$fakehome/.claude/logs/events.jsonl"
+  out=$(drift)
+  case "$out" in
+    *"·2s"*) assert "sesiones posteriores: cuenta ·2s" "" 0 ;;
+    *)       assert "sesiones posteriores: cuenta ·2s" "salió: ${out#*$'\n'}" 1 ;;
+  esac
+  : > "$fakehome/.claude/logs/events.jsonl"
+
+  # 5. the bar never takes git's optional locks: a `git status` killed mid-refresh by
+  #    the status-line timeout leaves .git/index.lock behind and the next commit fails.
+  shim="$tmp/shim"; mkdir -p "$shim"
+  real_git=$(command -v git)
+  printf '#!/bin/sh\nprintf "%%s\\n" "${GIT_OPTIONAL_LOCKS:-unset}" >> "%s/git-locks.log"\nexec "%s" "$@"\n' "$tmp" "$real_git" > "$shim/git"
+  chmod +x "$shim/git"
+  printf '%s' "$payload" | PATH="$shim:$PATH" CC_NOW="$real_now" HOME="$fakehome" "$BASH" "$SL" >/dev/null 2>&1
+  locks=$(sort -u "$tmp/git-locks.log" 2>/dev/null | tr '\n' ' ')
+  case "$locks" in
+    "0 ") assert "git sin locks opcionales (GIT_OPTIONAL_LOCKS=0)" "" 0 ;;
+    *)    assert "git sin locks opcionales (GIT_OPTIONAL_LOCKS=0)" "vio: ${locks:-ninguna llamada}" 1 ;;
+  esac
+
   rm -rf "$tmp"
 fi
 
 echo
-echo "Snapshot: se arma con jq, no pegando texto en una plantilla"
+echo "Snapshot sin jq: jstr y jnum (escape JSON y números de bash)"
+# The snapshot was a second jq call per render; since 2026-10-15 bash builds it. These two
+# functions are the whole risk, so they are checked against jq itself.
+eval "$(sed -n '/^jstr() {/,/^}/p;/^jnum() {/,/^}/p' "$SL")"
+if ! declare -F jstr >/dev/null || ! declare -F jnum >/dev/null; then
+  assert "jstr y jnum existen en statusline.sh" "no los encontré" 1
+else
+  bad=""
+  for v in 'plain' 'feat/"x"' 'C:\Users\a"b\' $'tab\there' $'nl\nhere' $'cr\rhere' \
+           $'ctl\001\002\037end' 'ñandú ⎇ ✓ ⚠' '' '\\"\\'; do
+    jstr j "$v"
+    eq=$("${JQ:-jq}" -n --argjson a "$j" --arg b "$v" '$a == $b' 2>/dev/null)
+    [ "${eq%$'\r'}" = true ] || bad+=" [$j]"
+  done
+  assert "jstr: jq lee de vuelta la misma cadena (10 casos)" "${bad:-}" "$([ -z "$bad" ] && echo 0 || echo 1)"
+  bad=""
+  for v in 12 -3 007 0 12.5 -0.25 abc '' 1e-05; do
+    jnum n "$v"
+    ref=$("${JQ:-jq}" -rn --arg v "$v" '$v|tonumber? // -1' 2>/dev/null)
+    [ "$("${JQ:-jq}" -n "$n" 2>/dev/null)" = "$("${JQ:-jq}" -n "${ref%$'\r'}" 2>/dev/null)" ] || bad+=" [$v→$n≠$ref]"
+  done
+  assert "jnum: igual que tonumber? // -1 de jq (9 casos)" "${bad:-}" "$([ -z "$bad" ] && echo 0 || echo 1)"
+fi
+
+echo
+echo "Snapshot: nunca una plantilla printf (rama con comillas)"
 # A refname may contain a double quote (git check-ref-format allows it; only the FILESYSTEM
 # refuses it as a loose ref on Windows, which is why this uses packed-refs). With the old
 # printf template that quote closed the JSON string and every later /ahora said "el snapshot
