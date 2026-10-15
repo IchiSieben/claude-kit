@@ -41,8 +41,16 @@ run() {
   local srv=$!
   sleep 1
   rm -rf "$OUT"; mkdir -p "$OUT"
+  # Measure what visitors get (gzip, real TLS) when the published files are this commit's files;
+  # otherwise the local server (python http.server: no compression, so perf reads lower).
+  local base="http://127.0.0.1:$port" live="${DEMO_LIVE_URL:-https://kit.ichisieben.dev}" same=1 f
+  for f in index.html app.js content.js grid.json; do
+    [ "$(curl -fsS "$live/${f/index.html/}?gates=$RANDOM" | shasum | cut -c1-40)" = "$(shasum < "docs/demo/$f" | cut -c1-40)" ] || { same=0; echo "live differs: $f"; }
+  done
+  [ $same = 1 ] && base="$live"
+  echo "== measuring $base"
   local rc=0
-  (cd "$W" && node demo-gates.mjs "http://127.0.0.1:$port" "$OLDPWD/$OUT") || rc=22
+  (cd "$W" && node demo-gates.mjs "$base" "$OLDPWD/$OUT") || rc=22
   kill "$srv" 2>/dev/null
 
   mkdir -p evidence/demo-v2

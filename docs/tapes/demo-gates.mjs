@@ -192,7 +192,7 @@ function report() {
   const axeN = Object.values(R.axe).reduce((n, v) => n + v.length, 0);
   const cutN = R.flicker.filter(f => !f.nav).reduce((n, f) => n + f.cuts.length, 0);
   const pass = { perf: perf >= 95, a11y: med.a11y === 100, cls: med.cls === 0, axe: axeN === 0, flicker: cutN === 0 };
-  const md = [`# demo v2 — gates (${new Date().toISOString().slice(0, 16)}Z)`, "",
+  const md = [`# demo v2 — gates (${new Date().toISOString().slice(0, 16)}Z)`, "", `Measured: ${BASE}`, "",
     `Lighthouse mobile, median of ${L.length}: **perf ${perf}** · a11y ${med.a11y} · best-practices ${med.bp} · SEO ${med.seo} · LCP ${med.lcp} ms · CLS ${med.cls} · TBT ${med.tbt} ms`,
     `LCP element: \`${(med.lcpEl || "").replace(/`/g, "'").slice(0, 120)}\``, "",
     "| run | perf | a11y | LCP ms | CLS | TBT ms |", "|---|---|---|---|---|---|", ...L.map((r, i) => `| ${i + 1} | ${r.perf} | ${r.a11y} | ${r.lcp} | ${r.cls} | ${r.tbt} |`), "",
