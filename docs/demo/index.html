@@ -3,269 +3,362 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulador de la barra</title>
-<meta name="description" content="La barra de estado de claude-kit reaccionando a controles. Cada estado es la salida real de statusline.sh, pre-renderizada.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2316181d'/%3E%3Crect x='6' y='12' width='14' height='3' fill='%2356d364'/%3E%3Crect x='6' y='18' width='20' height='3' fill='%23e3b341'/%3E%3C/svg%3E">
+<title>La barra de claude-kit</title>
+<meta name="description" content="La barra de estado de claude-kit, en vivo: mueve un control y mira qué cambia y por qué. Cada estado es la salida real de statusline.sh.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230D1117'/%3E%3Crect x='6' y='12' width='14' height='3' rx='1.5' fill='%232DD4BF'/%3E%3Crect x='6' y='18' width='20' height='3' rx='1.5' fill='%238B949E'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/jetbrains-mono-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="tutorial/tutorial.css">
 <style>
 @font-face{font-family:"JetBrains Mono";src:url("fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");font-weight:100 800;font-display:swap}
 @font-face{font-family:"Space Grotesk";src:url("fonts/space-grotesk-latin-wght-normal.woff2") format("woff2");font-weight:300 700;font-display:swap}
+/* The bar's symbols are not in the latin subsets: two DejaVu subsets (verified glyph by glyph),
+   so no glyph ever falls back to whatever the visitor's system has. */
+@font-face{font-family:"Kit Symbols";src:url("fonts/kit-symbols-mono.woff2") format("woff2");
+  unicode-range:U+2191,U+2193,U+2192,U+2298,U+250B,U+2591,U+2593,U+25CF,U+26A0,U+26A1,U+2713,U+2717,U+2744;font-display:swap}
+@font-face{font-family:"Kit Symbols";src:url("fonts/kit-symbols-branch.woff2") format("woff2");unicode-range:U+2387;font-display:swap}
+@font-face{font-family:"Grotesk Fallback";src:local("Arial");size-adjust:104%}
+
+/* ---- tokens: the Landing's (global.css), one accent with one job: "this is what changed" ---- */
 :root{
-  --bg:#f6f7f9;--panel:#ffffff;--line:#d9dde3;--fg:#1f2328;--dim:#5b636d;--accent:#4f46e5;--focus:#4f46e5;
-  --term:#1e1f26;--term-fg:#e6e8ee;--t-red:#ff6b6b;--t-grn:#56d364;--t-amb:#e3b341;--t-mag:#ff7ac6;--t-cyn:#7ad7f0;
-  --sel:#eef0ff;--code:#eef0f3;
-  color-scheme:light;
+  --bg:#0D1117;--surface:#161B22;--surface-2:#1E242E;--line:#30363D;--fg:#E6EDF3;--muted:#8B949E;
+  --accent:#2DD4BF;--accent-text:#2DD4BF;--accent-soft:rgb(45 212 191 / .16);
+  --term:#090C10;--term-bar:#141920;--term-line:#232A33;--term-fg:#E6EDF3;--term-dim:#59636E;
+  --t-red:#FF7B72;--t-grn:#56D364;--t-amb:#E3B341;--t-mag:#FF7AC6;--t-cyn:#7AD7F0;
+  --r-card:28px;--r-pill:980px;
+  --ease-out:cubic-bezier(.22,1,.36,1);--ease-in:cubic-bezier(.4,0,1,1);
+  --d-micro:180ms;--d-reveal:560ms;--d-halo:700ms;--d-wire:500ms;--stagger:60ms;
+  --mono:"JetBrains Mono","Kit Symbols",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"Space Grotesk","Grotesk Fallback",system-ui,sans-serif;
+  color-scheme:dark;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0f1115;--panel:#16181d;--line:#2a2e36;--fg:#e6e8ee;--dim:#9aa3ad;--accent:#8b85ff;--focus:#8b85ff;
-  --term:#0b0c10;--sel:#23243a;--code:#22252c;color-scheme:dark;}}
-:root[data-theme="dark"]{
-  --bg:#0f1115;--panel:#16181d;--line:#2a2e36;--fg:#e6e8ee;--dim:#9aa3ad;--accent:#8b85ff;--focus:#8b85ff;
-  --term:#0b0c10;--sel:#23243a;--code:#22252c;color-scheme:dark;}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#FFFFFF;--surface:#F6F8FA;--surface-2:#ECF0F4;--line:#D0D7DE;--fg:#1F2328;--muted:#59636E;
+  --accent:#0D9488;--accent-text:#0F766E;--accent-soft:rgb(13 148 136 / .12);--term-line:#2A323C;color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#FFFFFF;--surface:#F6F8FA;--surface-2:#ECF0F4;--line:#D0D7DE;--fg:#1F2328;--muted:#59636E;
+  --accent:#0D9488;--accent-text:#0F766E;--accent-soft:rgb(13 148 136 / .12);--term-line:#2A323C;color-scheme:light}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 "Space Grotesk",system-ui,sans-serif}
-main{max-width:1060px;margin:0 auto;padding:28px 16px 48px}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between}
-h1{font-size:clamp(24px,4vw,34px);line-height:1.15;margin:0 0 6px;letter-spacing:-.01em}
-.lede{margin:0;color:var(--dim);max-width:62ch}
-.tools{display:flex;gap:8px}
-.tools button{font:inherit;font-size:14px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
-.term{margin:22px 0 8px;background:var(--term);color:var(--term-fg);border-radius:12px;padding:18px 18px 16px;
-  font:13.5px/1.75 "JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;overflow-wrap:anywhere}
-.term .ln{white-space:pre-wrap;min-height:1.75em}
-.term button.sec{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;border-radius:3px;
-  text-decoration:underline dotted rgba(255,255,255,.28);text-underline-offset:4px;white-space:pre-wrap;text-align:left}
-.term button.sec:hover{background:rgba(255,255,255,.08)}
-.term button.sec[aria-pressed="true"]{background:rgba(139,133,255,.28);text-decoration:none}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 clamp(1.0625rem,1rem + .25vw,1.125rem)/1.6 var(--sans);letter-spacing:-.016em;overflow-x:hidden}
+a{color:var(--accent-text);text-underline-offset:3px}
+code,kbd{font-family:var(--mono);font-size:.86em;letter-spacing:0;background:var(--surface-2);padding:.08em .4em;border-radius:6px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+@media (min-width:768px){.wrap{padding:0 32px}}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.label{font:400 12px/1.4 var(--mono);letter-spacing:0;color:var(--muted)}
+.visually-hidden{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---- top bar ---- */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(12px);-webkit-backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+.top .wrap{display:flex;align-items:center;gap:16px;height:56px}
+.brand{font:600 15px/1 var(--mono);letter-spacing:-.01em;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:8px}
+.brand i{display:inline-block;width:10px;height:10px;border-radius:var(--r-pill);background:var(--accent)}
+.top nav{display:flex;gap:4px;margin-left:auto}
+.top nav a{font-size:14px;color:var(--muted);text-decoration:none;padding:6px 12px;border-radius:var(--r-pill);transition:color var(--d-micro) var(--ease-out),background var(--d-micro) var(--ease-out)}
+.top nav a:hover{color:var(--fg);background:var(--surface)}
+@media (max-width:767px){.top nav{display:none}.tools{margin-left:auto}}
+.tools{display:flex;gap:6px}
+.pill{font:500 13px/1 var(--sans);letter-spacing:-.01em;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);padding:8px 14px;cursor:pointer;transition:background var(--d-micro) var(--ease-out),border-color var(--d-micro) var(--ease-out),transform 240ms var(--ease-out)}
+.pill:hover{background:var(--surface-2)}
+.pill:active{transform:scale(.98)}
+.pill.icon{padding:8px 11px;min-width:38px}
+
+/* ---- hero ---- */
+.hero{padding:56px 0 24px}
+@media (min-width:1024px){.hero{padding:88px 0 32px}}
+.eyebrow{margin:0 0 14px}
+h1{font-weight:600;font-size:clamp(2.4rem,1.2rem + 5vw,4.75rem);line-height:.98;letter-spacing:-.025em;margin:0;max-width:16ch}
+.lead{font-size:clamp(1.1875rem,1.1rem + .4vw,1.375rem);line-height:1.45;font-weight:300;color:var(--muted);max-width:56ch;margin:20px 0 0}
+.lead b{color:var(--fg);font-weight:500}
+
+/* ---- stage: terminal + caption + controls, with the wire layer on top ---- */
+.stage{position:relative;margin-top:40px}
+.screen{position:relative}
+.term{position:relative;background:var(--term);color:var(--term-fg);border-radius:var(--r-card);border:1px solid var(--term-line);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .04),inset 0 0 0 1px rgb(0 0 0 / .4);overflow:hidden}
+.term-bar{display:flex;align-items:center;gap:8px;height:44px;padding:0 20px;background:var(--term-bar);border-bottom:1px solid var(--term-line)}
+.term-bar i{width:12px;height:12px;border-radius:var(--r-pill);background:#3A414B}
+.term-bar i:nth-child(1){background:#FF5F57}.term-bar i:nth-child(2){background:#FEBC2E}.term-bar i:nth-child(3){background:#28C840}
+.term-bar span{flex:1;text-align:center;font:400 12px/1 var(--mono);color:var(--term-dim);margin-right:52px}
+.term-body{display:flex;flex-direction:column;justify-content:flex-end;gap:18px;padding:28px 28px 26px}
+@media (min-width:1024px){.term{aspect-ratio:16/7.2}.term-body{height:calc(100% - 44px);padding:36px 40px 34px}}
+/* the transcript above the bar is deliberately abstract: the bar is the only real text here */
+.ghost-lines{display:flex;flex-direction:column;gap:11px;flex:1;justify-content:flex-end;min-height:72px}
+.ghost-lines i{display:block;height:9px;border-radius:var(--r-pill);background:#161C24}
+.ghost-lines i:nth-child(1){width:22%;background:#1A2129}.ghost-lines i:nth-child(2){width:64%}.ghost-lines i:nth-child(3){width:48%}.ghost-lines i:nth-child(4){width:30%;margin-bottom:10px}.ghost-lines i:nth-child(5){width:18%;background:#1A2129}.ghost-lines i:nth-child(6){width:71%}.ghost-lines i:nth-child(7){width:40%}
+@media (max-width:1023px){.ghost-lines i:nth-child(-n+4){display:none}}
+.prompt{display:flex;align-items:center;gap:10px;border:1px solid var(--term-line);border-radius:var(--r-pill);padding:10px 16px;font:400 13px/1 var(--mono);color:var(--term-dim)}
+.prompt b{color:var(--term-fg);font-weight:400}
+.prompt s{display:inline-block;width:8px;height:15px;background:#3A414B;text-decoration:none}
+.bar{font:400 clamp(11.5px,.62rem + .5vw,16px)/1.85 var(--mono);letter-spacing:0;font-variant-ligatures:none;min-height:3.7em}
+.ln{position:relative;white-space:pre-wrap;min-height:1.85em}
+.ln>span,.ln>button{display:inline-block;white-space:pre;vertical-align:top}
+.sec{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;position:relative;border-radius:var(--r-pill);text-align:left}
+.sec::after{content:"";position:absolute;inset:-2px -5px;border-radius:var(--r-pill);box-shadow:0 0 0 1.5px var(--accent);opacity:0;pointer-events:none;transition:opacity var(--d-micro) var(--ease-out)}
+.sec:hover::after,.sec.pre::after{opacity:.55}
+.sec.sel::after{opacity:1;background:rgb(45 212 191 / .10)}
+.sec:focus-visible{outline:none}.sec:focus-visible::after{opacity:1}
+.sec.halo::after{animation:halo var(--d-halo) var(--ease-out) both}
+@keyframes halo{0%{opacity:0;box-shadow:0 0 0 1.5px var(--accent),0 0 0 0 rgb(45 212 191 / .55)}
+  25%{opacity:1;box-shadow:0 0 0 1.5px var(--accent),0 0 22px 4px rgb(45 212 191 / .45)}
+  100%{opacity:.0;box-shadow:0 0 0 1.5px var(--accent),0 0 0 0 rgb(45 212 191 / 0)}}
+.sec.in{animation:secin 450ms var(--ease-out) both}
+@keyframes secin{from{opacity:0;transform:translateY(3px)}}
+.ghost{position:absolute;pointer-events:none;white-space:pre;animation:ghostout 320ms var(--ease-in) both}
+@keyframes ghostout{to{opacity:0;transform:translateY(-3px)}}
 .b{font-weight:700}.c31{color:var(--t-red)}.c32{color:var(--t-grn)}.c33{color:var(--t-amb)}.c35{color:var(--t-mag)}.c36{color:var(--t-cyn)}
-.hint{font-size:13px;color:var(--dim);margin:0 0 18px}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
-@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
-.card h2{font-size:15px;margin:0 0 12px;letter-spacing:.02em;text-transform:uppercase;color:var(--dim)}
-fieldset{border:0;margin:0 0 14px;padding:0;min-width:0}
-legend{font-weight:600;font-size:14px;margin-bottom:6px;padding:0}
+
+/* caption: one sentence next to the sector that changed */
+.caption{position:relative;min-height:96px;margin:14px 0 0;padding:16px 20px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line);font-size:16px;line-height:1.5}
+@media (min-width:768px){.caption{min-height:84px}}
+.caption::before{content:"";position:absolute;top:-7px;left:var(--nx,40px);width:12px;height:12px;background:var(--surface);border-left:1px solid var(--line);border-top:1px solid var(--line);transform:rotate(45deg);transition:left 450ms var(--ease-out)}
+.caption .k{font:500 12px/1 var(--mono);color:var(--accent-text);margin-right:8px;letter-spacing:0}
+.caption .msg{display:block}
+.caption .msg.in{animation:fadein 450ms var(--ease-out) both}
+@keyframes fadein{from{opacity:0}}
+.caption .more{font-size:14px;margin-left:6px}
+
+.modes{display:flex;gap:4px;margin:28px 0 18px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);width:max-content;max-width:100%}
+.modes button{font:500 14px/1 var(--sans);letter-spacing:-.01em;color:var(--muted);background:none;border:0;border-radius:var(--r-pill);padding:10px 18px;cursor:pointer;transition:color var(--d-micro) var(--ease-out),background var(--d-micro) var(--ease-out)}
+.modes button[aria-selected="true"]{background:var(--bg);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:1023px){.controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:559px){.controls{grid-template-columns:minmax(0,1fr)}}
+.ctl{border:1px solid var(--line);border-radius:var(--r-card);padding:16px 18px 18px;margin:0;min-width:0;background:var(--bg);transition:border-color var(--d-micro) var(--ease-out),background var(--d-micro) var(--ease-out)}
+.ctl.pre{border-color:var(--accent);background:var(--accent-soft)}
+.ctl legend{float:left;width:100%;padding:0;margin:0 0 10px;display:flex;justify-content:space-between;gap:8px;font-weight:500;font-size:15px}
+.ctl legend .label{font-weight:400}
+.ctl legend+*{clear:both}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg label{position:relative}
-.seg input{position:absolute;opacity:0;inset:0;margin:0}
-.seg span{display:inline-block;font-size:13.5px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;cursor:pointer;background:var(--panel)}
-.seg input:checked+span{background:var(--sel);border-color:var(--accent);color:var(--fg);font-weight:600}
-.seg input:focus-visible+span,.tools button:focus-visible,.term button.sec:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-input[type=range]{width:100%;accent-color:var(--accent)}
-.ticks{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim);font-family:"JetBrains Mono",ui-monospace,monospace}
-#legend .n{display:inline-block;min-width:28px;height:28px;line-height:28px;text-align:center;border-radius:8px;background:var(--accent);color:#fff;font-weight:700;margin-right:8px}
-#legend h3{margin:0 0 10px;font-size:18px;display:flex;align-items:center}
-#legend dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 12px;font-size:14.5px}
-#legend dt{color:var(--dim)}#legend dd{margin:0;overflow-wrap:anywhere}
-code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.88em;background:var(--code);padding:1px 5px;border-radius:5px}
-.empty{color:var(--dim)}
-footer{margin-top:22px;font-size:13.5px;color:var(--dim)}
-footer a,.lede a{color:var(--accent)}
-.err{color:#d1242f}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:inline-block;font-size:14px;line-height:1.2;padding:8px 13px;border:1px solid var(--line);border-radius:var(--r-pill);background:var(--surface);transition:background var(--d-micro) var(--ease-out),border-color var(--d-micro) var(--ease-out),color var(--d-micro) var(--ease-out)}
+.seg label:hover span{border-color:var(--muted)}
+.seg input:checked+span{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.seg input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+input[type=range]{width:100%;margin:6px 0 2px;accent-color:var(--accent);height:28px}
+.ticks{display:flex;justify-content:space-between}
+.ticks span{font:400 12px/1 var(--mono);color:var(--muted)}
+.ticks span.on{color:var(--fg)}
+
+.session{border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;background:var(--bg)}
+.session-row{display:flex;align-items:center;gap:14px}
+.session-row input{flex:1}
+.clock{font:500 22px/1 var(--mono);letter-spacing:-.02em;min-width:6.2ch;text-align:right}
+.session .ticks{margin-left:58px}
+@media (max-width:559px){.session .ticks span:nth-child(even){visibility:hidden}}
+
+.wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:5}
+.wires path{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linecap:round}
+.wires circle{fill:var(--accent)}
+@media (max-width:767px){.wires{display:none}
+  /* on a phone the controls are below the fold: the bar and its caption stay pinned while you move them */
+  .screen{position:sticky;top:56px;z-index:10;background:var(--bg);padding:8px 0 10px;margin:0 -16px;padding-left:16px;padding-right:16px}
+  .ghost-lines,.prompt,.term-bar span{display:none}.term-body{padding:16px 18px 14px}.term-bar{height:34px}
+  .caption{min-height:72px;font-size:14.5px;margin-top:10px;padding:12px 16px}}
+
+.again{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+
+/* ---- sections ---- */
+section.block{padding:96px 0 0}
+@media (min-width:1024px){section.block{padding-top:150px}}
+h2{font-weight:600;font-size:clamp(2rem,1.4rem + 2.4vw,3.5rem);line-height:1.05;letter-spacing:-.02em;margin:0;max-width:20ch}
+.intro{color:var(--muted);max-width:62ch;margin:18px 0 0;font-weight:300;font-size:clamp(1.0625rem,1rem + .3vw,1.25rem)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:48px}
+@media (max-width:1023px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:639px){.cards{grid-template-columns:minmax(0,1fr)}}
+.card{border:1px solid var(--line);border-radius:var(--r-card);padding:22px 22px 14px;background:var(--surface);display:flex;flex-direction:column;min-width:0;transition:border-color var(--d-micro) var(--ease-out)}
+.card.sel{border-color:var(--accent)}
+.card-h{display:flex;align-items:baseline;gap:12px}
+.num{font:500 12px/1 var(--mono);color:var(--accent-text);letter-spacing:0;min-width:2ch}
+.card h3{margin:0;font-size:20px;font-weight:500;letter-spacing:-.015em;line-height:1.2}
+.mini{margin:14px 0 6px;background:var(--term);border:1px solid var(--term-line);border-radius:var(--r-pill);padding:9px 16px;font:400 13px/1.4 var(--mono);color:var(--term-fg);white-space:pre;overflow:hidden;text-overflow:ellipsis;position:relative;min-height:38px}
+.mini span.st{display:inline-block}
+.mini .st.in{animation:fadein 450ms var(--ease-out) both}
+details{border-top:1px solid var(--line);padding:0}
+details:first-of-type{border-top:0}
+summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 0;font-size:15px;font-weight:500}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font:400 18px/1 var(--mono);color:var(--muted);transition:transform var(--d-micro) var(--ease-out)}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin:0 0 14px;font-size:15.5px;line-height:1.55;color:var(--fg)}
+details[open] p{animation:fadein 450ms var(--ease-out) both}
+.card .show{align-self:flex-start;margin:6px 0 8px;font:400 12px/1 var(--mono);color:var(--accent-text);background:none;border:0;padding:6px 0;cursor:pointer;letter-spacing:0}
+.glossary{margin-top:56px;border-top:1px solid var(--line);padding-top:28px}
+.glossary h3{font-size:20px;font-weight:500;margin:0 0 18px}
+.glossary dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px 28px;margin:0}
+.glossary div{display:flex;gap:12px;align-items:baseline;font-size:15px}
+.glossary dt{font:400 16px/1 var(--mono);min-width:2.2ch;text-align:center}
+.glossary dd{margin:0;color:var(--muted)}
+
+/* ---- what you take home: the tree builds itself as you scroll ---- */
+.take{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:48px;margin-top:48px;align-items:start}
+@media (max-width:1023px){.take{grid-template-columns:minmax(0,1fr)}}
+.tree{list-style:none;margin:0;padding:24px 26px;background:var(--term);color:var(--term-fg);border:1px solid var(--term-line);border-radius:var(--r-card);font:400 14px/1.5 var(--mono);letter-spacing:0}
+.tree li{display:grid;grid-template-columns:minmax(0,max-content) minmax(0,1fr);gap:4px 18px;padding:5px 0;align-items:baseline}
+.tree .path{white-space:pre;color:var(--term-fg)}
+.tree .path .d{color:var(--t-cyn)}
+.tree .what{color:#9AA4AF;font-size:13px}
+.tree .what a{color:inherit;text-decoration:none;border-bottom:1px dotted #59636E;transition:color var(--d-micro) var(--ease-out)}.tree .what a:hover{color:var(--t-cyn)}
+@media (max-width:639px){.tree li{grid-template-columns:minmax(0,1fr)}.tree .what{padding-left:2ch}}
+html.js .tree li{opacity:0}
+html.js .tree.is-in li{animation:rise var(--d-reveal) var(--ease-out) both;animation-delay:calc(var(--i,0) * var(--stagger))}
+@supports (animation-timeline: view()){@media (prefers-reduced-motion: no-preference){
+  html.js .tree li{opacity:1;animation:rise linear both;animation-timeline:view();animation-range:entry 0% cover 22%;animation-delay:0s}
+  html.js .tree.is-in li{animation:rise linear both;animation-timeline:view();animation-range:entry 0% cover 22%;animation-delay:0s}}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.install h3{font-size:20px;font-weight:500;margin:0 0 14px}
+.cmd{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 104px 20px 22px;font:400 14px/1.75 var(--mono);letter-spacing:0;white-space:pre;overflow-x:auto}
+.cmd .c{color:var(--muted)}
+.copy{position:absolute;top:12px;right:12px}
+.notouch{margin:18px 0 0;color:var(--muted);font-size:15.5px}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.links a{text-decoration:none}
+
+footer{margin:120px 0 0;padding:28px 0 40px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer p{margin:0 0 6px}
+
+/* ---- reveal (v13): nothing appears at once ---- */
+html.js .reveal{opacity:0}
+html.js .reveal.is-in{animation:rise var(--d-reveal) var(--ease-out) both}
+html.js .reveal-stagger>*{opacity:0}
+html.js .reveal-stagger.is-in>*{animation:rise var(--d-reveal) var(--ease-out) both;animation-delay:calc(min(var(--i,0),7) * var(--stagger))}
+@media (prefers-reduced-motion: reduce){
+  html.js .reveal.is-in,html.js .reveal-stagger.is-in>*,html.js .tree.is-in li,.sec.in{animation-name:fadein!important}
+  html.js .tree li{animation-timeline:auto!important}
+  .ghost{animation-name:fadeout!important}
+}
+@keyframes fadeout{to{opacity:0}}
+@media print{html.js .reveal,html.js .reveal-stagger>*,html.js .tree li{opacity:1;animation:none}}
+html.vt-swap::view-transition-old(root){animation:none;opacity:1}
+html.vt-swap::view-transition-new(root){animation:fadein 560ms cubic-bezier(.25,.1,.75,.9) 90ms both}
+
+/* tutorial skin */
+.ic7-tutorial-root{--tut-bg:var(--surface);--tut-fg:var(--fg);--tut-dim:var(--muted);--tut-line:var(--line);--tut-accent:var(--accent);--tut-font:var(--sans);--tut-mono:var(--mono);--tut-z:50}
+.ic7-tutorial-card{border-radius:var(--r-card)!important;padding:20px 22px 16px!important;width:min(380px,calc(100vw - 28px))!important}
+.ic7-tutorial-spot{border-radius:var(--r-card)!important}
+.ic7-tutorial-actions button{border-radius:var(--r-pill)!important}
 </style>
+<script>document.documentElement.classList.add("js");try{var t=localStorage.getItem("kitdemo-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
-<main>
-  <header>
-    <div>
-      <h1 data-i18n="title">La barra de claude-kit, en vivo</h1>
-      <p class="lede" data-i18n-html="lede">Mueve los controles y mira cómo reacciona la barra de estado. Cada estado es la salida real de <code>statusline.sh</code>, pre-renderizada, no una imitación en JavaScript. Toca un sector para ver qué dice.</p>
-    </div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="https://github.com/IchiSieben/claude-kit"><i></i>claude-kit</a>
+    <nav aria-label="Secciones">
+      <a href="#barra" data-i18n="navBar">La barra</a>
+      <a href="#significado" data-i18n="navMeaning">Qué significa</a>
+      <a href="#llevas" data-i18n="navTake">Qué te llevas</a>
+    </nav>
     <div class="tools">
-      <button id="lang" type="button" aria-label="English">EN</button>
-      <button id="theme" type="button" aria-label="Cambiar tema">◐</button>
+      <button class="pill" id="lang" type="button" aria-label="English">EN</button>
+      <button class="pill icon" id="theme" type="button" aria-label="Cambiar tema">◐</button>
     </div>
-  </header>
-
-  <div class="term" id="term" aria-live="polite"><div class="ln"></div><div class="ln"></div></div>
-  <p class="hint" data-i18n="hint">Los sectores subrayados se pueden tocar (Tab y Enter con el teclado).</p>
-
-  <div class="grid">
-    <form class="card" id="controls" onsubmit="return false">
-      <h2 data-i18n="controls">Controles</h2>
-      <fieldset><legend data-i18n="model">Modelo y esfuerzo</legend><div class="seg" data-c="0"></div></fieldset>
-      <fieldset><legend><span data-i18n="context">Contexto usado</span> · <span id="ctxv"></span></legend>
-        <input type="range" id="ctx" min="0" max="3" step="1" value="1" aria-describedby="ctxt">
-        <div class="ticks" id="ctxt"><span>60k</span><span>180k</span><span>320k</span><span>385k</span></div></fieldset>
-      <fieldset><legend data-i18n="cache">Caché de prompt</legend><div class="seg" data-c="2"></div></fieldset>
-      <fieldset><legend data-i18n="quota">Cuota del plan</legend><div class="seg" data-c="3"></div></fieldset>
-      <fieldset><legend data-i18n="git">Git</legend><div class="seg" data-c="4"></div></fieldset>
-      <fieldset><legend data-i18n="handoff">HANDOFF.md</legend><div class="seg" data-c="5"></div></fieldset>
-    </form>
-    <section class="card" id="legend" aria-live="polite"><h2 data-i18n="legendTitle">Qué significa</h2><p class="empty" data-i18n="legendEmpty">Toca un sector de la barra.</p></section>
   </div>
+</header>
 
-  <footer>
-    <p data-i18n-html="foot">Generado por <code>tools/render-grid.sh</code>: 972 combinaciones pasadas por el <code>statusline.sh</code> real. Si la barra cambia, <code>verify.sh</code> exige regenerar. Leyenda completa en <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/statusline.es.md">statusline.es.md</a> · lección <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.md">01 · Lee tu barra</a> · <a href="https://github.com/IchiSieben/claude-kit">código</a>.</p>
-    <p id="meta"></p>
-  </footer>
+<main id="barra">
+  <section class="hero">
+    <div class="wrap">
+      <p class="label eyebrow reveal" data-i18n="eyebrow">claude-kit · barra de estado</p>
+      <h1 class="reveal" data-i18n="title">Tu sesión de Claude Code, en dos líneas.</h1>
+      <p class="lead reveal" data-i18n-html="lead">Mueve un control y mira qué cambia en la barra, y por qué. Cada estado es la salida real de <code>statusline.sh</code>: <b>1 296 renders, ninguno inventado</b>.</p>
+
+      <div class="stage" id="stage">
+        <div class="screen" id="screen">
+          <div class="term" id="term">
+            <div class="term-bar" aria-hidden="true"><i></i><i></i><i></i><span>~/demo-project — claude</span></div>
+            <div class="term-body">
+              <div class="ghost-lines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="prompt" aria-hidden="true"><b>›</b><s></s></div>
+              <div class="bar" id="bar" role="group" aria-label="Barra de estado"><div class="ln"></div><div class="ln"></div></div>
+            </div>
+          </div>
+          <p class="caption" id="caption" aria-live="polite"><span class="msg" data-i18n="captionIdle">Toca cualquier parte de la barra, o mueve un control.</span></p>
+        </div>
+
+        <div class="modes" role="tablist" aria-label="Modo">
+          <button type="button" role="tab" id="tab-explore" aria-selected="true" aria-controls="controls" data-i18n="modeExplore">Explorar</button>
+          <button type="button" role="tab" id="tab-session" aria-selected="false" aria-controls="session" data-i18n="modeSession">Reproducir una sesión</button>
+        </div>
+
+        <form class="controls" id="controls" role="tabpanel" aria-labelledby="tab-explore" onsubmit="return false">
+          <fieldset class="ctl" data-c="0"><legend><span data-i18n="model">Modelo y esfuerzo</span></legend><div class="seg"></div></fieldset>
+          <fieldset class="ctl" data-c="1"><legend><span data-i18n="context">Contexto usado</span><span class="label" id="ctxv"></span></legend>
+            <input type="range" id="ctx" min="0" max="3" step="1" value="1" aria-describedby="ctxt">
+            <div class="ticks" id="ctxt"><span>60k</span><span>180k</span><span>320k</span><span>385k</span></div></fieldset>
+          <fieldset class="ctl" data-c="2"><legend><span data-i18n="cache">Caché de prompt</span></legend><div class="seg"></div></fieldset>
+          <fieldset class="ctl" data-c="3"><legend><span data-i18n="quota">Cuota del plan</span></legend><div class="seg"></div></fieldset>
+          <fieldset class="ctl" data-c="4"><legend><span data-i18n="git">Git</span></legend><div class="seg"></div></fieldset>
+          <fieldset class="ctl" data-c="5"><legend><span data-i18n="handoff">HANDOFF.md</span></legend><div class="seg"></div></fieldset>
+        </form>
+
+        <div class="session" id="session" role="tabpanel" aria-labelledby="tab-session" hidden>
+          <div class="session-row">
+            <button class="pill icon" id="play" type="button" aria-label="Reproducir">▶</button>
+            <input type="range" id="tline" min="0" max="8" step="1" value="0" aria-describedby="tticks">
+            <span class="clock" id="clock">0:00</span>
+          </div>
+          <div class="ticks" id="tticks"></div>
+        </div>
+
+        <svg class="wires" id="wires" aria-hidden="true"></svg>
+      </div>
+
+      <div class="again">
+        <button class="pill" id="tour" type="button" data-i18n="tourAgain">Ver el recorrido otra vez</button>
+        <span class="label" id="meta"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="significado">
+    <div class="wrap">
+      <p class="label eyebrow reveal" data-i18n="eyebrowMeaning">18 sectores · 3 niveles</p>
+      <h2 class="reveal" data-i18n="meaningTitle">Qué significa cada cosa</h2>
+      <p class="intro reveal" data-i18n-html="meaningIntro">En el orden en que se leen. Cada tarjeta explica su sector tres veces: para un niño, qué mide exactamente y por qué está ahí. La tira oscura repite los estados reales de ese sector.</p>
+      <div class="cards" id="cards"></div>
+      <div class="glossary reveal" id="glossary"></div>
+    </div>
+  </section>
+
+  <section class="block" id="llevas">
+    <div class="wrap">
+      <p class="label eyebrow reveal" data-i18n="eyebrowTake">~/.claude</p>
+      <h2 class="reveal" data-i18n="takeTitle">Qué te llevas al descargar</h2>
+      <p class="intro reveal" data-i18n-html="takeIntro">Todo es texto que puedes leer: reglas, agentes, skills y hooks que se copian a <code>~/.claude</code>. La barra es solo un archivo de ellos.</p>
+      <div class="take">
+        <ul class="tree" id="tree"></ul>
+        <div class="install reveal">
+          <h3 data-i18n="installTitle">Instalar en tres comandos</h3>
+          <div class="cmd" id="cmd"><button class="pill copy" id="copy" type="button" data-i18n="copy">Copiar</button><span>git clone https://github.com/IchiSieben/claude-kit
+cd claude-kit
+bash sync-to-home.sh</span></div>
+          <p class="notouch" data-i18n-html="notouch">Después, reinicia Claude Code. <b>No toca</b> tu <code>model</code>, tus plugins ni tu tema: esas claves son de cada máquina, y la copia respalda lo que reemplaza.</p>
+          <div class="links">
+            <a class="pill" href="https://github.com/IchiSieben/claude-kit" data-i18n="linkRepo">Repositorio</a>
+            <a class="pill" id="lesson" href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.md" data-i18n="linkLesson">Lección 01 · Lee tu barra</a>
+            <a class="pill" href="https://ichisieben.dev/proyectos/claude-kit/" data-i18n="linkCard">Ficha en el portafolio</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
-<script>
-"use strict";
-const T = {
-  es: {title:"La barra de claude-kit, en vivo", controls:"Controles", model:"Modelo y esfuerzo", context:"Contexto usado",
-    cache:"Caché de prompt", quota:"Cuota del plan", git:"Git", handoff:"HANDOFF.md", legendTitle:"Qué significa",
-    legendEmpty:"Toca un sector de la barra.", hint:"Los sectores subrayados se pueden tocar (Tab y Enter con el teclado).",
-    lede:'Mueve los controles y mira cómo reacciona la barra de estado. Cada estado es la salida real de <code>statusline.sh</code>, pre-renderizada, no una imitación en JavaScript. Toca un sector para ver qué dice.',
-    foot:'Generado por <code>tools/render-grid.sh</code>: 972 combinaciones pasadas por el <code>statusline.sh</code> real. Si la barra cambia, <code>verify.sh</code> exige regenerar. Leyenda completa en <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/statusline.es.md">statusline.es.md</a> · lección <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.md">01 · Lee tu barra</a> · <a href="https://github.com/IchiSieben/claude-kit">código</a>.',
-    what:"Se ve", means:"Significa", source:"Lee de", threshold:"Umbral", node:"La máquina donde corre la sesión (CC_NODE o el hostname). No tiene fila en la leyenda.",
-    meta:(d,h)=>`Renderizado el ${d} · entradas ${h}`, theme:"Cambiar tema", load:"No se pudo cargar grid.json. Abre la página desde un servidor (no file://).",
-    opts:[["Opus 5.5 · high","Sonnet 5.5 · medium","Haiku 5.5 · low"],null,["caliente · 42 min","enfriando · 4 min","fría"],
-      ["5h 20% · 7d 30%","5h 41% · 7d 87%","5h 93% · 7d 97%"],["al día con origin","1 commit sin push (3 h)","+ 2 archivos modificados"],
-      ["escrito hace 10 min","escrito hace 7 h","no existe"]]},
-  en: {title:"The claude-kit status line, live", controls:"Controls", model:"Model and effort", context:"Context used",
-    cache:"Prompt cache", quota:"Plan quota", git:"Git", handoff:"HANDOFF.md", legendTitle:"What it means",
-    legendEmpty:"Tap a sector of the bar.", hint:"Underlined sectors can be tapped (Tab and Enter on a keyboard).",
-    lede:'Move the controls and watch the status line react. Every state is the real output of <code>statusline.sh</code>, pre-rendered, not a JavaScript imitation. Tap a sector to see what it says. The bar\'s own words are Spanish; they come from <code>thresholds.json</code>.',
-    foot:'Generated by <code>tools/render-grid.sh</code>: 972 combinations piped through the real <code>statusline.sh</code>. If the bar changes, <code>verify.sh</code> demands a re-render. Full legend in <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/statusline.md">statusline.md</a> · lesson <a href="https://github.com/IchiSieben/claude-kit/blob/main/docs/leccion-01-lee-tu-barra.en.md">01 · Read your bar</a> · <a href="https://github.com/IchiSieben/claude-kit">code</a>.',
-    what:"Looks like", means:"Means", source:"Reads", threshold:"Threshold", node:"The machine the session runs on (CC_NODE or the hostname). It has no legend row.",
-    meta:(d,h)=>`Rendered ${d} · inputs ${h}`, theme:"Toggle theme", load:"Could not load grid.json. Open the page from a server (not file://).",
-    opts:[["Opus 5.5 · high","Sonnet 5.5 · medium","Haiku 5.5 · low"],null,["warm · 42 min","cooling · 4 min","cold"],
-      ["5h 20% · 7d 30%","5h 41% · 7d 87%","5h 93% · 7d 97%"],["in sync with origin","1 unpushed commit (3 h)","+ 2 modified files"],
-      ["written 10 min ago","written 7 h ago","missing"]]},
-};
-const CTX = ["60k","180k","320k","385k"];
-const state = [0,1,0,1,1,1];
-let lang = "es", grid = null, picked = null;
-try { const s = localStorage.getItem("kitdemo-lang"); if (s && T[s]) lang = s; else if (!/^es/i.test(navigator.language||"")) lang = "en"; } catch (e) {}
-try { const th = localStorage.getItem("kitdemo-theme"); if (th) document.documentElement.dataset.theme = th; } catch (e) {}
 
-const $ = s => document.querySelector(s);
-const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const md = s => esc(s).replace(/\\\|/g,"|").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>");
+<footer>
+  <div class="wrap">
+    <p data-i18n-html="foot">Generado por <code>tools/render-grid.sh</code>: cada combinación de controles pasó por el <code>statusline.sh</code> real. Si la barra cambia, <code>verify.sh</code> falla hasta que se regenere. Ningún estado intermedio es inventado: la animación solo ocurre entre dos salidas reales.</p>
+    <p id="meta2"></p>
+  </div>
+</footer>
 
-/* ANSI -> [{ch, cls}] (only the SGR codes statusline.sh emits: 0 1 31 32 33 35 36). */
-function parseAnsi(line) {
-  const out = []; let bold = false, fg = 0;
-  for (let i = 0; i < line.length; ) {
-    if (line[i] === "\x1b" && line[i+1] === "[") {
-      const j = line.indexOf("m", i); const codes = line.slice(i+2, j).split(";").map(Number);
-      for (const c of codes) { if (c === 0) { bold = false; fg = 0; } else if (c === 1) bold = true; else if (c >= 30 && c <= 37) fg = c; }
-      i = j + 1; continue;
-    }
-    const cp = line.codePointAt(i); const ch = String.fromCodePoint(cp);
-    out.push({ch, cls: (bold ? "b " : "") + (fg ? "c" + fg : "")}); i += ch.length;
-  }
-  return out;
-}
-
-/* Sector rules, tried at each position of the plain text (numbers = rows of docs/statusline.md). */
-const RULES = [
-  [/^⚠ umbrales/, "16"],
-  [/^·(?:low|medium|high|xhigh|max)\b/, "2"],
-  [/^@\S+/, "node"],
-  [/^[▓░┋]+/, "3"],
-  [/^\d+k\/\d+k(?: ⚠)?/, "4"],
-  [/^\d+% of \d+[kM]/, "5"],
-  [/^\$[\d.⚠]+/, "6"],
-  [/^[⚡❄]︎?.*$/, "10"],
-  [/^⚠ caché/, "10"],
-  [/^\d+m\b|^⚠m/, "7"],
-  [/^5h \S+/, "8"], [/^7d \S+/, "9"],
-  [/^hit \S+/, "11"], [/^\(\S+ miss\)/, "12"],
-  [/^\+\d+\/-\d+|^⚠ diff/, "13"],
-  [/^⎇.*?(?=  |$)/, "14"],
-  [/^(?:✓|⚠ ?)(?:sin )?HANDOFF.*?(?=  |$)/, "15"],
-  [/^\[[^\]]*\]/, "17"],
-];
-function sectorize(cells, first) {
-  const text = cells.map(c => c.ch).join("");
-  const sec = new Array(cells.length).fill(null);
-  // character offsets in `text` vs cell indices differ for astral chars: map them
-  const off = []; let k = 0; for (let i = 0; i < cells.length; i++) { off.push(k); k += cells[i].ch.length; }
-  const cellAt = o => { let lo = 0, hi = off.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (off[m] <= o) lo = m; else hi = m - 1; } return lo; };
-  let o = 0;
-  if (first) { const m = text.match(/^.*?(?= ·| @|$)/); if (m && m[0]) { for (let i = cellAt(0); i <= cellAt(m[0].length - 1); i++) sec[i] = "1"; o = m[0].length; } }
-  while (o < text.length) {
-    // the hint (#18) is the magenta tail of line 2: once it starts, no other rule applies
-    // (it may quote "5h 93%" or "hit bajo", which would otherwise match #8 or #11)
-    if (/c35/.test(cells[cellAt(o)].cls) && text[o].trim()) { for (let i = cellAt(o); i < cells.length; i++) sec[i] = "18"; break; }
-    const rest = text.slice(o); let hit = null;
-    for (const [re, id] of RULES) { const m = rest.match(re); if (m && m[0]) { hit = [m[0].length, id]; break; } }
-    if (hit) { const a = cellAt(o), b = cellAt(o + hit[0] - 1); for (let i = a; i <= b; i++) sec[i] = hit[1]; o += hit[0]; }
-    else o += 1;
-  }
-  cells.forEach((c, i) => { if (!sec[i] && /c35/.test(c.cls) && c.ch.trim()) sec[i] = "18"; });
-  // the hint is one run: fill the gaps between its first and last magenta cell
-  const h = sec.map((s, i) => s === "18" ? i : -1).filter(i => i >= 0);
-  if (h.length) for (let i = h[0]; i <= h[h.length-1]; i++) if (!sec[i]) sec[i] = "18";
-  return sec;
-}
-
-function renderLine(el, raw, first) {
-  const cells = parseAnsi(raw), sec = sectorize(cells, first);
-  let html = "", i = 0;
-  while (i < cells.length) {
-    const s = sec[i]; let j = i; let inner = "";
-    while (j < cells.length && sec[j] === s) {
-      let k = j; let txt = "";
-      while (k < cells.length && sec[k] === s && cells[k].cls === cells[j].cls) { txt += cells[k].ch; k++; }
-      inner += cells[j].cls ? `<span class="${cells[j].cls.trim()}">${esc(txt)}</span>` : esc(txt);
-      j = k;
-    }
-    html += s ? `<button type="button" class="sec" data-sec="${s}" aria-pressed="${picked === s}">${inner}</button>` : inner;
-    i = j;
-  }
-  el.innerHTML = html;
-}
-
-function key() { return state.join("."); }
-function draw() {
-  $("#ctxv").textContent = CTX[state[1]];
-  if (!grid) return;
-  const ids = grid.cells[key()] || [];
-  const lns = document.querySelectorAll("#term .ln");
-  lns.forEach((el, n) => renderLine(el, ids[n] !== undefined ? grid.lines[ids[n]] : "", n === 0));
-  if (picked && !document.querySelector(`#term [data-sec="${picked}"]`)) showLegend(picked, true);
-}
-function showLegend(id, gone) {
-  picked = id;
-  document.querySelectorAll("#term button.sec").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sec === id)));
-  const L = T[lang], box = $("#legend");
-  let body;
-  if (id === "node") body = `<h3>@</h3><p>${esc(L.node)}</p>`;
-  else {
-    const r = grid && grid.legend[lang][id];
-    body = r ? `<h3><span class="n">${id}</span>${md(r.what)}</h3><dl><dt>${L.means}</dt><dd>${md(r.means)}</dd><dt>${L.source}</dt><dd>${md(r.source)}</dd><dt>${L.threshold}</dt><dd>${md(r.threshold)}</dd></dl>` : "";
-  }
-  box.innerHTML = `<h2>${esc(L.legendTitle)}</h2>` + body;
-}
-
-function buildControls() {
-  const L = T[lang];
-  document.querySelectorAll(".seg").forEach(seg => {
-    const c = +seg.dataset.c;
-    seg.innerHTML = L.opts[c].map((t, i) => `<label><input type="radio" name="c${c}" value="${i}"${state[c] === i ? " checked" : ""}><span>${esc(t)}</span></label>`).join("");
-  });
-}
-function applyLang() {
-  const L = T[lang]; document.documentElement.lang = lang;
-  document.querySelectorAll("[data-i18n]").forEach(e => { e.textContent = L[e.dataset.i18n]; });
-  document.querySelectorAll("[data-i18n-html]").forEach(e => { e.innerHTML = L[e.dataset.i18nHtml]; });
-  $("#lang").textContent = lang === "es" ? "EN" : "ES";
-  $("#lang").setAttribute("aria-label", lang === "es" ? "English" : "Español");
-  $("#theme").setAttribute("aria-label", L.theme);
-  document.title = lang === "es" ? "Simulador de la barra" : "Status line simulator";
-  buildControls();
-  if (grid) $("#meta").textContent = L.meta(new Date(grid.renderedAt * 1000).toISOString().slice(0, 10), grid.inputsHash.slice(0, 12));
-  if (picked) showLegend(picked); else $("#legend").innerHTML = `<h2>${esc(L.legendTitle)}</h2><p class="empty">${esc(L.legendEmpty)}</p>`;
-}
-
-$("#controls").addEventListener("change", e => {
-  const t = e.target;
-  if (t.id === "ctx") state[1] = +t.value; else if (t.name) state[+t.name.slice(1)] = +t.value;
-  draw();
-});
-$("#ctx").addEventListener("input", e => { state[1] = +e.target.value; draw(); });
-$("#term").addEventListener("click", e => { const b = e.target.closest("button.sec"); if (b) showLegend(b.dataset.sec); });
-$("#lang").addEventListener("click", () => { lang = lang === "es" ? "en" : "es"; try { localStorage.setItem("kitdemo-lang", lang); } catch (e) {} applyLang(); draw(); });
-$("#theme").addEventListener("click", () => {
-  const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  r.dataset.theme = dark ? "light" : "dark"; try { localStorage.setItem("kitdemo-theme", r.dataset.theme); } catch (e) {}
-});
-
-applyLang(); draw();
-fetch("grid.json").then(r => r.json()).then(g => { grid = g; applyLang(); draw(); })
-  .catch(() => { $("#term .ln").innerHTML = `<span class="c31">${esc(T[lang].load)}</span>`; });
-</script>
+<!-- the default cell, inline so the bar paints before grid.json arrives (written by tools/render-grid.sh) -->
+<script id="initial" type="application/json">{"key": "0.1.0.1.1.1", "lines": ["\u001b[1mOpus 5.5\u001b[0m ·high @mac \u001b[33m▓▓▓▓▓▓▓▓▓░░░░░░┋░░░░ 180k\u001b[0m/400k · 18% of 1M · $3.80 · 45m · \u001b[32m⚡ caliente · 42m\u001b[0m", "5h 41%  7d 87%  \u001b[32m+213\u001b[0m/\u001b[31m-15\u001b[0m  ⎇ main \u001b[33m↑1\u001b[0m ↓0 ●0 ?0  \u001b[33m⚠HANDOFF 04:27 ·0f ·1c ·0s\u001b[0m  [demo]  \u001b[35m↑1 sin push → git push\u001b[0m"]}</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
