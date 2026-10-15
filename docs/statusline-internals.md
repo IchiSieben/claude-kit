@@ -221,7 +221,16 @@ the `CC_PROF=1` phase marks, and times old and new interleaved.
 
 At the measured ~50–65 ms per spawn and ~28 ms per fork, the full path saves two spawns and a
 pipe, roughly 130–160 ms per render on a quiet Windows machine (an estimate from those unit
-costs: a clean wall-clock A/B was not possible that day). The
+costs). A wall-clock A/B came later that day, `bench-statusline.sh 3 57f0b1e`, old and new
+interleaved with the CPU still loaded and only 3 runs each, so read it as a direction, not a
+budget:
+
+| Wall clock, median of 3 (Windows, loaded) | Before (`57f0b1e`) | After |
+|---|---|---|
+| Full path on this repo, with unpushed commits (the 10 → 7 row) | 911 ms | **782 ms** |
+| Floor (directory missing) | 437 ms | **321 ms** |
+
+The
 bar prints the same bytes (golden tests, plus an old-vs-new comparison on four real repos
 with the real event log) and the snapshot parses to the same JSON.
 

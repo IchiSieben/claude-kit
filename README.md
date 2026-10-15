@@ -84,7 +84,7 @@ git clone https://github.com/IchiSieben/claude-kit
 cd claude-kit
 bash sync-to-home.sh   # merges only the portable settings.json keys into ~/.claude,
                         # backs up whatever it replaces, never deletes
-bash verify.sh         # checks the mirror landed and runs both test suites
+bash verify.sh         # checks the mirror landed and runs every test suite
 ```
 
 Restart Claude Code — `CLAUDE.md`, `settings.json` and skills load at process launch, so

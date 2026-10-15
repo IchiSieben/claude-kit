@@ -46,7 +46,7 @@ Prompt: `../docs/PROMPT-ecosistema-claude-code.md` §3 (V1). Modo dormido: sin p
   `media` aparte hasta que existan los archivos), flujo "módulo enjambre" en la arquitectura,
   `import-arquitecturas.py --check` → `check ok: 12 containers, 18 calls, 5 flows, 0 hits`.
 
-FICHA-READY: be62c5c
+FICHA-READY: cf310cc
 
 - `verify.sh` rc=0 (128 pruebas; la deriva contra `~/.claude` es la esperada). `origin/main` = el commit que trae esta línea (fast-forward desde la rama `ecosistema/2026-10-15`).
 - `~/.claude` NO se re-sincronizó (4 barras vivas): cuando quieras la barra nueva, en el repo
@@ -141,12 +141,13 @@ En vivo: **https://kit.ichisieben.dev/**. Los archivos publicados son iguales po
   de 4 a 2). A/B intercalado en Windows, n=3 y máquina cargada: 911 → 782 ms el completo y
   437 → 321 ms el piso. La meta de 200 ms se corrigió: el piso de Windows es ~225 ms. Detalle y
   la hipótesis de caché rechazada: `docs/statusline-internals.md`. `GIT_OPTIONAL_LOCKS=0`.
-  `tools/bench-statusline.sh`. Columna de la Mac: `TASK-kit-bench-1.md` (lane `bench`), lanzar con
-  `python ../enjambre/enjambre.py run --repo claude-kit --task TASK-kit-bench-1.md --node mac
-  --detach --budget 1 --model sonnet` y copiar las cifras a la tabla.
+  `tools/bench-statusline.sh`. Columna de la Mac: `kit-bench-1` (lane `bench`) quedó EN COLA a las
+  17:40, la Mac tenía sus 2 huecos ocupados. Recoger: `python ../enjambre/enjambre.py status | grep
+  kit-bench-1`, luego `git show mac/kit-bench-1:evidence/bench/darwin-<fecha>.txt` y copiar las
+  cifras a la tabla de costo del README del repo privado (de ahí sale `docs/statusline-internals.md`).
 - **Ítem 2 (guardas)**: `.githooks/pre-push` en los dos repos (`bash tools/install-hooks.sh [repo]`
   para otros repos), `.gitattributes` con binarios explícitos y un lint de `set -euo pipefail`
-  en verify. En uso real: el hook dejó pasar el push del orquestador con verify en verde, y la
+  en verify. En uso real: el hook dejó pasar el push del repo privado con verify en verde, y la
   cadena `verify && push` frenó un push del kit con el árbol sucio. La negación por el hook en sí
   la prueba `tests/prepush_test.sh`.
 - **Ítem 3 (partidas)**: `harvest.py` v2, `partidas.py`, `docs/harvest{,.es}.md`. Salidas en

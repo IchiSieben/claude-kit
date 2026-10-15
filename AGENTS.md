@@ -1,7 +1,7 @@
 # AGENTS.md — claude-kit
 
 Stack: bash (the status line needs bash >= 4.2; on macOS it re-execs into Homebrew's), jq,
-Python 3 stdlib. Verify: `bash verify.sh` (runs `tests/statusline_test.sh` and `tests/hooks_test.sh`).
+Python 3 stdlib. Verify: `bash verify.sh` (runs every `tests/*_test.sh` suite and the repo checks).
 
 ## enjambre
 
