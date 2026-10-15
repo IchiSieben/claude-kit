@@ -9,20 +9,28 @@ en `HANDOFF.md`:
 
 | Cifra | Valor | Cómo se obtiene |
 |---|---|---|
-| Pruebas en verde | 128 | `statusline_test.sh` 67 + `hooks_test.sh` 38 + `enjambre_module_test.sh` 23 |
+| Pruebas en verde | 140 | `statusline_test.sh` 67 + `hooks_test.sh` 38 + `enjambre_module_test.sh` 23 + `route_test.sh` 12 |
 | Render completo de la barra | ~476 ms | `docs/statusline-internals.md` § Cost (medido en reposo, 2026-09-22) |
 | Hooks | 5 (+1 opcional) | `home/.claude/hooks/` · el módulo enjambre añade `enjambre-ssh-guard.sh` |
 | Skills | 10 | `home/.claude/skills/` |
 | Agentes | 6 | `home/.claude/agents/` |
 
-El prompt pedía `"Open source · 79 tests"`: 79 era la cifra del 2026-09-22. Hoy son 128 y la
-ficha dice la cifra de hoy (ver `docs/DECISIONES.md`).
+El prompt pedía `"Open source · 79 tests"` (la cifra del 2026-09-22); el owner aprobó usar la
+cifra del día. El 2026-10-15 por la tarde son 140: se sumó `route_test.sh` (ver `docs/DECISIONES.md`).
 
-## `media` — pegar solo cuando existan los archivos
+`demoUrl` es el simulador de la barra, publicado en https://kit.ichisieben.dev/ (docroot `kit-app`).
 
-El esquema rompe el build si `public/media/claude-kit/` no tiene los tres archivos. Salen del
-trabajo `kit-media` de la Mac (`docs/media/statusline-{preview.mp4,preview.webm,poster.webp}`),
-y el Landing los copia con sus nombres:
+## `media` — listo; pegar cuando el Landing copie los archivos
+
+El esquema rompe el build si `public/media/claude-kit/` no tiene los archivos. Están en este repo
+desde el 2026-10-15 (video de `mac/kit-media-3`, pósters del fotograma 0):
+
+| En este repo | En el Landing |
+|---|---|
+| `docs/media/statusline-poster.webp` (1280x720, 15 KB) | `public/media/claude-kit/poster.webp` |
+| `docs/media/statusline-poster-mobile.webp` (640x360, 5 KB) | `public/media/claude-kit/poster-mobile.webp` |
+| `docs/media/statusline-preview.mp4` (H.264, 85 KB) | `public/media/claude-kit/preview.mp4` |
+| `docs/media/statusline-preview.webm` (AV1/VP9, 110 KB) | `public/media/claude-kit/preview.webm` |
 
 ```yaml
 media:
@@ -45,7 +53,7 @@ order: 13
 featured: false
 status: "live"
 maturity: "usable"
-statusNote: "Open source · 128 tests"
+statusNote: "Open source · 140 tests"
 published: true
 since: 2026
 date: "2026-10-15"
@@ -56,6 +64,7 @@ summary: "Mi configuración de Claude Code, publicada y saneada: reglas de enrut
 oneLine: "La configuración de Claude Code con la que construí este portafolio: reglas, agentes, hooks y una barra de estado que no miente, igual en cada máquina."
 techLine: "Bash · jq · git · Claude Code"
 repoUrl: "https://github.com/IchiSieben/claude-kit"
+demoUrl: "https://kit.ichisieben.dev/"
 skills:
   - "bash"
   - "windows"
@@ -63,14 +72,14 @@ skills:
   - "llm-agentes"
   - "macos-arm"
 applied:
-  bash: "La barra de estado, los cinco hooks y los scripts de espejo son bash + jq, con 128 pruebas que comparan la barra contra salidas guardadas con reloj y ancho fijos."
+  bash: "La barra de estado, los cinco hooks y los scripts de espejo son bash + jq, con 140 pruebas, entre ellas las que comparan la barra contra salidas guardadas con reloj y ancho fijos."
   windows: "Se usa a diario en Windows con Git Bash; ahí cada proceso lanzado cuesta 50–65 ms, y por eso la barra hace una sola llamada a jq para todos los campos."
   git: "La barra cuenta commits sin push, archivos sucios y si el HANDOFF quedó atrás del árbol; kit-update.sh solo avanza con git pull --ff-only."
   llm-agentes: "Seis subagentes por carril (de haiku a opus) y una regla de revisión: el revisor nunca es más débil que el autor."
   macos-arm: "El mismo ~/.claude corre en una Mac mini con Apple Silicon; el video de la barra se graba ahí, delegado por enjambre."
 problem: "Usaba Claude Code todo el día en tres frentes y los mismos problemas aparecían en todos: el modelo más caro haciendo trabajo de uno chico, sesiones que perdían el hilo y descubrir demasiado tarde que el contexto estaba enorme, la caché fría o el traspaso desactualizado."
 results:
-  - { label: "pruebas automáticas en verde", value: 128, source: "statusline 67 + hooks 38 + módulo enjambre 23, Windows, 2026-10-15" }
+  - { label: "pruebas automáticas en verde", value: 140, source: "statusline 67 + hooks 38 + módulo enjambre 23 + /route 12, Windows, 2026-10-15" }
   - { label: "render completo de la barra en Windows + Git Bash", value: 476, unit: "ms", source: "docs/statusline-internals.md, 2026-09-22" }
   - { label: "hooks del ciclo de sesión", value: 5, source: "home/.claude/hooks, 2026-10-15" }
   - { label: "skills", value: 10, source: "home/.claude/skills, 2026-10-15" }
@@ -89,7 +98,8 @@ agentes, skills, hooks, la barra de estado y `rules/thresholds.json`, el único 
 La barra lee el JSON que Claude Code le pasa en cada turno y lo pinta en dos líneas: contexto en
 tokens absolutos, estado de la caché en una palabra (`caliente`, `enfriando`, `fría`) y sus
 minutos, cuota del plan, git y la frescura del HANDOFF. Un dato que falta se pinta `⚠`, nunca `0`.
-La lección 01 de la ruta *Code like me* la explica sector por sector.
+La lección 01 de la ruta *Code like me* la explica sector por sector. El simulador de la barra (el enlace de demo) la
+muestra reaccionando a controles: cada estado es la salida real del script, pre-renderizada.
 
 Para quien tiene más de una máquina, el módulo opcional `enjambre` (`--with enjambre`) añade un
 hook que bloquea el `ssh` directo a los nodos y obliga a delegar por la cola de enjambre.
@@ -110,7 +120,7 @@ order: 13
 featured: false
 status: "live"
 maturity: "usable"
-statusNote: "Open source · 128 tests"
+statusNote: "Open source · 140 tests"
 published: true
 since: 2026
 date: "2026-10-15"
@@ -121,6 +131,7 @@ summary: "My Claude Code setup, published and sanitised: lane-based routing rule
 oneLine: "The Claude Code setup I built this portfolio with: rules, agents, hooks and a status line that does not lie, the same on every machine."
 techLine: "Bash · jq · git · Claude Code"
 repoUrl: "https://github.com/IchiSieben/claude-kit"
+demoUrl: "https://kit.ichisieben.dev/"
 skills:
   - "bash"
   - "windows"
@@ -128,14 +139,14 @@ skills:
   - "llm-agentes"
   - "macos-arm"
 applied:
-  bash: "The status line, the five hooks and the mirror scripts are bash + jq, with 128 tests that compare the bar against saved output at a fixed clock and width."
+  bash: "The status line, the five hooks and the mirror scripts are bash + jq, with 140 tests, including suites that compare the bar against saved output at a fixed clock and width."
   windows: "Used daily on Windows with Git Bash, where every spawned process costs 50–65 ms, which is why the bar makes a single jq call for every field."
   git: "The bar counts unpushed commits, dirty files and whether the HANDOFF fell behind the tree; kit-update.sh only moves with git pull --ff-only."
   llm-agentes: "Six subagents by lane (haiku to opus) and one review rule: the reviewer is never weaker than the author."
   macos-arm: "The same ~/.claude runs on an Apple Silicon Mac mini; the status-line video is recorded there, delegated through enjambre."
 problem: "I used Claude Code all day on three fronts and the same problems showed up in all of them: the most expensive model doing a small model's job, sessions losing the thread, and finding out too late that context was huge, the cache was cold or the handoff was stale."
 results:
-  - { label: "automated tests passing", value: 128, source: "statusline 67 + hooks 38 + enjambre module 23, Windows, 2026-10-15" }
+  - { label: "automated tests passing", value: 140, source: "statusline 67 + hooks 38 + enjambre module 23 + /route 12, Windows, 2026-10-15" }
   - { label: "full status-line render on Windows + Git Bash", value: 476, unit: "ms", source: "docs/statusline-internals.md, 2026-09-22" }
   - { label: "session lifecycle hooks", value: 5, source: "home/.claude/hooks, 2026-10-15" }
   - { label: "skills", value: 10, source: "home/.claude/skills, 2026-10-15" }
@@ -154,7 +165,8 @@ agents, skills, hooks, the status line and `rules/thresholds.json`, the only pla
 The bar reads the JSON Claude Code hands it on every turn and draws two lines: context in absolute
 tokens, the cache state in one word (`caliente`, `enfriando`, `fría`) plus its minutes, plan
 quota, git and how fresh the HANDOFF is. A missing field is painted `⚠`, never `0`. Lesson 01 of
-the *Code like me* route walks through it sector by sector.
+the *Code like me* route walks through it sector by sector. The status line simulator (the demo link) shows
+it reacting to controls: every state is the script's real output, pre-rendered.
 
 For anyone with more than one machine, the optional `enjambre` module (`--with enjambre`) adds a
 hook that blocks a raw `ssh` to the nodes and makes every delegation go through enjambre's queue.

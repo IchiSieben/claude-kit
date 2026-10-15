@@ -140,3 +140,13 @@ Formato: fecha · tarea · qué se eligió · por qué · qué se descartó · c
   gitconfig del sistema). Descarté build-kit, verify.sh, `git stash` con rutas y el collect de
   enjambre (solo hace `fetch`). Mitigación: `.gitattributes` binario para mp4/webm/webp y el check
   "árbol limpio" de `verify.sh`, que lo detectó las dos veces. Se restauró desde HEAD.
+- **Ítem 2 · publicación en `kit.ichisieben.dev`.** Subdominio `kit` con docroot
+  `public_html/kit-app` (pre-aprobado en §12) y subida por TUS archivo por archivo solo dentro de
+  ese docroot, como la demo de enjambre. Nunca el deploy por archivo comprimido: reemplaza el sitio
+  padre, que es el Landing. Hostinger sembró un `default.php` que **no se borró** (borrar en
+  Hostinger necesita al owner): el `.htaccess` de la demo lo niega (403) y fija `DirectoryIndex
+  index.html`. Matriz verificada: `/`, `grid.json` y las fuentes 200; `.htaccess`, `default.php` y
+  `fonts/` (sin listado) 403.
+- **Ítem 3 · la ficha pasa a 140 tests y lleva `demoUrl`.** Misma regla que el owner aprobó para el
+  128 (la cifra del día): se sumaron las 12 de `route_test.sh`. El bloque `media` ya tiene sus
+  archivos y su mapeo a `public/media/claude-kit/`; la copia la hace el Landing (V4).

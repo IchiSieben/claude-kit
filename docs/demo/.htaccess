@@ -1,0 +1,14 @@
+# kit.ichisieben.dev: the status line simulator. Static files only (no PHP, no process).
+Options -Indexes
+DirectoryIndex index.html
+# Hostinger seeds a new docroot with default.php; the demo never serves it.
+<Files "default.php">
+  Require all denied
+</Files>
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  <FilesMatch "\.(json|woff2)$">
+    Header set Cache-Control "public, max-age=300"
+  </FilesMatch>
+</IfModule>
